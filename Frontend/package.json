@@ -14,7 +14,6 @@
     "bcryptjs": "^3.0.3",
     "init": "^0.1.2",
     "jsonwebtoken": "^9.0.3",
-    "npx": "^10.2.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2"
