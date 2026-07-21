@@ -19,14 +19,22 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/medixo";
 
-const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173,http://127.0.0.1:5173")
+const defaultClientUrls = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://medixo-git-main-cyberbhanus-projects.vercel.app",
+];
+
+const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, "");
+
+const allowedOrigins = (process.env.CLIENT_URL || defaultClientUrls.join(","))
   .split(",")
-  .map((origin) => origin.trim())
+  .map(normalizeOrigin)
   .filter(Boolean);
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
       return callback(null, true);
     }
 
