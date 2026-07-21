@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from "react";
-import { clearStoredAuth, getDashboardPath, getStoredUser } from "../utils/auth";
+import { clearStoredAuth, getDashboardPath, getStoredUser, normalizeRole } from "../utils/auth";
 
 function Icon({ name }) {
   const paths = {
@@ -21,9 +21,6 @@ function Icon({ name }) {
     ),
     search: (
       <path d="m13.5 13.5-3.1-3.1m1-4.1a5.1 5.1 0 1 1-10.2 0 5.1 5.1 0 0 1 10.2 0Z" />
-    ),
-    cart: (
-      <path d="M2 3h2l1.2 8h7.6l1-5.5H5.1M6.6 14.5h.1m5 0h.1" />
     ),
     menu: (
       <path d="M3 5h10M3 8h10M3 11h10" />
@@ -54,6 +51,8 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(() => getStoredUser());
+  const homePath = user ? getDashboardPath(user.role) : "/";
+  const role = normalizeRole(user?.role);
 
   useEffect(() => {
     setUser(getStoredUser());
@@ -68,27 +67,45 @@ export default function Navbar() {
   return (
     <header className="site-header">
       <nav className="main-nav shell" aria-label="Primary navigation">
-        <Link to="/" aria-label="Medixo home">
+        <Link to={homePath} aria-label="Medixo home">
           <Logo />
         </Link>
 
         <div className="nav-links">
-          <a href="/">Home</a>
-          <a href="/#doctors">Doctors</a>
-          <a href="/#specializations">Specializations</a>
-          <a href="/#hospitals">Hospitals</a>
-          <a href="/#lab-tests">Lab Tests</a>
-          <a href="/#health-packages">Health Packages</a>
-          <a href="/#pages">Pages</a>
+          {role === "doctor" ? (
+            <>
+              <Link to="/doctor-dashboard">Home</Link>
+              <Link to="/doctor-dashboard">My Appointments</Link>
+              <Link to="/doctor-dashboard">Clinic Details</Link>
+              <Link to="/doctor-dashboard">Availability</Link>
+            </>
+          ) : role === "super_admin" ? (
+            <>
+              <Link to="/admin-dashboard">Home</Link>
+              <Link to="/admin-dashboard">Doctors</Link>
+              <Link to="/admin-dashboard">Appointments</Link>
+            </>
+          ) : role === "laboratory" ? (
+            <>
+              <Link to="/laboratory-dashboard">Home</Link>
+              <Link to="/laboratory-dashboard">Test Bookings</Link>
+              <Link to="/laboratory-dashboard">Reports</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/">Home</Link>
+              <Link to="/doctors">Doctors</Link>
+              <Link to="/#specializations">Specializations</Link>
+              <Link to="/#hospitals">Hospitals</Link>
+              <Link to="/#lab-tests">Lab Tests</Link>
+              <Link to="/#health-packages">Health Packages</Link>
+            </>
+          )}
         </div>
 
         <div className="nav-actions">
           <button className="icon-button" aria-label="Search">
             <Icon name="search" />
-          </button>
-          <button className="icon-button cart-button" aria-label="Cart">
-            <Icon name="cart" />
-            <span>2</span>
           </button>
           {user ? (
             <>
@@ -97,7 +114,8 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" className="ghost-button">Login</Link>
+              <Link to="/login" className="ghost-button">Patient Login</Link>
+              <Link to="/doctor-login" className="ghost-button">Doctor Login</Link>
               <Link to="/signup" className="primary-button">Sign Up</Link>
             </>
           )}

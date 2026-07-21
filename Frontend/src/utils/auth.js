@@ -30,9 +30,33 @@ export const clearStoredAuth = () => {
   localStorage.removeItem(USER_KEY);
 };
 
+export const normalizeRole = (role) => {
+  const normalized = String(role || "").trim().toLowerCase();
+
+  if (normalized === "admin" || normalized === "superadmin" || normalized === "super_admin") {
+    return "super_admin";
+  }
+
+  if (normalized === "lab" || normalized === "laboratory") {
+    return "laboratory";
+  }
+
+  return normalized;
+};
+
 export const getDashboardPath = (role) => {
-  if (role === "doctor") {
+  const normalizedRole = normalizeRole(role);
+
+  if (normalizedRole === "super_admin") {
+    return "/admin-dashboard";
+  }
+
+  if (normalizedRole === "doctor") {
     return "/doctor-dashboard";
+  }
+
+  if (normalizedRole === "laboratory") {
+    return "/laboratory-dashboard";
   }
 
   return "/patient-dashboard";

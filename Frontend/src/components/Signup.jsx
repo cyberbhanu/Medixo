@@ -5,13 +5,32 @@ import Navbar from "./Navbar";
 import "../styles/auth.css";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "patient" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "patient",
+    specialization: "",
+    experience: "",
+    location: "",
+    fees: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const isDoctor = false;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const nextFormData = { ...formData, [e.target.name]: e.target.value };
+
+    if (e.target.name === "role" && e.target.value !== "doctor") {
+      nextFormData.specialization = "";
+      nextFormData.experience = "";
+      nextFormData.location = "";
+      nextFormData.fees = "";
+    }
+
+    setFormData(nextFormData);
     setError("");
   };
 
@@ -83,17 +102,75 @@ const Signup = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">I am a</label>
+                <label className="form-label">Account Type</label>
                 <select
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
                   className="form-input"
+                  disabled
                 >
                   <option value="patient">Patient</option>
-                  <option value="doctor">Doctor</option>
                 </select>
               </div>
+
+              {isDoctor ? (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Specialization</label>
+                    <input
+                      type="text"
+                      name="specialization"
+                      placeholder="Cardiology"
+                      value={formData.specialization}
+                      onChange={handleChange}
+                      className="form-input"
+                      required={isDoctor}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Experience (Years)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="experience"
+                      placeholder="10"
+                      value={formData.experience}
+                      onChange={handleChange}
+                      className="form-input"
+                      required={isDoctor}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Location</label>
+                    <input
+                      type="text"
+                      name="location"
+                      placeholder="Delhi"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="form-input"
+                      required={isDoctor}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Consultation Fee</label>
+                    <input
+                      type="number"
+                      min="0"
+                      name="fees"
+                      placeholder="800"
+                      value={formData.fees}
+                      onChange={handleChange}
+                      className="form-input"
+                      required={isDoctor}
+                    />
+                  </div>
+                </>
+              ) : null}
 
               <button
                 type="submit"

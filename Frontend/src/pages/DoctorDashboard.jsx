@@ -1,46 +1,161 @@
+import { useEffect, useState } from "react";
+import { getAppointments, getDoctors, updateDoctorHospitalDetails, updateDoctorAvailability, getLabs, createAppointment, updateAppointment } from "../api";
 import DashboardLayout, {
   DashboardIcon,
   DashboardSection,
 } from "../components/DashboardLayout";
+import ClinicDetailsCard from "../components/ClinicDetailsCard";
+import EditClinicDetailsModal from "../components/EditClinicDetailsModal";
+import ManageAppointmentModal from "../components/ManageAppointmentModal";
+import "../styles/modal.css";
 import { getStoredUser } from "../utils/auth";
-
-const stats = [
-  { icon: "calendar", value: "18", label: "Today's Appointments", note: "5 patients already checked in" },
-  { icon: "users", value: "246", label: "Active Patients", note: "12 new patient records this month" },
-  { icon: "star", value: "4.9", label: "Patient Rating", note: "Based on 1,240 reviews" },
-  { icon: "rupee", value: "Rs. 38k", label: "Weekly Earnings", note: "12% higher than last week" },
-];
-
-const schedule = [
-  { patient: "Ananya Mehta", reason: "Chest pain review", time: "09:00 AM", mode: "In-clinic" },
-  { patient: "Rakesh Kumar", reason: "Blood pressure follow-up", time: "10:30 AM", mode: "Video" },
-  { patient: "Sana Khan", reason: "Prescription renewal", time: "12:15 PM", mode: "Video" },
-  { patient: "Kabir Shah", reason: "Post-surgery check-in", time: "03:00 PM", mode: "In-clinic" },
-];
-
-const requests = [
-  "3 lab reports need review before evening rounds",
-  "2 prescription renewals are waiting for approval",
-  "1 patient has requested an urgent callback",
-  "4 empty slots are available for tomorrow morning",
-];
-
-const clinicMetrics = [
-  { label: "Average consultation", value: "22 min" },
-  { label: "No-show rate", value: "3%" },
-  { label: "Pending reports", value: "7" },
-  { label: "Completed follow-ups", value: "31" },
-];
 
 export default function DoctorDashboard() {
   const user = getStoredUser();
   const firstName = user?.name?.split(" ")[0] || "Doctor";
+  const [doctorProfile, setDoctorProfile] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [labs, setLabs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [managingAppointment, setManagingAppointment] = useState(null);
+
+  useEffect(() => {
+    if (!user?.id && !user?.email) {
+      setLoading(false);
+      return;
+    }
+
+    const loadDashboardData = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [doctorProfiles, labData] = await Promise.all([
+          getDoctors({
+          userId: user.id,
+          email: user.email,
+          }),
+          getLabs()
+        ]);
+
+        const activeDoctorProfile = doctorProfiles[0] || null;
+        setDoctorProfile(activeDoctorProfile);
+        setLabs(labData);
+
+        if (!activeDoctorProfile?._id) {
+          setAppointments([]);
+          return;
+        }
+
+        const appointmentData = await getAppointments({
+          doctorId: activeDoctorProfile._id,
+        });
+
+        setAppointments(appointmentData);
+      } catch (requestError) {
+        setError(requestError.response?.data?.error || "Failed to load doctor dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user?.email, user?.id]);
+
+  const handleSaveAppointment = async (appointmentId, draft) => {
+    try {
+      const updated = await updateAppointment(appointmentId, {
+        ...draft,
+        patientAge: Number(draft.patientAge),
+      });
+
+      setAppointments((current) => current.map((item) => (item._id === updated._id ? updated : item)));
+      setManagingAppointment(updated); // Keep modal open with updated data
+      alert("Patient record updated successfully!");
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to update patient details");
+    }
+  };
+
+  const handleReferPatient = async (patientAppointment, referralDetails) => {
+    try {
+      await createAppointment({
+        type: "lab",
+        labId: referralDetails.labId,
+        referredBy: doctorProfile._id,
+        patientName: patientAppointment.patientName,
+        patientEmail: patientAppointment.patientEmail,
+        patientPhone: patientAppointment.patientPhone,
+        patientAge: patientAppointment.patientAge,
+        patientGender: patientAppointment.patientGender,
+        appointmentDate: referralDetails.appointmentDate,
+        appointmentTime: referralDetails.appointmentTime,
+        reason: referralDetails.reason,
+        notes: `Referred by Dr. ${doctorProfile.name} for: ${referralDetails.reason}`,
+      });
+      alert("Patient successfully referred to the lab!");
+      return true; // Indicate success
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to refer to lab");
+      return false; // Indicate failure
+    }
+  };
+
+  const activePatients = new Set(appointments.map((appointment) => appointment.patientEmail)).size;
+  const completedAppointments = appointments.filter(
+    (appointment) => appointment.status === "Completed"
+  ).length;
+  const weeklyEarnings = appointments
+    .filter((appointment) => appointment.status !== "Cancelled")
+    .reduce((total, appointment) => total + (appointment.doctorId?.fees || doctorProfile?.fees || 0), 0);
+  const requests = appointments
+    .filter((appointment) => appointment.status !== "Completed")
+    .slice(0, 4)
+    .map(
+      (appointment) =>
+        `Queue #${appointment.queueNumber || "-"}: ${appointment.patientName} (${appointment.patientPhone}) on ${appointment.appointmentDate} at ${appointment.appointmentTime}`
+    );
+  const clinicMetrics = [
+    { label: "Specialization", value: doctorProfile?.specialization || "Pending" },
+    { label: "Location", value: doctorProfile?.location || "Pending" },
+    { label: "Experience", value: doctorProfile ? `${doctorProfile.experience} yrs` : "Pending" },
+    { label: "Consultation fee", value: doctorProfile ? `Rs. ${doctorProfile.fees}` : "Pending" },
+  ];
+  const stats = [
+    {
+      icon: "calendar",
+      value: String(appointments.length),
+      label: "Your Appointments",
+      note: doctorProfile ? "Only bookings assigned to your doctor profile are shown here" : "Complete doctor signup details to activate scheduling",
+    },
+    {
+      icon: "users",
+      value: String(activePatients),
+      label: "Active Patients",
+      note: "Unique patient emails assigned to you",
+    },
+    {
+      icon: "star",
+      value: String(completedAppointments),
+      label: "Completed Visits",
+      note: "Finished consultations tracked from appointment status",
+    },
+    {
+      icon: "rupee",
+      value: `Rs. ${weeklyEarnings}`,
+      label: "Projected Earnings",
+      note: "Calculated from your linked appointments",
+    },
+  ];
 
   return (
     <DashboardLayout
       role="Doctor Dashboard"
       title={`Good to see you, Dr. ${firstName}`}
-      subtitle="Manage appointments, review patients faster, and keep your clinic day running on time with one focused dashboard."
+      subtitle="Manage appointments, review patients faster, and keep your clinic day running on time with live data connected to your signup details."
       chips={["Smart schedule", "Patient insights", "Fast follow-ups"]}
       stats={stats}
       quickActions={[
@@ -74,21 +189,84 @@ export default function DoctorDashboard() {
         </>
       }
     >
-      <DashboardSection title="Today's Schedule" action="Open Full Schedule">
+      {error ? <div className="dashboard-banner error">{error}</div> : null}
+
+      <DashboardSection title="Hospital/Clinic Details">
+        <ClinicDetailsCard 
+          doctorProfile={doctorProfile}
+          onEdit={() => setShowEditModal(true)}
+        />
+      </DashboardSection>
+
+      <DashboardSection 
+        title="Availability & Blocked Times" 
+        action="Edit Schedule"
+        onActionClick={() => setShowAvailabilityModal(true)}
+      >
         <div className="dashboard-table">
-          {schedule.map((item) => (
-            <article key={`${item.patient}-${item.time}`} className="dashboard-table-row">
-              <div>
-                <h3>{item.patient}</h3>
-                <p>{item.reason}</p>
-              </div>
-              <span className="dashboard-time-pill">
-                <DashboardIcon name="clock" /> {item.time}
-              </span>
-              <span className="dashboard-inline-badge">{item.mode}</span>
-              <button type="button">Open Chart</button>
-            </article>
-          ))}
+          {doctorProfile?.availability?.length ? (
+            doctorProfile.availability.map((daySchedule) => (
+              <article key={daySchedule.day} className="dashboard-table-row">
+                <div>
+                  <h3>{daySchedule.day}</h3>
+                </div>
+                {daySchedule.isAvailable ? (
+                  <span className="dashboard-time-pill">
+                    <DashboardIcon name="clock" /> {daySchedule.startTime} - {daySchedule.endTime}
+                  </span>
+                ) : (
+                  <span className="dashboard-inline-badge" style={{ backgroundColor: '#ffebee', color: '#c62828' }}>Blocked</span>
+                )}
+              </article>
+            ))
+          ) : (
+            <p className="dashboard-empty-state">
+              No availability schedule set. Click "Edit Schedule" to configure your working hours and blocked times.
+            </p>
+          )}
+        </div>
+      </DashboardSection>
+
+      <DashboardSection title="Patient Care Queue" action="Professional view">
+        <div className="dashboard-table">
+          {loading ? (
+            <p className="dashboard-empty-state">Loading appointments...</p>
+          ) : doctorProfile ? (
+            appointments.length ? (
+              appointments.map((item) => (
+                <article key={item._id} className="dashboard-table-row dashboard-patient-row">
+                  <div className="dashboard-patient-row-header">
+                    <div>
+                      <h3>{item.patientName}</h3>
+                      <p>{item.reason}</p>
+                      <p className="dashboard-muted-note">
+                        {item.disease ? `Condition: ${item.disease}` : "No diagnosis recorded yet"}
+                      </p>
+                    </div>
+                    <div className="dashboard-action-row">
+                      <span className="dashboard-time-pill">
+                        <DashboardIcon name="clock" /> {item.appointmentTime}
+                      </span>
+                      <span className="dashboard-inline-badge">{item.status}</span>
+                    </div>
+                  </div>
+                  <div className="dashboard-action-row">
+                    <button type="button" onClick={() => setManagingAppointment(item)} className="dashboard-primary-action dashboard-compact-action">
+                      Manage Patient
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="dashboard-empty-state">
+                No appointments are assigned to your doctor profile yet. Bookings linked to your profile will appear here automatically.
+              </p>
+            )
+          ) : (
+            <p className="dashboard-empty-state">
+              No doctor profile is linked to this account yet. Sign up as a doctor with all profile fields filled to activate this dashboard.
+            </p>
+          )}
         </div>
       </DashboardSection>
 
@@ -98,8 +276,12 @@ export default function DoctorDashboard() {
             <span className="dashboard-icon-bubble">
               <DashboardIcon name="lightning" />
             </span>
-            <h3>Fast Review Time</h3>
-            <p>Average response time for patient questions is down to 18 minutes this week.</p>
+            <h3>Linked Doctor Profile</h3>
+            <p>
+              {doctorProfile
+                ? `${doctorProfile.name} is connected to this login and ready to receive appointments automatically.`
+                : "This account does not yet have a complete doctor profile in the system."}
+            </p>
           </article>
 
           <article className="dashboard-performance-card">
@@ -107,7 +289,11 @@ export default function DoctorDashboard() {
               <DashboardIcon name="message" />
             </span>
             <h3>Patient Communication</h3>
-            <p>92% of follow-up messages were answered within the same consultation window.</p>
+            <p>
+              {activePatients
+                ? `${activePatients} patients are currently mapped to your appointment list through their booking email.`
+                : "Patient activity will appear here once appointments are created for your doctor profile."}
+            </p>
           </article>
 
           <article className="dashboard-performance-card">
@@ -115,10 +301,131 @@ export default function DoctorDashboard() {
               <DashboardIcon name="chart" />
             </span>
             <h3>Case Efficiency</h3>
-            <p>Digital prescriptions reduced repeat administrative work across routine visits.</p>
+            <p>
+              {appointments.length
+                ? `${appointments.length} appointments are now being tracked directly from the backend for this doctor account.`
+                : "Your dashboard is ready and will fill itself as soon as appointments are booked."}
+            </p>
           </article>
         </div>
       </DashboardSection>
+
+      {showEditModal && (
+        <EditClinicDetailsModal
+          doctorProfile={doctorProfile}
+          user={user}
+          onClose={() => setShowEditModal(false)}
+          onSave={async (updatedDetails) => {
+            await updateDoctorHospitalDetails(
+              doctorProfile._id,
+              updatedDetails,
+              localStorage.getItem("token")
+            );
+            // Reload doctor profile
+            const doctorProfiles = await getDoctors({
+              userId: user.id,
+              email: user.email,
+            });
+            setDoctorProfile(doctorProfiles[0]);
+            setShowEditModal(false);
+          }}
+        />
+      )}
+
+      {showAvailabilityModal && (
+        <EditAvailabilityModal
+          doctorProfile={doctorProfile}
+          onClose={() => setShowAvailabilityModal(false)}
+          onSave={async (updatedAvailability) => {
+            await updateDoctorAvailability(doctorProfile._id, updatedAvailability);
+            const doctorProfiles = await getDoctors({ userId: user.id, email: user.email });
+            setDoctorProfile(doctorProfiles[0]);
+            setShowAvailabilityModal(false);
+          }}
+        />
+      )}
+
+      {managingAppointment && (
+        <ManageAppointmentModal
+          appointment={managingAppointment}
+          labs={labs}
+          onClose={() => setManagingAppointment(null)}
+          onSaveAppointment={handleSaveAppointment}
+          onReferPatient={handleReferPatient}
+        />
+      )}
     </DashboardLayout>
+  );
+}
+
+function EditAvailabilityModal({ doctorProfile, onClose, onSave }) {
+  const DEFAULT_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const [availability, setAvailability] = useState(
+    doctorProfile?.availability?.length
+      ? doctorProfile.availability
+      : DEFAULT_DAYS.map(day => ({ day, startTime: "09:00", endTime: "17:00", isAvailable: true }))
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleToggleDay = (index) => {
+    const newAvail = [...availability];
+    newAvail[index].isAvailable = !newAvail[index].isAvailable;
+    setAvailability(newAvail);
+  };
+
+  const handleTimeChange = (index, field, value) => {
+    const newAvail = [...availability];
+    newAvail[index][field] = value;
+    setAvailability(newAvail);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await onSave(availability);
+    } catch (err) {
+      setError(err.message || "Failed to save availability");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2 className="modal-title">Set Availability</h2>
+          <button onClick={onClose} className="modal-close-btn" type="button">x</button>
+        </div>
+        <form onSubmit={handleSubmit} className="modal-form">
+          {error && <div className="modal-error">{error}</div>}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {availability.map((daySchedule, idx) => (
+              <div key={daySchedule.day} className="availability-row">
+                <div className="availability-day">{daySchedule.day}</div>
+                <label className="availability-toggle">
+                  <input type="checkbox" checked={daySchedule.isAvailable} onChange={() => handleToggleDay(idx)} />
+                  Available
+                </label>
+                {daySchedule.isAvailable && (
+                  <div className="availability-times">
+                    <input type="time" value={daySchedule.startTime} onChange={(e) => handleTimeChange(idx, "startTime", e.target.value)} className="modal-input availability-time-input" required />
+                    <span>to</span>
+                    <input type="time" value={daySchedule.endTime} onChange={(e) => handleTimeChange(idx, "endTime", e.target.value)} className="modal-input availability-time-input" required />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="modal-buttons">
+            <button type="button" onClick={onClose} className="modal-cancel-btn" disabled={loading}>Cancel</button>
+            <button type="submit" className="modal-submit-btn" disabled={loading}>{loading ? "Saving..." : "Save Schedule"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

@@ -8,6 +8,9 @@
 # Environment files
 **/.env
 
+# Automatic data backups
+backend/backups/
+
 # Local browser automation profiles
 Frontend/.chrome-profile-final-live/
 Frontend/.chrome-profile-final-live2/

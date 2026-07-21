@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login } from "../api";
-import { getDashboardPath, setStoredAuth } from "../utils/auth";
+import { login, updateDoctorHospitalDetails, getDoctors } from "../api";
+import { setStoredAuth, getDashboardPath } from "../utils/auth";
 import Navbar from "./Navbar";
+import EditClinicDetailsModal from "./EditClinicDetailsModal";
 import "../styles/auth.css";
 
-const Login = () => {
+const DoctorLogin = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showHospitalDetails, setShowHospitalDetails] = useState(false);
+  const [loginData, setLoginData] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -20,16 +23,57 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await login(formData);
-      setStoredAuth(data.token, data.user);
-      alert("Login successful");
-      navigate(getDashboardPath(data.user?.role));
+      const data = await login({ ...formData, role: "doctor" });
+
+      // After login, we need the full doctor profile to check for details and get the correct ID
+      const doctorProfiles = await getDoctors({ userId: data.user.id, email: data.user.email });
+      if (!doctorProfiles.length) {
+        setError("Doctor profile not found for this user account. Please contact an admin.");
+        setLoading(false);
+        return;
+      }
+      const doctorProfile = doctorProfiles[0];
+
+      // Check if doctor has already submitted hospital details
+      if (doctorProfile.detailsSubmitted) {
+        setStoredAuth(data.token, data.user);
+        alert("Login successful");
+        navigate(getDashboardPath(data.user?.role));
+      } else {
+        // Show hospital details form
+        setLoginData({ ...data, doctorProfile });
+        setShowHospitalDetails(true);
+      }
     } catch (error) {
       setError(error.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }
   };
+
+  if (showHospitalDetails && loginData) {
+    return (
+      <>
+        <Navbar />
+        <EditClinicDetailsModal
+          doctorProfile={{}}
+          user={loginData?.user}
+          onClose={() => setShowHospitalDetails(false)}
+          onSave={async (updatedDetails) => {
+            await updateDoctorHospitalDetails(
+              loginData.doctorProfile._id,
+              updatedDetails,
+              loginData.token
+            );
+            // After successful submission, complete the login
+            setStoredAuth(loginData.token, { ...loginData.user, detailsSubmitted: true });
+            alert("Login successful! Hospital details saved.");
+            navigate(getDashboardPath(loginData.user?.role));
+          }}
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -38,13 +82,13 @@ const Login = () => {
         <div className="auth-wrapper">
           <div className="auth-card">
             <div className="auth-header">
-              <h1 className="auth-title">Welcome Back</h1>
-              <p className="auth-subtitle">Sign in to your Medixo account</p>
+              <h1 className="auth-title">Doctor Login</h1>
+              <p className="auth-subtitle">Access your Medixo doctor account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="auth-form">
               {error && <div className="auth-error">{error}</div>}
-              
+
               <div className="form-group">
                 <label className="form-label">Email Address</label>
                 <input
@@ -89,18 +133,24 @@ const Login = () => {
                   Create one now
                 </Link>
               </p>
+              <p className="auth-footer-text">
+                Patient login?{" "}
+                <Link to="/login" className="auth-link">
+                  Click here
+                </Link>
+              </p>
             </div>
           </div>
 
           <div className="auth-image">
             <div className="auth-image-content">
-              <h2>Welcome to Medixo</h2>
-              <p>Your complete healthcare management platform</p>
+              <h2>Manage Your Practice</h2>
+              <p>Add and manage your hospital/clinic details with ease</p>
               <ul className="auth-features">
-                <li>✓ Verified healthcare professionals</li>
-                <li>✓ Instant appointment booking</li>
-                <li>✓ Secure payment options</li>
-                <li>✓ 24/7 customer support</li>
+                <li>✓ Add multiple hospital/clinic details</li>
+                <li>✓ Manage your availability</li>
+                <li>✓ Track patient appointments</li>
+                <li>✓ Update your services</li>
               </ul>
             </div>
           </div>
@@ -110,4 +160,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default DoctorLogin;

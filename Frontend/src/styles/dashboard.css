@@ -2,7 +2,6 @@
   min-height: 100vh;
   padding-bottom: 40px;
   background:
-    radial-gradient(circle at top right, rgba(0, 185, 242, 0.16), transparent 22%),
     linear-gradient(180deg, #f7fbff 0%, #f8fafd 34%, #f2f6fb 100%);
 }
 
@@ -17,8 +16,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.9), transparent 18%),
-    linear-gradient(135deg, #0d5bdd 0%, #0a7ae7 48%, #01b9f2 100%);
+    linear-gradient(135deg, #0b4fbf 0%, #0878d6 52%, #02a6c2 100%);
 }
 
 .dashboard-hero-inner {
@@ -37,7 +35,7 @@
   min-height: 34px;
   padding: 0 14px;
   color: #e7f3ff;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 999px;
   font-size: 12px;
@@ -96,7 +94,7 @@
   justify-content: center;
   gap: 10px;
   padding: 0 20px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 800;
 }
@@ -105,6 +103,10 @@
   color: #0b4bb8;
   background: #fff;
   box-shadow: 0 14px 28px rgba(16, 64, 150, 0.18);
+}
+
+.dashboard-quick-actions button:hover {
+  transform: translateY(-1px);
 }
 
 .dashboard-quick-actions .secondary {
@@ -125,10 +127,10 @@
 .dashboard-appointment-card,
 .dashboard-recommend-card,
 .dashboard-performance-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(225, 232, 243, 0.95);
-  border-radius: 18px;
-  box-shadow: 0 16px 36px rgba(33, 52, 86, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(33, 52, 86, 0.08);
 }
 
 .dashboard-stat-card {
@@ -136,6 +138,20 @@
   display: flex;
   gap: 16px;
   padding: 22px 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-stat-card:hover,
+.dashboard-panel:hover,
+.dashboard-appointment-card:hover,
+.dashboard-recommend-card:hover,
+.dashboard-performance-card:hover,
+.dashboard-admin-record:hover {
+  box-shadow: 0 18px 42px rgba(33, 52, 86, 0.11);
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-2px);
 }
 
 .dashboard-icon-bubble {
@@ -146,7 +162,7 @@
   place-items: center;
   color: var(--blue);
   background: var(--soft);
-  border-radius: 15px;
+  border-radius: 8px;
   font-size: 24px;
 }
 
@@ -215,9 +231,21 @@
   padding: 0 16px;
   color: var(--blue);
   background: var(--soft);
-  border-radius: 10px;
+  border: 1px solid #d8e8ff;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 800;
+}
+
+.dashboard-panel-header button:hover,
+.dashboard-appointment-card button:hover,
+.dashboard-recommend-card button:hover,
+.dashboard-table-row button:hover,
+.dashboard-secondary-action:hover,
+.dashboard-admin-record button:hover {
+  color: #073f9c;
+  background: #e4f0ff;
+  transform: translateY(-1px);
 }
 
 .dashboard-card-list,
@@ -248,7 +276,8 @@
   width: fit-content;
   padding: 0 12px;
   color: #0b5ccc;
-  background: #eef5ff;
+  background: #edf6ff;
+  border: 1px solid #d5e7ff;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -307,6 +336,18 @@
   object-position: center top;
   border-radius: 14px;
   background: #eaf0f8;
+}
+
+.dashboard-doctor-avatar {
+  width: 100%;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  background: linear-gradient(135deg, #ebf4ff 0%, #d8ebff 100%);
+  border-radius: 14px;
+  font-size: 56px;
+  font-weight: 800;
 }
 
 .dashboard-recommend-card strong {
@@ -381,7 +422,41 @@
   padding: 18px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
   border: 1px solid #ebf0f6;
-  border-radius: 16px;
+  border-radius: 8px;
+}
+
+.dashboard-patient-row {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-patient-row-header,
+.dashboard-action-row {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-patient-row-header {
+  justify-content: space-between;
+}
+
+.dashboard-action-row {
+  align-items: center;
+}
+
+.dashboard-muted-note {
+  margin-top: 4px;
+  color: #4b5563;
+}
+
+.dashboard-compact-action {
+  min-height: 34px;
+  padding: 6px 16px;
+  font-size: 13px;
 }
 
 .dashboard-performance-grid {
@@ -395,6 +470,286 @@
 
 .dashboard-performance-card .dashboard-icon-bubble {
   margin-bottom: 18px;
+}
+
+.dashboard-banner {
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-banner.error {
+  color: #b42318;
+  background: #fff1f0;
+  border: 1px solid #f7c6c2;
+}
+
+.dashboard-banner.success {
+  color: #136c3d;
+  background: #eefbf3;
+  border: 1px solid #bce7cb;
+}
+
+.dashboard-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.15fr);
+  gap: 18px;
+}
+
+.dashboard-form-card {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e3ebf6;
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(33, 52, 86, 0.08);
+}
+
+.dashboard-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-input-group {
+  display: grid;
+  gap: 8px;
+}
+
+.dashboard-input-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.dashboard-input-group span {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dashboard-input-group input,
+.dashboard-input-group select,
+.dashboard-input-group textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  color: #101828;
+  background: #fff;
+  border: 1px solid #d9e4f2;
+  border-radius: 8px;
+  outline: none;
+}
+
+.dashboard-input-group textarea {
+  min-height: 120px;
+  padding: 14px;
+  resize: vertical;
+}
+
+.dashboard-input-group input:focus,
+.dashboard-input-group select:focus,
+.dashboard-input-group textarea:focus {
+  border-color: #87b4f5;
+  box-shadow: 0 0 0 4px rgba(13, 91, 221, 0.08);
+}
+
+.dashboard-input-group input[aria-invalid="true"],
+.dashboard-input-group select[aria-invalid="true"],
+.dashboard-input-group textarea[aria-invalid="true"] {
+  border-color: #d92d20;
+  box-shadow: 0 0 0 4px rgba(217, 45, 32, 0.08);
+}
+
+.dashboard-field-error {
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashboard-primary-action,
+.dashboard-secondary-action,
+.dashboard-admin-record button {
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dashboard-primary-action {
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue) 0%, #0786d8 100%);
+  box-shadow: 0 10px 20px rgba(13, 91, 221, 0.18);
+}
+
+.dashboard-primary-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(13, 91, 221, 0.22);
+}
+
+.dashboard-secondary-action,
+.dashboard-admin-record button {
+  color: var(--blue);
+  background: #eef5ff;
+}
+
+.dashboard-secondary-action.danger {
+  color: #b42318;
+  background: #fff1f0;
+}
+
+.dashboard-appointment-actions,
+.dashboard-reschedule-form {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-appointment-actions {
+  min-width: 180px;
+}
+
+.dashboard-reschedule-form {
+  min-width: 240px;
+}
+
+.dashboard-admin-list {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-admin-record {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e7edf6;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.dashboard-record-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-record-identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-record-avatar {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 8px;
+  background: #eef5ff;
+}
+
+.dashboard-record-avatar.fallback {
+  display: grid;
+  place-items: center;
+  color: var(--blue);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.dashboard-record-header h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.dashboard-record-header p,
+.dashboard-record-note,
+.dashboard-empty-state {
+  margin: 8px 0 0;
+  color: #5e6676;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dashboard-record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-record-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-filter-row,
+.dashboard-record-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: end;
+}
+
+.dashboard-record-grid span {
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.dashboard-upload-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.dashboard-upload-box {
+  min-height: 128px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--blue);
+  background: #f4f8ff;
+  border: 1px dashed #9fc3f5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+
+.dashboard-upload-box input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dashboard-upload-box img {
+  width: 100%;
+  height: 128px;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.dashboard-url-input {
+  align-content: start;
 }
 
 @media (max-width: 1180px) {
@@ -413,6 +768,10 @@
 
   .dashboard-doctor-grid,
   .dashboard-performance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-admin-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -436,7 +795,16 @@
   }
 
   .dashboard-panel {
+    padding: 16px;
+  }
+
+  .dashboard-stat-card {
+    min-height: auto;
     padding: 18px;
+  }
+
+  .dashboard-content-grid {
+    margin-top: 18px;
   }
 
   .dashboard-panel-header {
@@ -454,6 +822,19 @@
   }
 
   .dashboard-doctor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-filter-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-upload-row {
     grid-template-columns: 1fr;
   }
 }

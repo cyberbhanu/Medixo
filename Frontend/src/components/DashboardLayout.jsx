@@ -42,12 +42,12 @@ function StatCard({ item }) {
   );
 }
 
-export function DashboardSection({ title, action, children }) {
+export function DashboardSection({ title, action, onActionClick, children }) {
   return (
     <section className="dashboard-panel">
       <div className="dashboard-panel-header">
         <h2>{title}</h2>
-        {action ? <button type="button">{action}</button> : null}
+        {action ? <button type="button" onClick={onActionClick}>{action}</button> : null}
       </div>
       {children}
     </section>
@@ -86,21 +86,24 @@ export default function DashboardLayout({
 
           <div className="dashboard-quick-actions">
             {quickActions.map((action) => (
-              <button key={action.label} type="button" className={action.variant || "secondary"}>
+              <button
+                key={action.label}
+                type="button"
+                className={action.variant || "secondary"}
+                onClick={action.onClick}
+              >
                 <DashboardIcon name={action.icon} />
                 {action.label}
               </button>
             ))}
           </div>
         </div>
+        <div className="shell dashboard-stat-grid">
+          {stats.map((item) => (
+            <StatCard key={item.label} item={item} />
+          ))}
+        </div>
       </section>
-
-      <section className="shell dashboard-stat-grid">
-        {stats.map((item) => (
-          <StatCard key={item.label} item={item} />
-        ))}
-      </section>
-
       <section className="shell dashboard-content-grid">
         <div className="dashboard-main-column">{children}</div>
         <aside className="dashboard-side-column">{aside}</aside>

@@ -23,8 +23,12 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["patient", "doctor"],
+      enum: ["super_admin", "doctor", "patient", "laboratory"],
       default: "patient",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -32,13 +36,12 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-UserSchema.pre("save", async function saveUser(next) {
+UserSchema.pre("save", async function saveUser() {
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
 
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 UserSchema.methods.comparePassword = function comparePassword(password) {
