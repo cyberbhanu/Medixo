@@ -18,6 +18,7 @@ export default function DoctorDashboard() {
   const [labs, setLabs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [managingAppointment, setManagingAppointment] = useState(null);
@@ -75,8 +76,13 @@ export default function DoctorDashboard() {
       setAppointments((current) => current.map((item) => (item._id === updated._id ? updated : item)));
       setManagingAppointment(updated); // Keep modal open with updated data
       alert("Patient record updated successfully!");
+      setManagingAppointment(updated);
+      setSuccess("Patient record updated successfully!");
+      setError("");
     } catch (err) {
       alert(err.response?.data?.error || "Failed to update patient details");
+      setError(err.response?.data?.error || "Failed to update patient details");
+      setSuccess("");
     }
   };
 
@@ -97,9 +103,13 @@ export default function DoctorDashboard() {
         notes: `Referred by Dr. ${doctorProfile.name} for: ${referralDetails.reason}`,
       });
       alert("Patient successfully referred to the lab!");
+      setSuccess("Patient successfully referred to the lab!");
+      setError("");
       return true; // Indicate success
     } catch (err) {
       alert(err.response?.data?.error || "Failed to refer to lab");
+      setError(err.response?.data?.error || "Failed to refer to lab");
+      setSuccess("");
       return false; // Indicate failure
     }
   };
@@ -190,6 +200,7 @@ export default function DoctorDashboard() {
       }
     >
       {error ? <div className="dashboard-banner error">{error}</div> : null}
+      {success ? <div className="dashboard-banner success">{success}</div> : null}
 
       <DashboardSection title="Hospital/Clinic Details">
         <ClinicDetailsCard 
