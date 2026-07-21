@@ -32,9 +32,23 @@ const allowedOrigins = (process.env.CLIENT_URL || defaultClientUrls.join(","))
   .map(normalizeOrigin)
   .filter(Boolean);
 
+const isAllowedOrigin = (origin) => {
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (allowedOrigins.includes(normalizedOrigin)) {
+    return true;
+  }
+
+  try {
+    const { hostname, protocol } = new URL(normalizedOrigin);
+    return protocol === "https:" && hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+};
+
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+    if (!origin || isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 

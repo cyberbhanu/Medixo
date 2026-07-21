@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const PRODUCTION_API_URL = "https://horizon-healthcare-backend.onrender.com/api";
+
 const resolveApiBaseUrl = () => {
   const configuredUrl = import.meta.env.VITE_API_URL?.trim();
   if (configuredUrl) {
@@ -10,7 +12,7 @@ const resolveApiBaseUrl = () => {
     return "http://127.0.0.1:5000/api";
   }
 
-  return "/api";
+  return PRODUCTION_API_URL;
 };
 
 export const API = axios.create({
@@ -30,7 +32,10 @@ API.interceptors.request.use((config) => {
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    const requestUrl = error.config?.url || "";
+    const isAuthRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/signup");
+
+    if (error.response && error.response.status === 401 && !isAuthRequest) {
       localStorage.clear();
       window.location.href = "/login";
     }
