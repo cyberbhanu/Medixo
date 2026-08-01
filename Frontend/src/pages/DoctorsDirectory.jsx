@@ -126,8 +126,6 @@ export default function DoctorsDirectory() {
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get("search") || "");
   const [selectedSpecialty, setSelectedSpecialty] = useState(() => searchParams.get("specialty") || "all");
   const [selectedCity, setSelectedCity] = useState(() => searchParams.get("city") || "all");
-  const [minExperience, setMinExperience] = useState(() => searchParams.get("minExperience") || "");
-  const [maxFees, setMaxFees] = useState(() => searchParams.get("maxFees") || "");
 
   useEffect(() => {
     const loadFilterOptions = async () => {
@@ -154,8 +152,6 @@ export default function DoctorsDirectory() {
           search: searchTerm,
           specialty: selectedSpecialty,
           city: selectedCity,
-          minExperience,
-          maxFees,
         };
         const queryParams = Object.fromEntries(
           Object.entries(params).filter(([, value]) => value && value !== "all")
@@ -171,7 +167,7 @@ export default function DoctorsDirectory() {
     };
 
     loadDoctors();
-  }, [searchTerm, selectedSpecialty, selectedCity, minExperience, maxFees]);
+  }, [searchTerm, selectedSpecialty, selectedCity]);
 
   const handleBookAppointment = (doctor) => {
     if (!doctor?._id) {
@@ -182,7 +178,7 @@ export default function DoctorsDirectory() {
     navigate(`/doctors/${doctor._id}`);
   };
 
-  const areFiltersActive = searchTerm || selectedSpecialty !== "all" || selectedCity !== "all" || minExperience || maxFees;
+  const areFiltersActive = searchTerm || selectedSpecialty !== "all" || selectedCity !== "all";
 
   return (
     <>
@@ -239,27 +235,7 @@ export default function DoctorsDirectory() {
               ))}
             </div>
 
-            <div className="doctors-directory-range-filters">
-              <label>
-                <span>Experience</span>
-                <select value={minExperience} onChange={(event) => setMinExperience(event.target.value)}>
-                  <option value="">Any experience</option>
-                  <option value="1">1+ years</option>
-                  <option value="5">5+ years</option>
-                  <option value="10">10+ years</option>
-                  <option value="15">15+ years</option>
-                </select>
-              </label>
-              <label>
-                <span>Max fees</span>
-                <select value={maxFees} onChange={(event) => setMaxFees(event.target.value)}>
-                  <option value="">Any fee</option>
-                  <option value="500">Up to Rs. 500</option>
-                  <option value="1000">Up to Rs. 1000</option>
-                  <option value="1500">Up to Rs. 1500</option>
-                  <option value="2500">Up to Rs. 2500</option>
-                </select>
-              </label>
+            <div className="doctors-directory-filter-actions">
               {areFiltersActive ? (
                 <button
                   type="button"
@@ -268,8 +244,6 @@ export default function DoctorsDirectory() {
                     setSearchTerm("");
                     setSelectedSpecialty("all");
                     setSelectedCity("all");
-                    setMinExperience("");
-                    setMaxFees("");
                   }}
                 >
                   Clear filters

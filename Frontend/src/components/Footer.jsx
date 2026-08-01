@@ -27,11 +27,11 @@ export default function Footer() {
             <div className="site-footer-stack">
               <div className="site-footer-contact-row">
                 <Icon name="phone" />
-                <span>+91 98765 43210</span>
+                <a href="tel:+919876543210">+91 98765 43210</a>
               </div>
               <div className="site-footer-contact-row">
                 <Icon name="mail" />
-                <span>support@medixo.com</span>
+                <a href="mailto:support@medixo.com">support@medixo.com</a>
               </div>
             </div>
           </div>
@@ -40,9 +40,10 @@ export default function Footer() {
             <h3>Quick Links</h3>
             <div className="site-footer-stack">
               <Link to="/">Home</Link>
-              <Link to="/#doctors">Doctors</Link>
+              <Link to="/doctors">Doctors</Link>
               <Link to="/#specializations">Specializations</Link>
               <Link to="/#hospitals">Hospitals</Link>
+              <Link to="/#lab-tests">Lab Tests</Link>
             </div>
           </div>
 
@@ -50,8 +51,8 @@ export default function Footer() {
             <h3>Company</h3>
             <div className="site-footer-stack">
               <Link to="/#about">About Us</Link>
-              <a href="/#privacy">Privacy Policy</a>
-              <a href="/#terms">Terms & Conditions</a>
+              <Link to="/privacy-policy">Privacy Policy</Link>
+              <Link to="/terms-conditions">Terms & Conditions</Link>
               <Link to="/#contact">Contact</Link>
             </div>
           </div>

@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/Footer";
 import { getDashboardPath, getStoredUser, normalizeRole } from "./utils/auth";
 
@@ -13,6 +13,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const DoctorDashboard = lazy(() => import("./pages/DoctorDashboard"));
 const PatientDashboard = lazy(() => import("./pages/PatientDashboard"));
 const LaboratoryDashboard = lazy(() => import("./pages/LaboratoryDashboard"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 
 function LoadingFallback() {
   return (
@@ -56,9 +57,28 @@ function RoleAwareHome() {
   return <Home />;
 }
 
+function ScrollToHash() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    const element = document.getElementById(location.hash.slice(1));
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location.pathname, location.hash]);
+
+  return null;
+}
+
 function App() {
   return (
     <>
+      <ScrollToHash />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<RoleAwareHome />} />
@@ -67,6 +87,8 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/doctors" element={<DoctorsDirectory />} />
           <Route path="/doctors/:doctorId" element={<DoctorProfilePage />} />
+          <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
+          <Route path="/terms-conditions" element={<LegalPage type="terms" />} />
           <Route
             path="/patient-dashboard"
             element={

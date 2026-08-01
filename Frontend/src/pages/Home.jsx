@@ -112,12 +112,7 @@ const DEFAULT_FILTERS = {
   type: "all",
   specialty: "",
   city: "",
-  department: "",
-  minExperience: "",
-  maxFees: "",
-  minRating: "",
   availability: "",
-  consultationType: "",
 };
 
 const includesText = (value, query) =>
@@ -131,12 +126,6 @@ const uniqueSorted = (items) =>
   [...new Set(items.map((item) => String(item || "").trim()).filter(Boolean))].sort((a, b) =>
     a.localeCompare(b)
   );
-
-const getDepartmentName = (department) => {
-  if (!department) return "";
-  if (typeof department === "string") return department;
-  return department.name || "";
-};
 
 const getResourceCity = (item) => item.city || item.location || "";
 
@@ -153,8 +142,6 @@ const getSearchText = (item, fields = []) =>
 
 const doctorMatchesFilters = (doctor, filters) => {
   const query = filters.query.trim();
-  const departmentName = getDepartmentName(doctor.department);
-  const departmentId = typeof doctor.department === "object" ? doctor.department?._id : doctor.department;
   const searchText = getSearchText(doctor, [
     "name",
     "qualification",
@@ -174,21 +161,12 @@ const doctorMatchesFilters = (doctor, filters) => {
     (!query || includesText(searchText, query)) &&
     (!filters.specialty || doctor.specialization === filters.specialty) &&
     (!filters.city || getDoctorCity(doctor) === filters.city) &&
-    (!filters.department || departmentId === filters.department || departmentName === filters.department) &&
-    (!filters.minExperience || Number(doctor.experience || 0) >= Number(filters.minExperience)) &&
-    (!filters.maxFees || Number(doctor.fees || 0) <= Number(filters.maxFees)) &&
-    (!filters.minRating || Number(doctor.rating || 0) >= Number(filters.minRating)) &&
-    (!filters.availability || isAvailableToday(doctor)) &&
-    (!filters.consultationType || doctor.consultationType === filters.consultationType)
+    (!filters.availability || isAvailableToday(doctor))
   );
 };
 
 const facilityMatchesFilters = (item, filters) => {
   const query = filters.query.trim();
-  const departments = asArray(item.departments).map(getDepartmentName);
-  const departmentIds = asArray(item.departments).map((department) =>
-    typeof department === "object" ? department._id : department
-  );
   const searchText = getSearchText(item, [
     "name",
     "address",
@@ -202,9 +180,7 @@ const facilityMatchesFilters = (item, filters) => {
 
   return (
     (!query || includesText(searchText, query)) &&
-    (!filters.city || getResourceCity(item) === filters.city) &&
-    (!filters.department || departments.includes(filters.department) || departmentIds.includes(filters.department)) &&
-    (!filters.minRating || Number(item.rating || 0) >= Number(filters.minRating))
+    (!filters.city || getResourceCity(item) === filters.city)
   );
 };
 
@@ -214,8 +190,7 @@ const labMatchesFilters = (lab, filters) => {
 
   return (
     (!query || includesText(searchText, query)) &&
-    (!filters.city || getResourceCity(lab) === filters.city) &&
-    (!filters.minRating || Number(lab.rating || 0) >= Number(filters.minRating))
+    (!filters.city || getResourceCity(lab) === filters.city)
   );
 };
 
@@ -252,10 +227,13 @@ const getDoctorDescription = (doctor) =>
   doctor.about ||
   `${doctor.specialization} care with ${doctor.experience || 0}+ years of clinical experience.`;
 
-function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, departmentOptions }) {
+const fallbackPopularSpecialties = ["Dental", "Cardiology", "Orthopedics", "Pediatrics", "Neurology"];
+
+function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, onSearchSubmit }) {
   const handleSubmit = (event) => {
     event.preventDefault();
     onFiltersChange({ ...filters, query: filters.query.trim() });
+    onSearchSubmit();
   };
 
   return (
@@ -293,44 +271,89 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
       </label>
       <button type="submit">Search</button>
       <div className="home-filter-row" aria-label="Homepage filters">
-        <select value={filters.department} onChange={(event) => onFiltersChange({ ...filters, department: event.target.value })}>
-          <option value="">Department</option>
-          {departmentOptions.map((item) => <option key={item._id || item.name} value={item._id || item.name}>{item.name}</option>)}
-        </select>
-        <select value={filters.minExperience} onChange={(event) => onFiltersChange({ ...filters, minExperience: event.target.value })}>
-          <option value="">Experience</option>
-          <option value="1">1+ years</option>
-          <option value="5">5+ years</option>
-          <option value="10">10+ years</option>
-          <option value="15">15+ years</option>
-        </select>
-        <select value={filters.maxFees} onChange={(event) => onFiltersChange({ ...filters, maxFees: event.target.value })}>
-          <option value="">Fee</option>
-          <option value="500">Up to Rs. 500</option>
-          <option value="1000">Up to Rs. 1000</option>
-          <option value="1500">Up to Rs. 1500</option>
-          <option value="2500">Up to Rs. 2500</option>
-        </select>
-        <select value={filters.minRating} onChange={(event) => onFiltersChange({ ...filters, minRating: event.target.value })}>
-          <option value="">Rating</option>
-          <option value="4">4+ rating</option>
-          <option value="4.5">4.5+ rating</option>
-        </select>
         <select value={filters.availability} onChange={(event) => onFiltersChange({ ...filters, availability: event.target.value })}>
           <option value="">Availability</option>
           <option value="today">Available today</option>
-        </select>
-        <select value={filters.consultationType} onChange={(event) => onFiltersChange({ ...filters, consultationType: event.target.value })}>
-          <option value="">Consultation</option>
-          <option value="Online">Online</option>
-          <option value="Offline">Offline</option>
-          <option value="Online/Offline">Online/Offline</option>
         </select>
         <button type="button" className="home-clear-filter" onClick={() => onFiltersChange(DEFAULT_FILTERS)}>
           Clear
         </button>
       </div>
     </form>
+  );
+}
+
+function SearchResultsModal({ doctors, filters, loading, error, onClose, onBook, onView }) {
+  const searchLabel = filters.specialty || filters.query || filters.city || "available doctors";
+
+  return (
+    <div className="home-search-overlay" role="presentation" onMouseDown={onClose}>
+      <section
+        className="home-search-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="home-search-results-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="home-search-modal-header">
+          <div>
+            <span>Search results</span>
+            <h2 id="home-search-results-title">Doctors for {searchLabel}</h2>
+            <p>{loading ? "Finding doctors..." : `${doctors.length} doctor${doctors.length === 1 ? "" : "s"} available`}</p>
+          </div>
+          <button type="button" className="home-search-close" aria-label="Close search results" onClick={onClose}>
+            x
+          </button>
+        </header>
+
+        <div className="home-search-results">
+          {error ? <p className="home-search-empty">{error}</p> : null}
+          {!error && loading ? (
+            <HomeSkeletonGrid />
+          ) : !error && doctors.length ? (
+            doctors.map((doctor) => (
+              <article className="home-search-result-card" key={doctor._id}>
+                {doctor.profileImage || doctor.image ? (
+                  <img src={doctor.profileImage || doctor.image} alt={doctor.name} loading="lazy" />
+                ) : (
+                  <div className="home-search-avatar" aria-hidden="true">
+                    {doctor.name?.charAt(0) || "D"}
+                  </div>
+                )}
+                <div className="home-search-result-body">
+                  <div className="doctor-card-title-row">
+                    <h3>Dr. {doctor.name}</h3>
+                    <span className="rating"><Icon name="star" /> {Number(doctor.rating || 4.8).toFixed(1)}</span>
+                  </div>
+                  <p>{doctor.specialization} - {doctor.qualification || "Verified Medical Practitioner"}</p>
+                  <div className="doctor-meta">
+                    <span><Icon name="pin" /> {getDoctorCity(doctor) || "Location pending"}</span>
+                    <span><Icon name="clock" /> {doctor.experience || 0}+ yrs</span>
+                    <span>{getNextSlot(doctor)}</span>
+                  </div>
+                  <div className="home-search-result-footer">
+                    <strong>Rs. {doctor.fees}</strong>
+                    <div>
+                      <button type="button" className="home-search-view" onClick={() => onView(doctor)}>
+                        View Profile
+                      </button>
+                      <button type="button" onClick={() => onBook(doctor)}>
+                        Book Consultation
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="home-search-empty">
+              <h3>No doctors found</h3>
+              <p>Try another specialization, city, or search term.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -518,6 +541,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeSpecialty, setActiveSpecialty] = useState("All Doctors");
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   useEffect(() => {
     const loadHomepageData = async () => {
@@ -544,7 +568,7 @@ export default function Home() {
     loadHomepageData();
   }, []);
 
-  const { doctors, hospitals, clinics, labs, departments } = homepageData;
+  const { doctors, hospitals, clinics, labs } = homepageData;
 
   const specialtyOptions = useMemo(
     () => uniqueSorted(doctors.map((doctor) => doctor.specialization)),
@@ -561,22 +585,10 @@ export default function Home() {
     [clinics, doctors, hospitals, labs]
   );
 
-  const departmentOptions = useMemo(() => {
-    const fromFacilities = [...hospitals, ...clinics]
-      .flatMap((item) => asArray(item.departments))
-      .filter(Boolean);
-    const byId = new Map();
-
-    [...departments, ...fromFacilities].forEach((department) => {
-      const id = typeof department === "object" ? department._id || department.name : department;
-      const name = getDepartmentName(department);
-      if (id && name) {
-        byId.set(id, { _id: id, name });
-      }
-    });
-
-    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [clinics, departments, hospitals]);
+  const popularSpecialties = useMemo(
+    () => (specialtyOptions.length ? specialtyOptions : fallbackPopularSpecialties).slice(0, 5),
+    [specialtyOptions]
+  );
 
   const filteredDoctors = useMemo(() => {
     if (filters.type !== "all" && filters.type !== "doctor") return [];
@@ -634,6 +646,11 @@ export default function Home() {
 
   const visibleLabs = useMemo(() => filteredLabs.slice(0, 8), [filteredLabs]);
 
+  const searchModalDoctors = useMemo(
+    () => doctors.filter((doctor) => doctorMatchesFilters(doctor, filters)).slice(0, 12),
+    [doctors, filters]
+  );
+
   const stats = useMemo(
     () => [
       { label: "Active Doctors", mobileLabel: "Doctors", value: doctors.length, icon: "doctor" },
@@ -649,6 +666,24 @@ export default function Home() {
       setActiveSpecialty("All Doctors");
     }
   }, [activeSpecialty, specialtyGroups]);
+
+  useEffect(() => {
+    if (!isSearchModalOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsSearchModalOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSearchModalOpen]);
 
   const handleBookDoctor = (doctor) => {
     if (!doctor?._id) {
@@ -707,16 +742,16 @@ export default function Home() {
               onFiltersChange={setFilters}
               specialtyOptions={specialtyOptions}
               cityOptions={cityOptions}
-              departmentOptions={departmentOptions}
+              onSearchSubmit={() => setIsSearchModalOpen(true)}
             />
 
             <div className="popular-searches">
               <strong>Popular Searches:</strong>
-              <Link to="/doctors?search=Dentist">Dentist</Link>
-              <Link to="/doctors?search=Cardiologist">Cardiologist</Link>
-              <Link to="/doctors?search=Orthopedist">Orthopedist</Link>
-              <Link to="/doctors?search=Pediatrician">Pediatrician</Link>
-              <Link to="/doctors?search=Neurologist">Neurologist</Link>
+              {popularSpecialties.map((specialty) => (
+                <Link key={specialty} to={`/doctors?specialty=${encodeURIComponent(specialty)}`}>
+                  {specialty}
+                </Link>
+              ))}
             </div>
           </div>
 
@@ -901,6 +936,18 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {isSearchModalOpen ? (
+        <SearchResultsModal
+          doctors={searchModalDoctors}
+          filters={filters}
+          loading={loading}
+          error={error}
+          onClose={() => setIsSearchModalOpen(false)}
+          onBook={handleBookDoctor}
+          onView={handleViewDoctor}
+        />
+      ) : null}
     </main>
   );
 }

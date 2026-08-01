@@ -29,6 +29,11 @@
   border: 1px solid #d8e8ff;
 }
 
+.stats-section {
+  margin-top: 24px;
+  margin-bottom: 18px;
+}
+
 .stats-card .stat-item,
 .specialty-card,
 .doctor-card,
@@ -127,6 +132,184 @@
   color: #0d5bdd;
   background: #eef6ff;
   border: 1px solid #d8e8ff;
+}
+
+.home-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 18, 32, 0.56);
+  backdrop-filter: blur(8px);
+}
+
+.home-search-modal {
+  width: min(100%, 940px);
+  max-height: min(760px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(225, 232, 242, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(10, 18, 32, 0.28);
+}
+
+.home-search-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 26px 18px;
+  border-bottom: 1px solid #e6eef8;
+}
+
+.home-search-modal-header span {
+  color: #0d5bdd;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.home-search-modal-header h2 {
+  margin: 5px 0 0;
+  color: #101828;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.home-search-modal-header p {
+  margin: 8px 0 0;
+  color: #5b6678;
+  font-size: 14px;
+}
+
+.home-search-close {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  color: #667085;
+  background: #f4f7fb;
+  border: 1px solid #e3eaf4;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.home-search-results {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  overflow: auto;
+}
+
+.home-search-result-card {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5edf7;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(31, 50, 81, 0.06);
+}
+
+.home-search-result-card img,
+.home-search-avatar {
+  width: 86px;
+  height: 110px;
+  border-radius: 8px;
+}
+
+.home-search-result-card img {
+  object-fit: cover;
+  object-position: center top;
+  background: #eef4ff;
+}
+
+.home-search-avatar {
+  display: grid;
+  place-items: center;
+  color: #0d5bdd;
+  background: linear-gradient(180deg, #eef6ff 0%, #dcecff 100%);
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.home-search-result-body {
+  min-width: 0;
+}
+
+.home-search-result-body h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+}
+
+.home-search-result-body p {
+  margin: 8px 0 0;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-search-result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #edf2f8;
+}
+
+.home-search-result-footer strong {
+  color: #101828;
+  font-size: 16px;
+}
+
+.home-search-result-footer div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: flex-end;
+}
+
+.home-search-result-footer button {
+  min-height: 40px;
+  padding: 0 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #0d5bdd 0%, #0786d8 100%);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.home-search-result-footer .home-search-view {
+  color: #0d5bdd;
+  background: #eef6ff;
+  border: 1px solid #d8e8ff;
+}
+
+.home-search-empty {
+  margin: 0;
+  padding: 38px 20px;
+  color: #566070;
+  text-align: center;
+  background: #f8fbff;
+  border: 1px dashed #d9e6f5;
+  border-radius: 8px;
+}
+
+.home-search-empty h3 {
+  margin: 0 0 8px;
+  color: #101828;
+}
+
+.home-search-empty p {
+  margin: 0;
 }
 
 .resource-grid {
@@ -382,6 +565,45 @@
 
   .home-card-actions {
     grid-template-columns: 1fr;
+  }
+
+  .home-search-overlay {
+    padding: 14px;
+    place-items: start center;
+  }
+
+  .home-search-modal {
+    max-height: calc(100vh - 28px);
+  }
+
+  .home-search-modal-header {
+    padding: 18px;
+  }
+
+  .home-search-modal-header h2 {
+    font-size: 20px;
+  }
+
+  .home-search-result-card {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .home-search-result-card img,
+  .home-search-avatar {
+    width: 70px;
+    height: 92px;
+  }
+
+  .home-search-result-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .home-search-result-footer div,
+  .home-search-result-footer button {
+    width: 100%;
   }
 
   .info-card {

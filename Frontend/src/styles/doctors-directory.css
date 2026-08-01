@@ -120,6 +120,12 @@
   border-radius: 8px;
 }
 
+.doctors-directory-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
 .doctors-directory-clear-btn {
   min-height: 42px;
   padding: 0 14px;
