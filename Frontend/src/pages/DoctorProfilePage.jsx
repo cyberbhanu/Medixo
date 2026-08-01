@@ -88,17 +88,7 @@ export default function DoctorProfilePage() {
     }
   };
 
-  if (!user) {
-    return (
-      <>
-        <Navbar />
-        <main className="shell" style={{ padding: "48px 0" }}>
-          <h2>Please log in to book an appointment.</h2>
-          <button type="button" className="primary-button" onClick={() => navigate("/login")}>Go to Login</button>
-        </main>
-      </>
-    );
-  }
+  const isLoggedIn = Boolean(user);
 
   return (
     <>
@@ -212,50 +202,56 @@ export default function DoctorProfilePage() {
               <div style={{ marginBottom: "16px" }}>
                 <h2 style={{ margin: 0 }}>Book Appointment</h2>
                 <p style={{ margin: "6px 0 0", color: "#4d5f80" }}>
-                  Fill in your details below to request an appointment with Dr. {doctor.name}.
+                  {isLoggedIn
+                    ? `Fill in your details below to request an appointment with Dr. ${doctor.name}.`
+                    : "Please log in to book an appointment with this doctor."}
                 </p>
               </div>
               {error ? <div className="dashboard-banner error">{error}</div> : null}
               {success ? <div className="dashboard-banner success">{success}</div> : null}
-              <form onSubmit={handleSubmit} className="dashboard-form-grid">
-                <label className="dashboard-input-group">
-                  <span>Phone</span>
-                  <input required value={form.patientPhone} onChange={(event) => setForm({ ...form, patientPhone: event.target.value })} placeholder="9876543210" />
-                </label>
-                <label className="dashboard-input-group">
-                  <span>Age</span>
-                  <input required type="number" min="1" value={form.patientAge} onChange={(event) => setForm({ ...form, patientAge: event.target.value })} placeholder="28" />
-                </label>
-                <label className="dashboard-input-group">
-                  <span>Gender</span>
-                  <select value={form.patientGender} onChange={(event) => setForm({ ...form, patientGender: event.target.value })}>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </label>
-                <label className="dashboard-input-group">
-                  <span>Appointment date</span>
-                  <input required type="date" value={form.appointmentDate} onChange={(event) => setForm({ ...form, appointmentDate: event.target.value })} />
-                </label>
-                <label className="dashboard-input-group">
-                  <span>Appointment time</span>
-                  <input required type="time" value={form.appointmentTime} onChange={(event) => setForm({ ...form, appointmentTime: event.target.value })} />
-                </label>
-                <label className="dashboard-input-group full-width">
-                  <span>Reason</span>
-                  <input required value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Fever, follow-up, routine visit" />
-                </label>
-                <label className="dashboard-input-group full-width">
-                  <span>Notes</span>
-                  <textarea rows="4" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Add symptoms or details" />
-                </label>
-                <div className="dashboard-form-actions full-width">
-                  <button type="submit" className="dashboard-primary-action" disabled={saving}>
-                    {saving ? "Booking..." : "Book Appointment"}
-                  </button>
-                </div>
-              </form>
+              {isLoggedIn ? (
+                <form onSubmit={handleSubmit} className="dashboard-form-grid">
+                  <label className="dashboard-input-group">
+                    <span>Phone</span>
+                    <input required value={form.patientPhone} onChange={(event) => setForm({ ...form, patientPhone: event.target.value })} placeholder="9876543210" />
+                  </label>
+                  <label className="dashboard-input-group">
+                    <span>Age</span>
+                    <input required type="number" min="1" value={form.patientAge} onChange={(event) => setForm({ ...form, patientAge: event.target.value })} placeholder="28" />
+                  </label>
+                  <label className="dashboard-input-group">
+                    <span>Gender</span>
+                    <select value={form.patientGender} onChange={(event) => setForm({ ...form, patientGender: event.target.value })}>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </label>
+                  <label className="dashboard-input-group">
+                    <span>Appointment date</span>
+                    <input required type="date" value={form.appointmentDate} onChange={(event) => setForm({ ...form, appointmentDate: event.target.value })} />
+                  </label>
+                  <label className="dashboard-input-group">
+                    <span>Appointment time</span>
+                    <input required type="time" value={form.appointmentTime} onChange={(event) => setForm({ ...form, appointmentTime: event.target.value })} />
+                  </label>
+                  <label className="dashboard-input-group full-width">
+                    <span>Reason</span>
+                    <input required value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Fever, follow-up, routine visit" />
+                  </label>
+                  <label className="dashboard-input-group full-width">
+                    <span>Notes</span>
+                    <textarea rows="4" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Add symptoms or details" />
+                  </label>
+                  <div className="dashboard-form-actions full-width">
+                    <button type="submit" className="dashboard-primary-action" disabled={saving}>
+                      {saving ? "Booking..." : "Book Appointment"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button type="button" className="dashboard-primary-action" onClick={() => navigate("/login")}>Login to Book Appointment</button>
+              )}
             </section>
           </>
         ) : (

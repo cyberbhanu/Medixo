@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from "react";
 import { clearStoredAuth, getDashboardPath, getStoredUser, normalizeRole } from "../utils/auth";
+import siteLogo from "../assets/medixo logo .jpeg";
 
 function Icon({ name }) {
   const paths = {
@@ -37,11 +38,7 @@ function Icon({ name }) {
 function Logo() {
   return (
     <span className="brand">
-      <svg viewBox="0 0 42 34" aria-hidden="true" className="brand-mark">
-        <path d="M5 29V6l10 8 10-8v23h-7V18l-3 2.4L12 18v11H5Z" fill="#0f7bf5" />
-        <path d="M25 6v23h7V6h-7Z" fill="#01b9f2" />
-        <path d="M9.5 20h4v-4h4v4h4v4h-4v4h-4v-4h-4v-4Z" fill="#ff4456" />
-      </svg>
+      <img src={siteLogo} alt="Medixo logo" className="brand-logo" />
       <span>Medi<span>xo</span></span>
     </span>
   );
