@@ -54,6 +54,7 @@ export default function Navbar() {
   const [user, setUser] = useState(() => getStoredUser());
   const [showAuthMenu, setShowAuthMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileAuthMenu, setShowMobileAuthMenu] = useState(false);
   const role = normalizeRole(user?.role);
 
   useEffect(() => {
@@ -68,7 +69,11 @@ export default function Navbar() {
   };
 
   const toggleMobileMenu = () => setShowMobileMenu((active) => !active);
-  const closeMobileMenu = () => setShowMobileMenu(false);
+  const toggleMobileAuthMenu = () => setShowMobileAuthMenu((active) => !active);
+  const closeMobileMenu = () => {
+    setShowMobileMenu(false);
+    setShowMobileAuthMenu(false);
+  };
   const handleOverlayClick = (event) => {
     if (event.target === event.currentTarget) {
       closeMobileMenu();
@@ -220,7 +225,7 @@ export default function Navbar() {
                 )}
               </div>
 
-              <div className="mobile-menu-actions">
+              <div className="mobile-menu-section">
                 {user ? (
                   <>
                     <Link to={getDashboardPath(user.role)} className="mobile-menu-link" onClick={closeMobileMenu}>
@@ -232,18 +237,31 @@ export default function Navbar() {
                   </>
                 ) : (
                   <>
-                    <Link to="/login" className="mobile-menu-link" onClick={closeMobileMenu}>
-                      Patient Login
-                    </Link>
-                    <Link to="/doctor-login" className="mobile-menu-link" onClick={closeMobileMenu}>
-                      Doctor Login
-                    </Link>
-                    <Link to="/staff-login" className="mobile-menu-link" onClick={closeMobileMenu}>
-                      Staff Login
-                    </Link>
-                    <Link to="/signup" className="mobile-menu-action" onClick={closeMobileMenu}>
-                      Sign Up
-                    </Link>
+                    <button
+                      type="button"
+                      className="mobile-menu-auth-toggle"
+                      onClick={toggleMobileAuthMenu}
+                      aria-expanded={showMobileAuthMenu}
+                    >
+                      Login / Sign Up
+                    </button>
+
+                    {showMobileAuthMenu && (
+                      <div className="mobile-menu-auth-panel">
+                        <Link to="/login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                          Patient Login
+                        </Link>
+                        <Link to="/doctor-login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                          Doctor Login
+                        </Link>
+                        <Link to="/staff-login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                          Staff Login
+                        </Link>
+                        <Link to="/signup" className="mobile-menu-action" onClick={closeMobileMenu}>
+                          Sign Up
+                        </Link>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
