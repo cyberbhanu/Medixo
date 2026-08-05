@@ -361,22 +361,40 @@ svg {
   margin-bottom: 22px;
 }
 
-.mobile-menu-title {
-  color: #101828;
-  font-size: 20px;
-  font-weight: 800;
-}
+  @media (max-width: 820px) {
+    .mobile-menu-panel {
+      padding: 12px;
+      place-items: center;
+    }
 
-.mobile-menu-close {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  color: #475569;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 22px;
+    .mobile-menu-inner {
+      width: min(100%, 95vw);
+      padding: 22px;
+      border-radius: 22px;
+    }
+
+    .mobile-menu-title {
+      font-size: 20px;
+    }
+
+    .mobile-menu-close {
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+      border-radius: 14px;
+    }
+
+    .mobile-menu-links,
+    .mobile-menu-actions {
+      gap: 14px;
+    }
+
+    .mobile-menu-link,
+    .mobile-menu-action {
+      padding: 16px 18px;
+      font-size: 15px;
+    }
+  }
 }
 
 .mobile-menu-links,
@@ -1268,14 +1286,15 @@ svg {
   }
 
   .hero-section {
-    min-height: 390px;
+    min-height: auto;
+    padding: 28px 0 18px;
   }
 
   .hero-grid {
-    min-height: 390px;
+    min-height: auto;
     display: block;
-    padding-top: 33px;
-    padding-bottom: 17px;
+    padding-top: 0;
+    padding-bottom: 6px;
   }
 
   .hero-copy {
@@ -1283,231 +1302,163 @@ svg {
   }
 
   .hero-copy h1 {
-    max-width: 275px;
-    font-size: 28px;
-    line-height: 1.2;
+    max-width: 100%;
+    font-size: 32px;
+    line-height: 1.18;
   }
 
   .hero-copy > p {
-    max-width: 250px;
-    margin-top: 12px;
-    font-size: 14px;
-    line-height: 1.48;
+    max-width: 100%;
+    margin-top: 14px;
+    font-size: 15px;
+    line-height: 1.65;
   }
 
   .trust-row {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     margin-top: 20px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .trust-row span {
     min-width: 0;
-    gap: 6px;
+    gap: 8px;
   }
 
   .trust-row svg {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .search-panel {
     width: 100%;
-    min-height: 180px;
+    min-height: auto;
     grid-template-columns: 1fr;
-    gap: 8px;
-    margin-top: 21px;
-    padding: 11px;
-    border-radius: 7px;
+    gap: 10px;
+    margin-top: 22px;
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.98);
   }
 
   .search-panel input,
   .search-panel select,
   .search-panel button {
-    height: 40px;
-    font-size: 12px;
+    height: 46px;
+    font-size: 13px;
+  }
+
+  .search-panel input,
+  .search-panel select {
+    padding-left: 46px;
+  }
+
+  .search-panel label svg {
+    left: 16px;
   }
 
   .popular-searches {
-    display: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    margin-top: 18px;
   }
 
-  .hero-visual {
-    position: absolute;
-    right: -10px;
-    top: 70px;
-    z-index: 1;
-    width: 182px;
-    min-height: 220px;
-    opacity: 0.98;
-  }
-
-  .hero-visual img {
-    right: 0;
-    bottom: auto;
-    top: 0;
-    width: auto;
-    height: 260px;
-  }
-
+  .hero-visual,
   .care-badge {
     display: none;
   }
 
-  .stats-section {
-    margin-top: 18px;
-  }
-
   .stats-card {
-    width: 100%;
-    max-width: 100%;
-    min-height: auto;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 18px;
   }
 
   .stat-item {
-    min-width: 0;
     flex-direction: column;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .stat-item .soft-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 19px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
   }
 
   .stat-item strong {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .stat-item p {
-    margin-top: 3px;
-    font-size: 11px;
-  }
-
-  .desktop-label {
-    display: none;
-  }
-
-  .mobile-label {
-    display: inline;
-  }
-
-  .content-section {
-    padding-top: 28px;
-  }
-
-  .section-header {
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-
-  .section-header h2 {
-    font-size: 17px;
-  }
-
-  .section-header > a {
+    margin-top: 5px;
     font-size: 12px;
   }
 
-  .doctor-tabs {
-    display: none;
+  .content-section {
+    padding-top: 24px;
+  }
+
+  .section-header {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-header > a {
+    justify-self: start;
   }
 
   .specialty-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 9px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .specialty-card {
-    min-height: 76px;
-    display: grid;
-    justify-items: center;
-    gap: 8px;
-    padding: 10px 8px;
-    text-align: center;
-  }
-
-  .specialty-card .soft-icon {
-    width: 34px;
-    height: 34px;
-    font-size: 21px;
-  }
-
-  .specialty-card h3 {
-    font-size: 11px;
-  }
-
-  .specialty-card p {
-    display: none;
-  }
-
-  .slider-next {
-    display: none;
-  }
-
-  .doctors-section {
-    padding-top: 27px;
+    min-height: 90px;
+    padding: 14px 12px;
   }
 
   .doctor-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
   }
 
   .doctor-card {
-    min-height: 121px;
-    grid-template-columns: 70px 1fr;
-    gap: 13px;
-    padding: 9px;
-    border-radius: 7px;
+    min-height: auto;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    padding: 14px;
+    border-radius: 14px;
   }
 
   .doctor-card img {
-    width: 70px;
-    height: 102px;
-    border-radius: 6px;
+    width: 80px;
+    height: 104px;
+    border-radius: 12px;
+    object-fit: cover;
   }
 
   .doctor-card h3 {
-    margin-top: 7px;
-    font-size: 13px;
+    margin-top: 0;
+    font-size: 15px;
   }
 
   .doctor-card p {
-    margin-top: 5px;
-    font-size: 11px;
-  }
-
-  .doctor-meta,
-  .doctor-bottom {
-    margin-top: 12px;
-    font-size: 10px;
-  }
-
-  .doctor-bottom {
-    margin-top: 8px;
+    margin-top: 6px;
+    font-size: 12px;
   }
 
   .doctor-card button {
-    width: 95px;
-    justify-self: end;
-    height: 30px;
-    margin-top: -3px;
-    font-size: 11px;
-  }
-
-  .feature-strip {
-    display: none;
+    width: auto;
+    justify-self: start;
+    padding: 10px 14px;
+    font-size: 12px;
   }
 
   .site-footer {
@@ -1544,80 +1495,72 @@ svg {
     height: 67px;
   }
 
-  .stats-card {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 18px;
-  }
-
-  .trust-row {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
   .hero-section {
-    min-height: 386px;
+    min-height: auto;
+    padding: 26px 0 18px;
   }
 
   .hero-grid {
-    min-height: 386px;
+    display: block;
+    gap: 18px;
   }
 
   .hero-copy h1 {
-    max-width: 300px;
-    font-size: 21px;
+    max-width: 100%;
+    font-size: 26px;
   }
 
   .hero-copy > p {
-    max-width: 210px;
-    font-size: 11px;
-  }
-
-  .hero-visual {
-    right: 22px;
-    top: 72px;
-  }
-
-  .hero-visual img {
-    height: 225px;
+    max-width: 100%;
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   .trust-row {
-    width: auto;
-    display: flex;
-    justify-content: flex-start;
-    font-size: 8px;
-    gap: 12px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    font-size: 12px;
   }
 
   .trust-row span {
-    flex: 0 0 auto;
-    gap: 4px;
-  }
-
-  .trust-row svg {
-    font-size: 13px;
+    display: inline-flex;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
   }
 
   .search-panel {
     margin-top: 18px;
+    gap: 12px;
+  }
+
+  .search-panel input,
+  .search-panel select,
+  .search-panel button {
+    height: 48px;
+    font-size: 14px;
   }
 
   .stats-card {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 18px;
   }
 
   .stat-item {
-    flex: 0 0 64px;
+    width: 100%;
+    padding: 14px 12px;
   }
 
   .specialty-grid {
-    gap: 8px;
+    gap: 10px;
   }
 
   .site-footer {
     padding-inline: 14px;
+    padding-bottom: 28px;
   }
 }

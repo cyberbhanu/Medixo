@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "../styles/modal.css";
 
-const ManageAppointmentModal = ({ appointment, labs, onClose, onSaveAppointment, onReferPatient }) => {
+const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppointment, onReferPatient, showReferTab = true }) => {
   const [activeTab, setActiveTab] = useState("notes"); // 'notes' or 'refer'
 
   const [appointmentDraft, setAppointmentDraft] = useState({
@@ -57,7 +57,9 @@ const ManageAppointmentModal = ({ appointment, labs, onClose, onSaveAppointment,
 
         <div className="modal-tabs">
           <button className={`modal-tab-btn ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')}>Care Notes</button>
-          <button className={`modal-tab-btn ${activeTab === 'refer' ? 'active' : ''}`} onClick={() => setActiveTab('refer')}>Refer to Lab</button>
+          {showReferTab && (
+            <button className={`modal-tab-btn ${activeTab === 'refer' ? 'active' : ''}`} onClick={() => setActiveTab('refer')}>Refer to Lab</button>
+          )}
         </div>
 
         {activeTab === 'notes' && (
@@ -126,7 +128,7 @@ const ManageAppointmentModal = ({ appointment, labs, onClose, onSaveAppointment,
           </form>
         )}
 
-        {activeTab === 'refer' && (
+        {showReferTab && activeTab === 'refer' && (
           <form onSubmit={handleReferral} className="modal-form">
             <div className="modal-form-group">
               <label className="modal-label">Select Lab Facility</label>
