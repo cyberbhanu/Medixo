@@ -64,7 +64,7 @@ export default function Navbar() {
   return (
     <header className="site-header">
       <nav className="main-nav shell" aria-label="Primary navigation">
-        <Link to={homePath} aria-label="Medixo home">
+        <Link to="/" aria-label="Medixo homepage">
           <Logo />
         </Link>
 
