@@ -781,6 +781,10 @@
     padding-top: 20px;
   }
 
+  .dashboard-hero-inner {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-hero h1 {
     font-size: 28px;
   }
@@ -805,6 +809,7 @@
 
   .dashboard-content-grid {
     margin-top: 18px;
+    grid-template-columns: 1fr;
   }
 
   .dashboard-panel-header {
@@ -815,6 +820,14 @@
   .dashboard-appointment-card,
   .dashboard-table-row {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-appointment-card {
+    gap: 12px;
+  }
+
+  .dashboard-table-row {
+    gap: 12px;
   }
 
   .dashboard-quick-actions button {
@@ -837,4 +850,74 @@
   .dashboard-upload-row {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-card-list,
+  .dashboard-mini-list,
+  .dashboard-performance-grid,
+  .dashboard-checklist,
+  .dashboard-table,
+  .dashboard-admin-list {
+    gap: 14px;
+  }
+
+  .dashboard-panel {
+    border-radius: 14px;
+  }
 }
+
+@media (max-width: 580px) {
+  .dashboard-hero {
+    padding: 14px 0 10px;
+  }
+
+  .dashboard-hero-inner {
+    gap: 18px;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 24px;
+  }
+
+  .dashboard-hero p {
+    font-size: 13px;
+  }
+
+  .dashboard-panel-header {
+    gap: 10px;
+  }
+
+  .dashboard-panel-header h2 {
+    font-size: 20px;
+  }
+
+  .dashboard-appointment-card,
+  .dashboard-table-row {
+    padding: 14px;
+  }
+
+  .dashboard-appointment-actions,
+  .dashboard-reschedule-form {
+    min-width: 0;
+  }
+
+  .dashboard-record-header,
+  .dashboard-patient-row-header,
+  .dashboard-action-row,
+  .dashboard-record-grid,
+  .dashboard-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-record-avatar,
+  .dashboard-mini-dot,
+  .dashboard-icon-bubble {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dashboard-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

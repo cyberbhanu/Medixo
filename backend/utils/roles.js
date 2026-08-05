@@ -3,6 +3,7 @@ const ROLES = Object.freeze({
   DOCTOR: "doctor",
   PATIENT: "patient",
   LABORATORY: "laboratory",
+  STAFF: "staff",
 });
 
 const ROLE_ALIASES = Object.freeze({
@@ -13,6 +14,8 @@ const ROLE_ALIASES = Object.freeze({
   laboratory: ROLES.LABORATORY,
   doctor: ROLES.DOCTOR,
   patient: ROLES.PATIENT,
+  staff: ROLES.STAFF,
+  receptionist: ROLES.STAFF,
 });
 
 const normalizeRole = (role) => ROLE_ALIASES[String(role || "").trim().toLowerCase()] || "";

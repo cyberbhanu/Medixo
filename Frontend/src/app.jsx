@@ -6,6 +6,7 @@ import { getDashboardPath, getStoredUser, normalizeRole } from "./utils/auth";
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./components/Login"));
 const DoctorLogin = lazy(() => import("./components/DoctorLogin"));
+const StaffLogin = lazy(() => import("./components/StaffLogin"));
 const Signup = lazy(() => import("./components/Signup"));
 const DoctorsDirectory = lazy(() => import("./pages/DoctorsDirectory"));
 const DoctorProfilePage = lazy(() => import("./pages/DoctorProfilePage"));
@@ -13,6 +14,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const DoctorDashboard = lazy(() => import("./pages/DoctorDashboard"));
 const PatientDashboard = lazy(() => import("./pages/PatientDashboard"));
 const LaboratoryDashboard = lazy(() => import("./pages/LaboratoryDashboard"));
+const StaffDashboard = lazy(() => import("./pages/StaffDashboard"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 
 function LoadingFallback() {
@@ -54,6 +56,10 @@ function RoleAwareHome() {
     return <Navigate to="/laboratory-dashboard" replace />;
   }
 
+  if (role === "staff") {
+    return <Navigate to="/staff-dashboard" replace />;
+  }
+
   return <Home />;
 }
 
@@ -84,6 +90,7 @@ function App() {
           <Route path="/" element={<RoleAwareHome />} />
           <Route path="/login" element={<Login />} />
           <Route path="/doctor-login" element={<DoctorLogin />} />
+          <Route path="/staff-login" element={<StaffLogin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/doctors" element={<DoctorsDirectory />} />
           <Route path="/doctors/:doctorId" element={<DoctorProfilePage />} />
@@ -118,6 +125,14 @@ function App() {
             element={
               <ProtectedDashboard allowedRole="laboratory">
                 <LaboratoryDashboard />
+              </ProtectedDashboard>
+            }
+          />
+          <Route
+            path="/staff-dashboard"
+            element={
+              <ProtectedDashboard allowedRole="staff">
+                <StaffDashboard />
               </ProtectedDashboard>
             }
           />

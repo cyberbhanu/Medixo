@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
 import { createAppointment, getAppointments, getDoctors, getLabs, updateAppointment } from "../api";
 import DashboardLayout, {
   DashboardIcon,
@@ -30,6 +31,115 @@ const isFutureAppointment = (date, time) => {
   }
 
   return new Date(`${date}T${time}:00`).getTime() > Date.now();
+};
+
+const generatePdfText = (doc, label, value, x, y, maxWidth = 500) => {
+  if (!value) {
+    return y;
+  }
+
+  const text = `${label}: ${value}`;
+  const lines = doc.splitTextToSize(text, maxWidth);
+  doc.text(lines, x, y);
+  return y + lines.length * 14;
+};
+
+const getAppointmentRecordTitle = (appointment) =>
+  appointment.type === "lab"
+    ? appointment.testName || appointment.labId?.name || "Laboratory Record"
+    : appointment.doctorId?.name
+    ? `Doctor Visit with ${appointment.doctorId.name}`
+    : "Doctor Visit";
+
+const generateAppointmentPdf = (appointment, patient) => {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const margin = 40;
+  let y = 48;
+
+  doc.setFontSize(18);
+  doc.text("Medixo Treatment Record", margin, y);
+
+  doc.setFontSize(11);
+  y += 24;
+  y = generatePdfText(doc, "Patient", patient.name || "Patient", margin, y);
+  y = generatePdfText(doc, "Email", patient.email || "", margin, y);
+  y = generatePdfText(doc, "Record generated", new Date().toLocaleString(), margin, y);
+
+  y += 18;
+  doc.setFontSize(14);
+  doc.text(getAppointmentRecordTitle(appointment), margin, y);
+
+  y += 20;
+  doc.setFontSize(11);
+  y = generatePdfText(doc, "Status", appointment.status || "", margin, y);
+  y = generatePdfText(doc, "Visit type", appointment.type === "lab" ? "Lab Test" : "Doctor Consultation", margin, y);
+  y = generatePdfText(doc, "Date", appointment.appointmentDate || "", margin, y);
+  y = generatePdfText(doc, "Time", appointment.appointmentTime || "", margin, y);
+  y = generatePdfText(doc, "Doctor / Lab", appointment.type === "lab" ? appointment.labId?.name || "" : appointment.doctorId?.name || "", margin, y);
+  y = generatePdfText(doc, "Specialization / Test", appointment.type === "lab" ? appointment.testName || "" : appointment.doctorId?.specialization || "", margin, y);
+  y = generatePdfText(doc, "Reason", appointment.reason || "", margin, y, 500);
+  y = generatePdfText(doc, "Treatment Plan", appointment.treatmentPlan || "Not available", margin, y, 500);
+  y = generatePdfText(doc, "Prescription", appointment.prescription || "Not available", margin, y, 500);
+  y = generatePdfText(doc, "Notes", appointment.notes || "No additional notes", margin, y, 500);
+
+  if (appointment.reportUrl) {
+    y += 10;
+    doc.setTextColor("blue");
+    doc.textWithLink("View report online", margin, y, { url: appointment.reportUrl });
+    doc.setTextColor("black");
+  }
+
+  doc.save(`medixo-treatment-record-${appointment._id || Date.now()}.pdf`);
+};
+
+const generateHistoryPdf = (appointments, patient) => {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const margin = 40;
+  let y = 48;
+
+  doc.setFontSize(18);
+  doc.text("Medixo Treatment History", margin, y);
+  doc.setFontSize(11);
+  y += 24;
+  y = generatePdfText(doc, "Patient", patient.name || "Patient", margin, y);
+  y = generatePdfText(doc, "Email", patient.email || "", margin, y);
+  y = generatePdfText(doc, "Report generated", new Date().toLocaleString(), margin, y);
+
+  appointments.forEach((appointment, index) => {
+    if (y > 720) {
+      doc.addPage();
+      y = margin;
+    }
+
+    y += 24;
+    doc.setFontSize(14);
+    doc.text(`${index + 1}. ${getAppointmentRecordTitle(appointment)}`, margin, y);
+    y += 20;
+    doc.setFontSize(11);
+    y = generatePdfText(doc, "Status", appointment.status || "", margin, y);
+    y = generatePdfText(doc, "Date", appointment.appointmentDate || "", margin, y);
+    y = generatePdfText(doc, "Time", appointment.appointmentTime || "", margin, y);
+    y = generatePdfText(doc, "Doctor / Lab", appointment.type === "lab" ? appointment.labId?.name || "" : appointment.doctorId?.name || "", margin, y);
+    y = generatePdfText(doc, "Reason", appointment.reason || "", margin, y, 500);
+    y = generatePdfText(doc, "Treatment Plan", appointment.treatmentPlan || "Not available", margin, y, 500);
+    y = generatePdfText(doc, "Prescription", appointment.prescription || "Not available", margin, y, 500);
+    y = generatePdfText(doc, "Notes", appointment.notes || "No additional notes", margin, y, 500);
+
+    if (appointment.reportUrl) {
+      y += 10;
+      doc.setTextColor("blue");
+      doc.textWithLink("View report online", margin, y, { url: appointment.reportUrl });
+      doc.setTextColor("black");
+    }
+
+    y += 8;
+    if (y > 720 && index < appointments.length - 1) {
+      doc.addPage();
+      y = margin;
+    }
+  });
+
+  doc.save(`medixo-treatment-history-${patient.email || "patient"}.pdf`);
 };
 
 const validateAppointmentForm = (form) => {
@@ -293,10 +403,12 @@ export default function PatientDashboard() {
   const upcomingAppointments = appointments.filter(
     (appointment) => UPCOMING_STATUSES.includes(appointment.status)
   );
+  const treatmentHistory = useMemo(
+    () => appointments.filter((appointment) => appointment.status === "Completed"),
+    [appointments]
+  );
   const nextAppointment = upcomingAppointments[0];
-  const completedAppointments = appointments.filter(
-    (appointment) => appointment.status === "Completed"
-  ).length;
+  const completedAppointments = treatmentHistory.length;
   const stats = [
     {
       icon: "calendar",
@@ -673,6 +785,62 @@ export default function PatientDashboard() {
           ) : (
             <p className="dashboard-empty-state">
               No appointments found for {user?.email}. When an appointment is booked with this email, it will appear here automatically.
+            </p>
+          )}
+        </div>
+      </DashboardSection>
+
+      <DashboardSection
+        title="Treatment History"
+        action={treatmentHistory.length ? "Download PDF" : undefined}
+        onActionClick={() => generateHistoryPdf(treatmentHistory, user)}
+      >
+        <div className="dashboard-card-list">
+          {loading ? (
+            <p className="dashboard-empty-state">Loading history...</p>
+          ) : treatmentHistory.length ? (
+            treatmentHistory.map((item) => (
+              <article key={item._id} className="dashboard-appointment-card">
+                <div>
+                  <span className="dashboard-inline-badge">{item.status}</span>
+                  <h3>{item.type === "lab" ? item.testName || item.labId?.name : item.doctorId?.name || "Follow-up"}</h3>
+                  <p>{item.type === "lab" ? "Lab Test" : item.doctorId?.specialization || "Doctor Consultation"}</p>
+                </div>
+                <div className="dashboard-detail-stack">
+                  <span>
+                    <DashboardIcon name="calendar" /> {item.appointmentDate}
+                  </span>
+                  <span>
+                    <DashboardIcon name="clock" /> {item.appointmentTime}
+                  </span>
+                  <span>
+                    <DashboardIcon name="message" /> {item.patientPhone}
+                  </span>
+                </div>
+                <div className="dashboard-action-row">
+                  <button
+                    type="button"
+                    className="dashboard-secondary-action"
+                    onClick={() => generateAppointmentPdf(item, user)}
+                  >
+                    Download Record
+                  </button>
+                  {item.reportUrl ? (
+                    <a
+                      href={item.reportUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="dashboard-secondary-action"
+                    >
+                      View Report
+                    </a>
+                  ) : null}
+                </div>
+              </article>
+            ))
+          ) : (
+            <p className="dashboard-empty-state">
+              No completed treatments have been recorded yet. Once your appointment is marked completed, you can download the record here.
             </p>
           )}
         </div>

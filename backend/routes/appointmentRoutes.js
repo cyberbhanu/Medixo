@@ -285,6 +285,8 @@ router.get("/", async (_req, res) => {
 
       filters.type = "lab";
       filters.labId = labProfile._id;
+    } else if (hasRole(_req.user, ROLES.STAFF)) {
+      // Staff can view all appointments and assist with scheduling.
     } else {
       filters.$or = [
         { patientId: _req.user.id },
@@ -437,6 +439,31 @@ router.put("/:id", async (req, res) => {
 
       if (!hasOnlyLabFields) {
         return res.status(403).json({ error: "Laboratories can only update test status, reports, and notes" });
+      }
+    } else if (hasRole(req.user, ROLES.STAFF)) {
+      const requestedFields = Object.keys(req.body).filter((field) =>
+        EDITABLE_FIELDS.includes(field)
+      );
+      const staffEditableFields = [
+        "patientName",
+        "patientEmail",
+        "patientPhone",
+        "patientAge",
+        "patientGender",
+        "appointmentDate",
+        "appointmentTime",
+        "status",
+        "reason",
+        "disease",
+        "treatmentPlan",
+        "notes",
+      ];
+      const hasOnlyStaffFields = requestedFields.every((field) =>
+        staffEditableFields.includes(field)
+      );
+
+      if (!hasOnlyStaffFields) {
+        return res.status(403).json({ error: "Staff can only manage appointment details, status, and notes" });
       }
     } else if (hasRole(req.user, ROLES.PATIENT)) {
       const isOwnAppointment =

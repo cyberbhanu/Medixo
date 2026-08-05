@@ -39,7 +39,11 @@ function Logo() {
   return (
     <span className="brand">
       <img src={siteLogo} alt="Medixo logo" className="brand-logo" />
-      <span>Medi<span>xo</span></span>
+      <span>
+        Medi
+        <span className="brand-x">x</span>
+        <span className="brand-o">o</span>
+      </span>
     </span>
   );
 }
@@ -48,16 +52,33 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(() => getStoredUser());
-  const homePath = user ? getDashboardPath(user.role) : "/";
+  const [showAuthMenu, setShowAuthMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const role = normalizeRole(user?.role);
 
   useEffect(() => {
     setUser(getStoredUser());
   }, [location.pathname]);
 
+  const toggleAuthMenu = () => setShowAuthMenu((active) => !active);
+  const closeAuthMenu = (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setShowAuthMenu(false);
+    }
+  };
+
+  const toggleMobileMenu = () => setShowMobileMenu((active) => !active);
+  const closeMobileMenu = () => setShowMobileMenu(false);
+  const handleOverlayClick = (event) => {
+    if (event.target === event.currentTarget) {
+      closeMobileMenu();
+    }
+  };
+
   const handleLogout = () => {
     clearStoredAuth();
     setUser(null);
+    setShowMobileMenu(false);
     navigate("/");
   };
 
@@ -88,6 +109,12 @@ export default function Navbar() {
               <Link to="/laboratory-dashboard">Test Bookings</Link>
               <Link to="/laboratory-dashboard">Reports</Link>
             </>
+          ) : role === "staff" ? (
+            <>
+              <Link to="/staff-dashboard">Home</Link>
+              <Link to="/staff-dashboard">Appointments</Link>
+              <Link to="/staff-dashboard">Patients</Link>
+            </>
           ) : (
             <>
               <Link to="/">Home</Link>
@@ -110,17 +137,119 @@ export default function Navbar() {
               <button type="button" className="primary-button" onClick={handleLogout}>Logout</button>
             </>
           ) : (
-            <>
-              <Link to="/login" className="ghost-button">Patient Login</Link>
-              <Link to="/doctor-login" className="ghost-button">Doctor Login</Link>
-              <Link to="/signup" className="primary-button">Sign Up</Link>
-            </>
+            <div className="auth-dropdown" tabIndex={0} onBlur={closeAuthMenu}>
+              <button
+                type="button"
+                className="ghost-button auth-dropdown-toggle"
+                onClick={toggleAuthMenu}
+                aria-expanded={showAuthMenu}
+                aria-haspopup="menu"
+              >
+                Login / Sign Up
+              </button>
+
+              {showAuthMenu && (
+                <div className="auth-dropdown-panel" role="menu">
+                  <Link to="/login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
+                    Patient Login
+                  </Link>
+                  <Link to="/doctor-login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
+                    Doctor Login
+                  </Link>
+                  <Link to="/staff-login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
+                    Staff Login
+                  </Link>
+                  <Link to="/signup" className="primary-button auth-dropdown-item auth-dropdown-action" role="menuitem" onClick={() => setShowAuthMenu(false)}>
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        <button className="mobile-menu" aria-label="Open menu">
+        <button className="mobile-menu" aria-label="Open menu" aria-expanded={showMobileMenu} onClick={toggleMobileMenu}>
           <Icon name="menu" />
         </button>
+
+        {showMobileMenu && (
+          <div className="mobile-menu-panel open" role="dialog" aria-modal="true" aria-label="Mobile menu" onClick={handleOverlayClick}>
+            <div className="mobile-menu-inner">
+              <div className="mobile-menu-header">
+                <span className="mobile-menu-title">Menu</span>
+                <button type="button" className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Close menu">
+                  ×
+                </button>
+              </div>
+
+              <div className="mobile-menu-links">
+                {role === "doctor" ? (
+                  <>
+                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>Home</Link>
+                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>My Appointments</Link>
+                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>Clinic Details</Link>
+                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>Availability</Link>
+                  </>
+                ) : role === "super_admin" ? (
+                  <>
+                    <Link to="/admin-dashboard" onClick={closeMobileMenu}>Home</Link>
+                    <Link to="/admin-dashboard" onClick={closeMobileMenu}>Doctors</Link>
+                    <Link to="/admin-dashboard" onClick={closeMobileMenu}>Appointments</Link>
+                  </>
+                ) : role === "laboratory" ? (
+                  <>
+                    <Link to="/laboratory-dashboard" onClick={closeMobileMenu}>Home</Link>
+                    <Link to="/laboratory-dashboard" onClick={closeMobileMenu}>Test Bookings</Link>
+                    <Link to="/laboratory-dashboard" onClick={closeMobileMenu}>Reports</Link>
+                  </>
+                ) : role === "staff" ? (
+                  <>
+                    <Link to="/staff-dashboard" onClick={closeMobileMenu}>Home</Link>
+                    <Link to="/staff-dashboard" onClick={closeMobileMenu}>Appointments</Link>
+                    <Link to="/staff-dashboard" onClick={closeMobileMenu}>Patients</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/" onClick={closeMobileMenu}>Home</Link>
+                    <Link to="/doctors" onClick={closeMobileMenu}>Doctors</Link>
+                    <Link to="/#specializations" onClick={closeMobileMenu}>Specializations</Link>
+                    <Link to="/#hospitals" onClick={closeMobileMenu}>Hospitals</Link>
+                    <Link to="/#lab-tests" onClick={closeMobileMenu}>Lab Tests</Link>
+                    <Link to="/#health-packages" onClick={closeMobileMenu}>Health Packages</Link>
+                  </>
+                )}
+              </div>
+
+              <div className="mobile-menu-actions">
+                {user ? (
+                  <>
+                    <Link to={getDashboardPath(user.role)} className="mobile-menu-link" onClick={closeMobileMenu}>
+                      Dashboard
+                    </Link>
+                    <button type="button" className="mobile-menu-action mobile-menu-logout" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                      Patient Login
+                    </Link>
+                    <Link to="/doctor-login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                      Doctor Login
+                    </Link>
+                    <Link to="/staff-login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                      Staff Login
+                    </Link>
+                    <Link to="/signup" className="mobile-menu-action" onClick={closeMobileMenu}>
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
     </header>
   );

@@ -17,6 +17,7 @@ const iconPaths = {
   stetho: <path d="M4 3v3.2a3 3 0 1 0 6 0V3M3 3h2m4 0h2m-1 6.5c0 2 1.2 3 3 3a1.5 1.5 0 1 0 0-3" />,
   bell: <path d="M8 14a1.7 1.7 0 0 0 1.6-1H6.4A1.7 1.7 0 0 0 8 14Zm4-2H4l1-1.4V7.4a3 3 0 1 1 6 0v3.2L12 12Z" />,
   lightning: <path d="M8.7 1.8 4.8 8h2.4L6.6 14.2 11.3 7H8.8l-.1-5.2Z" />,
+  refresh: <path d="M4.75 3.75A4.75 4.75 0 0 1 10.35 1.5l.82.82M10.25 1.5 12 3.25m-5.5 10.5a4.75 4.75 0 0 1-4.1-2.65l-.84.84M5.75 14.5 4 13" />,
 };
 
 export function DashboardIcon({ name }) {

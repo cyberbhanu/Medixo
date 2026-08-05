@@ -93,6 +93,7 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .doctor-badge-row {
@@ -417,6 +418,94 @@
 .home-skeleton-card p {
   width: 100%;
   height: 14px;
+    line-clamp: auto;
+  .hero-grid {
+    display: grid;
+    gap: 24px;
+  }
+
+  .hero-copy {
+    padding-top: 8px;
+  }
+
+  .search-panel {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .search-panel input,
+  .search-panel select,
+  .search-panel button {
+    width: 100%;
+  }
+
+  .popular-searches {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .home-search-modal {
+    width: min(100%, 90vw);
+    max-height: min(100vh, 85vh);
+  }
+
+  .home-search-modal-header {
+    padding: 18px 20px 14px;
+  }
+
+  .home-search-results {
+    padding: 16px;
+  }
+
+  .home-search-result-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .home-search-result-card img,
+  .home-search-avatar {
+    width: 100%;
+    height: 180px;
+    border-radius: 12px;
+  }
+
+  .resource-grid {
+    gap: 14px;
+  }
+
+  .resource-card {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-media {
+    width: 100%;
+    min-height: 160px;
+  }
+
+  .resource-body h3 {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 520px) {
+  .search-panel {
+    gap: 10px;
+  }
+
+  .doctor-card-description {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+
+  .home-card-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .trust-row,
+  .trust-row span {
+    gap: 10px;
+  }
 }
 
 @keyframes homeSkeleton {

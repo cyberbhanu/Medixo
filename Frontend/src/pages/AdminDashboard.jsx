@@ -401,6 +401,7 @@ export default function AdminDashboard() {
                 >
                   <option value="doctor">Doctor</option>
                   <option value="laboratory">Lab</option>
+                  <option value="staff">Staff</option>
                 </select>
               </label>
 
@@ -466,7 +467,7 @@ export default function AdminDashboard() {
                   ? "Saving..."
                   : editingDoctorId
                     ? "Update Profile"
-                    : `Add ${doctorForm.role === "doctor" ? "Doctor" : "Lab"}`}
+                    : `Add ${doctorForm.role === "doctor" ? "Doctor" : doctorForm.role === "laboratory" ? "Lab" : "Staff"}`}
               </button>
               <button type="button" className="dashboard-secondary-action" onClick={resetDoctorForm}>
                 Clear Form

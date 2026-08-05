@@ -340,6 +340,10 @@
     padding: 20px;
   }
 
+  .auth-wrapper {
+    gap: 16px;
+  }
+
   .auth-header {
     padding: 24px 16px 16px;
   }
@@ -374,5 +378,9 @@
   .auth-button {
     padding: 10px 16px;
     font-size: 13px;
+  }
+
+  .auth-card {
+    width: 100%;
   }
 }
