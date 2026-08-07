@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { clearStoredAuth, getDashboardPath, getStoredUser, normalizeRole } from "../utils/auth";
 import siteLogo from "../assets/medixo logo .jpeg";
 
@@ -60,6 +61,23 @@ export default function Navbar() {
   useEffect(() => {
     setUser(getStoredUser());
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    if (!showMobileMenu) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showMobileMenu]);
 
   const toggleAuthMenu = () => setShowAuthMenu((active) => !active);
   const closeAuthMenu = (event) => {
@@ -182,7 +200,7 @@ export default function Navbar() {
           <Icon name="menu" />
         </button>
 
-        {showMobileMenu && (
+        {showMobileMenu && createPortal(
           <div className="mobile-menu-panel open" role="dialog" aria-modal="true" aria-label="Mobile menu" onClick={handleOverlayClick}>
             <div className="mobile-menu-inner">
               <div className="mobile-menu-header">
@@ -271,7 +289,8 @@ export default function Navbar() {
                 )}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </nav>
     </header>
