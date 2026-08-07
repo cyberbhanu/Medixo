@@ -74,6 +74,11 @@ export default function Navbar() {
     setShowMobileMenu(false);
     setShowMobileAuthMenu(false);
   };
+  const handleMobileNav = (path) => (event) => {
+    event?.preventDefault();
+    closeMobileMenu();
+    navigate(path);
+  };
   const handleOverlayClick = (event) => {
     if (event.target === event.currentTarget) {
       closeMobileMenu();
@@ -190,37 +195,37 @@ export default function Navbar() {
               <div className="mobile-menu-links">
                 {role === "doctor" ? (
                   <>
-                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>Home</Link>
-                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>My Appointments</Link>
-                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>Clinic Details</Link>
-                    <Link to="/doctor-dashboard" onClick={closeMobileMenu}>Availability</Link>
+                    <Link to="/doctor-dashboard" onClick={handleMobileNav("/doctor-dashboard")}>Home</Link>
+                    <Link to="/doctor-dashboard" onClick={handleMobileNav("/doctor-dashboard")}>My Appointments</Link>
+                    <Link to="/doctor-dashboard" onClick={handleMobileNav("/doctor-dashboard")}>Clinic Details</Link>
+                    <Link to="/doctor-dashboard" onClick={handleMobileNav("/doctor-dashboard")}>Availability</Link>
                   </>
                 ) : role === "super_admin" ? (
                   <>
-                    <Link to="/admin-dashboard" onClick={closeMobileMenu}>Home</Link>
-                    <Link to="/admin-dashboard" onClick={closeMobileMenu}>Doctors</Link>
-                    <Link to="/admin-dashboard" onClick={closeMobileMenu}>Appointments</Link>
+                    <Link to="/admin-dashboard" onClick={handleMobileNav("/admin-dashboard")}>Home</Link>
+                    <Link to="/admin-dashboard" onClick={handleMobileNav("/admin-dashboard")}>Doctors</Link>
+                    <Link to="/admin-dashboard" onClick={handleMobileNav("/admin-dashboard")}>Appointments</Link>
                   </>
                 ) : role === "laboratory" ? (
                   <>
-                    <Link to="/laboratory-dashboard" onClick={closeMobileMenu}>Home</Link>
-                    <Link to="/laboratory-dashboard" onClick={closeMobileMenu}>Test Bookings</Link>
-                    <Link to="/laboratory-dashboard" onClick={closeMobileMenu}>Reports</Link>
+                    <Link to="/laboratory-dashboard" onClick={handleMobileNav("/laboratory-dashboard")}>Home</Link>
+                    <Link to="/laboratory-dashboard" onClick={handleMobileNav("/laboratory-dashboard")}>Test Bookings</Link>
+                    <Link to="/laboratory-dashboard" onClick={handleMobileNav("/laboratory-dashboard")}>Reports</Link>
                   </>
                 ) : role === "staff" ? (
                   <>
-                    <Link to="/staff-dashboard" onClick={closeMobileMenu}>Home</Link>
-                    <Link to="/staff-dashboard" onClick={closeMobileMenu}>Appointments</Link>
-                    <Link to="/staff-dashboard" onClick={closeMobileMenu}>Patients</Link>
+                    <Link to="/staff-dashboard" onClick={handleMobileNav("/staff-dashboard")}>Home</Link>
+                    <Link to="/staff-dashboard" onClick={handleMobileNav("/staff-dashboard")}>Appointments</Link>
+                    <Link to="/staff-dashboard" onClick={handleMobileNav("/staff-dashboard")}>Patients</Link>
                   </>
                 ) : (
                   <>
-                    <Link to="/" onClick={closeMobileMenu}>Home</Link>
-                    <Link to="/doctors" onClick={closeMobileMenu}>Doctors</Link>
-                    <Link to="/#specializations" onClick={closeMobileMenu}>Specializations</Link>
-                    <Link to="/#hospitals" onClick={closeMobileMenu}>Hospitals</Link>
-                    <Link to="/#lab-tests" onClick={closeMobileMenu}>Lab Tests</Link>
-                    <Link to="/#health-packages" onClick={closeMobileMenu}>Health Packages</Link>
+                    <Link to="/" onClick={handleMobileNav("/")}>Home</Link>
+                    <Link to="/doctors" onClick={handleMobileNav("/doctors")}>Doctors</Link>
+                    <Link to="/#specializations" onClick={handleMobileNav("/#specializations")}>Specializations</Link>
+                    <Link to="/#hospitals" onClick={handleMobileNav("/#hospitals")}>Hospitals</Link>
+                    <Link to="/#lab-tests" onClick={handleMobileNav("/#lab-tests")}>Lab Tests</Link>
+                    <Link to="/#health-packages" onClick={handleMobileNav("/#health-packages")}>Health Packages</Link>
                   </>
                 )}
               </div>
@@ -228,7 +233,7 @@ export default function Navbar() {
               <div className="mobile-menu-section">
                 {user ? (
                   <>
-                    <Link to={getDashboardPath(user.role)} className="mobile-menu-link" onClick={closeMobileMenu}>
+                    <Link to={getDashboardPath(user.role)} className="mobile-menu-link" onClick={handleMobileNav(getDashboardPath(user.role))}>
                       Dashboard
                     </Link>
                     <button type="button" className="mobile-menu-action mobile-menu-logout" onClick={handleLogout}>
@@ -248,16 +253,16 @@ export default function Navbar() {
 
                     {showMobileAuthMenu && (
                       <div className="mobile-menu-auth-panel">
-                        <Link to="/login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                        <Link to="/login" className="mobile-menu-link" onClick={handleMobileNav("/login")}>
                           Patient Login
                         </Link>
-                        <Link to="/doctor-login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                        <Link to="/doctor-login" className="mobile-menu-link" onClick={handleMobileNav("/doctor-login")}>
                           Doctor Login
                         </Link>
-                        <Link to="/staff-login" className="mobile-menu-link" onClick={closeMobileMenu}>
+                        <Link to="/staff-login" className="mobile-menu-link" onClick={handleMobileNav("/staff-login")}>
                           Staff Login
                         </Link>
-                        <Link to="/signup" className="mobile-menu-action" onClick={closeMobileMenu}>
+                        <Link to="/signup" className="mobile-menu-action" onClick={handleMobileNav("/signup")}>
                           Sign Up
                         </Link>
                       </div>
