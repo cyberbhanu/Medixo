@@ -201,8 +201,44 @@ export default function Navbar() {
         </button>
 
         {showMobileMenu && createPortal(
-          <div className="mobile-menu-panel open" role="dialog" aria-modal="true" aria-label="Mobile menu" onClick={handleOverlayClick}>
-            <div className="mobile-menu-inner">
+          <div
+            className="mobile-menu-panel open"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile menu"
+            onClick={handleOverlayClick}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 40,
+              width: "100vw",
+            }}
+          >
+            <div
+              className="mobile-menu-inner"
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                height: "100%",
+              }}
+            >
+              <style>{`
+                .mobile-menu-inner {
+                  width: min(320px, 85vw); /* Set a max-width for the menu */
+                }
+                .mobile-menu-links {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 4px; /* Reduce the space between links */
+                  padding: 12px;
+                }
+                .mobile-menu-links > a {
+                  padding: 12px 16px; /* Adjust padding for each link */
+                  font-size: 16px;
+                  border-radius: 8px;
+                }
+              `}</style>
               <div className="mobile-menu-header">
                 <span className="mobile-menu-title">Menu</span>
                 <button type="button" className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Close menu">

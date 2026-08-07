@@ -2,10 +2,6 @@
   background: #f7f9fc;
 }
 
-.hero-section {
-  isolation: isolate;
-}
-
 .hero-copy {
   max-width: 760px;
 }
