@@ -536,3 +536,181 @@
     margin: 16px;
   }
 }
+
+/* Responsive production polish */
+.doctors-directory-container {
+  overflow-x: hidden;
+}
+
+.doctors-directory-content {
+  width: min(calc(100% - 40px), 1400px);
+  padding-inline: 0;
+}
+
+.doctors-directory-filters,
+.doctor-profile-card {
+  border-radius: 16px;
+}
+
+.doctors-directory-search-input,
+.doctors-directory-range-filters select,
+.doctors-directory-clear-btn,
+.doctor-profile-btn {
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.doctors-directory-specialty-btn {
+  min-height: 42px;
+}
+
+.doctors-directory-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.doctor-profile-card {
+  min-width: 0;
+}
+
+.doctor-profile-avatar {
+  border-radius: 14px;
+}
+
+.doctor-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.doctors-directory-muted {
+  color: #667085;
+}
+
+.skeleton {
+  animation: directorySkeleton 1.4s ease-in-out infinite;
+  background: linear-gradient(90deg, #eaf3ff 25%, #f7fbff 37%, #eaf3ff 63%);
+  background-size: 400% 100%;
+  border-radius: 10px;
+}
+
+.skeleton-avatar {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 14px;
+}
+
+.skeleton-line {
+  height: 14px;
+  margin-bottom: 10px;
+}
+
+.skeleton-line.full {
+  width: 100%;
+}
+
+.skeleton-line.wide {
+  width: 72%;
+}
+
+.skeleton-line.medium {
+  width: 52%;
+}
+
+.skeleton-line.short {
+  width: 40%;
+}
+
+.skeleton-block {
+  width: 90%;
+  height: 40px;
+}
+
+.doctor-profile-skeleton-footer {
+  padding: 20px 24px;
+  margin-top: auto;
+}
+
+.skeleton-button {
+  width: 100%;
+  height: 48px;
+}
+
+@keyframes directorySkeleton {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@media (min-width: 1441px) {
+  .doctors-directory-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .doctors-directory-content {
+    width: min(calc(100% - 36px), 920px);
+  }
+
+  .doctors-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .doctors-directory-container {
+    padding-bottom: 96px;
+  }
+
+  .doctors-directory-hero {
+    padding: 36px 18px 70px;
+  }
+
+  .doctors-directory-content {
+    width: min(calc(100% - 28px), 640px);
+    margin-top: -44px;
+    padding-block: 0 28px;
+  }
+
+  .doctors-directory-filters {
+    padding: 16px;
+  }
+
+  .doctors-directory-specialties {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .doctors-directory-specialty-btn {
+    flex: 0 0 auto;
+  }
+
+  .doctors-directory-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .doctor-profile-card {
+    border-radius: 16px;
+  }
+
+  .doctor-profile-header,
+  .doctor-profile-details,
+  .doctor-clinic-info {
+    padding: 18px;
+  }
+
+  .doctor-profile-btn {
+    width: calc(100% - 36px);
+    margin: 18px;
+  }
+}

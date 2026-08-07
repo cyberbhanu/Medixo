@@ -415,6 +415,8 @@
   width: 100%;
   height: 14px;
     line-clamp: auto;
+}
+@media (max-width: 767px) {
   .hero-grid {
     display: grid;
     gap: 24px;
@@ -511,6 +513,178 @@
 
   100% {
     background-position: 0 0;
+  }
+}
+
+.section-kicker {
+  margin: 0;
+  color: #4d5f80;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.testimonial-card {
+  min-height: 244px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid rgba(224, 233, 245, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(31, 50, 81, 0.08);
+}
+
+.testimonial-stars {
+  display: flex;
+  gap: 4px;
+  color: #f0a500;
+}
+
+.testimonial-stars svg {
+  fill: currentColor;
+}
+
+.testimonial-card p {
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.testimonial-card strong,
+.testimonial-card span {
+  display: block;
+}
+
+.testimonial-card strong {
+  color: #101828;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.testimonial-card span {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.specialty-card[role="button"] {
+  cursor: pointer;
+}
+
+.home-page .doctor-grid,
+.home-page .resource-grid,
+.home-page .specialty-grid,
+.testimonial-grid {
+  align-items: stretch;
+}
+
+.home-page .doctor-card,
+.home-page .resource-card,
+.home-page .info-card,
+.testimonial-card {
+  height: 100%;
+}
+
+.home-page .doctor-card img,
+.doctor-card-avatar,
+.resource-media,
+.resource-media img {
+  aspect-ratio: 3 / 4;
+}
+
+.home-page .home-card-actions {
+  align-self: end;
+}
+
+@media (min-width: 1025px) {
+  .home-page .doctor-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-page .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1441px) {
+  .home-page .doctor-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .search-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .search-panel > button[type="submit"] {
+    grid-column: span 2;
+  }
+
+  .home-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-page .doctor-grid,
+  .home-page .resource-grid,
+  .testimonial-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-copy h1 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .search-panel input,
+  .search-panel select,
+  .search-panel button,
+  .home-clear-filter {
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .popular-searches a {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0 12px;
+    background: #eef6ff;
+    border: 1px solid #d8e8ff;
+    border-radius: 999px;
+  }
+
+  .doctor-card-description {
+    display: none;
+  }
+
+  .doctor-card-title-row {
+    align-items: flex-start;
+  }
+
+  .doctor-meta,
+  .doctor-bottom,
+  .resource-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonial-card {
+    min-height: 210px;
   }
 }
 
@@ -742,6 +916,10 @@
   .stats-card {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .stats-card {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 
   .stat-item {
     flex: initial;
@@ -749,5 +927,51 @@
 
   .home-card-link {
     width: 100%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .home-page .search-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-radius: 16px;
+  }
+
+  .home-page .search-panel > button[type="submit"] {
+    grid-column: span 2;
+  }
+
+  .home-page .doctor-grid,
+  .home-page .resource-grid,
+  .home-page .testimonial-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-page .search-panel,
+  .home-page .doctor-grid,
+  .home-page .resource-grid,
+  .home-page .specialty-grid,
+  .home-page .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .doctor-card,
+  .home-page .resource-card {
+    grid-template-columns: 1fr;
+    border-radius: 16px;
+  }
+
+  .home-page .doctor-card img,
+  .home-page .doctor-card-avatar,
+  .home-page .resource-media {
+    width: 100%;
+    height: auto;
+    min-height: 180px;
+    aspect-ratio: 16 / 10;
+  }
+
+  .home-search-modal {
+    border-radius: 18px;
   }
 }

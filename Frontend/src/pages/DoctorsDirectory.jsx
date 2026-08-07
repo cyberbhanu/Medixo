@@ -36,42 +36,29 @@ function Icon({ name }) {
   );
 }
 
-// SUGGESTION: This component should be extracted to a separate file (e.g., /components/DoctorCardSkeleton.jsx) for better reusability.
 const DoctorCardSkeleton = () => (
   <div className="doctor-profile-card" aria-hidden="true">
-    <style>{`
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
-      .skeleton {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        background-color: #eaf3ff;
-        border-radius: 8px;
-      }
-    `}</style>
     <div className="doctor-profile-header">
-      <div className="skeleton" style={{ width: '64px', height: '64px', minWidth: '64px', borderRadius: '12px' }}></div>
-      <div className="doctor-profile-info" style={{ flex: 1 }}>
-        <div className="skeleton" style={{ height: '20px', width: '70%', marginBottom: '8px' }}></div>
-        <div className="skeleton" style={{ height: '16px', width: '50%' }}></div>
+      <div className="skeleton skeleton-avatar" />
+      <div className="doctor-profile-info">
+        <div className="skeleton skeleton-line wide" />
+        <div className="skeleton skeleton-line medium" />
       </div>
     </div>
     <div className="doctor-profile-details">
-      <div className="skeleton" style={{ height: '40px', width: '90%' }}></div>
+      <div className="skeleton skeleton-block" />
     </div>
-    <div className="doctor-clinic-info" style={{ flexGrow: 1, padding: '20px 24px' }}>
-      <div className="skeleton" style={{ height: '16px', width: '40%', marginBottom: '12px' }}></div>
-      <div className="skeleton" style={{ height: '14px', width: '100%', marginBottom: '8px' }}></div>
-      <div className="skeleton" style={{ height: '14px', width: '80%' }}></div>
+    <div className="doctor-clinic-info">
+      <div className="skeleton skeleton-line short" />
+      <div className="skeleton skeleton-line full" />
+      <div className="skeleton skeleton-line wide" />
     </div>
-    <div style={{ padding: '20px 24px', marginTop: 'auto' }}>
-      <div className="skeleton" style={{ height: '45px', width: '100%', borderRadius: '10px' }}></div>
+    <div className="doctor-profile-skeleton-footer">
+      <div className="skeleton skeleton-button" />
     </div>
   </div>
 );
 
-// SUGGESTION: This component should be extracted to a separate file (e.g., /components/DoctorCard.jsx) for better reusability.
 const DoctorCard = ({ doctor, onBookAppointment }) => {
   const rating = doctor.rating || 4.8;
   const reviewCount = doctor.reviewCount || 120;
@@ -80,7 +67,7 @@ const DoctorCard = ({ doctor, onBookAppointment }) => {
     <div className="doctor-profile-card">
       <div className="doctor-profile-header">
         {doctor.profileImage ? (
-          <img src={doctor.profileImage} alt={doctor.name} className="doctor-profile-avatar image" />
+          <img src={doctor.profileImage} alt={doctor.name} className="doctor-profile-avatar image" loading="lazy" />
         ) : (
           <div className="doctor-profile-avatar">{doctor.name.charAt(0)}</div>
         )}
@@ -97,7 +84,7 @@ const DoctorCard = ({ doctor, onBookAppointment }) => {
       <div className="doctor-profile-details">
         <div className="doctor-profile-detail-item"><Icon name="award" /><div><span className="detail-label">Experience</span><span className="detail-value">{doctor.experience} years</span></div></div>
         <div className="doctor-profile-detail-item"><Icon name="location" /><div><span className="detail-label">Location</span><span className="detail-value">{doctor.location}</span></div></div>
-        <div className="doctor-profile-detail-item"><Icon name="phone" /><div><span className="detail-label">Consultation Fee</span><span className="detail-value">₹{doctor.fees}</span></div></div>
+        <div className="doctor-profile-detail-item"><Icon name="phone" /><div><span className="detail-label">Consultation Fee</span><span className="detail-value">Rs. {doctor.fees}</span></div></div>
       </div>
 
       {doctor.detailsSubmitted && doctor.hospitalClinicDetails?.clinicName && (
@@ -216,7 +203,7 @@ export default function DoctorsDirectory() {
                   </button>
                 ))
               ) : (
-                <p style={{ color: "#999" }}>No specialties available</p>
+                <p className="doctors-directory-muted">No specialties available</p>
               )}
             </div>
 
@@ -257,7 +244,7 @@ export default function DoctorsDirectory() {
               {Array.from({ length: 6 }).map((_, index) => <DoctorCardSkeleton key={index} />)}
             </div>
           ) : error ? (
-            <div className="doctors-directory-error">❌ Error: {error}</div>
+            <div className="doctors-directory-error">Error: {error}</div>
           ) : doctors.length === 0 ? (
             <div className="doctors-directory-empty">
               <Icon name="hospital" />

@@ -65,8 +65,8 @@ const ClinicDetailsCard = ({ doctorProfile, onEdit }) => {
       </div>
 
       {details.clinicImage && (
-        <div style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px', border: '1px solid #e3f0ff', backgroundColor: '#f8fafd' }}>
-          <img src={details.clinicImage} alt="Clinic Facility" style={{ width: '100%', height: 'auto', maxHeight: '400px', objectFit: 'contain', display: 'block' }} onError={(e) => e.target.style.display = 'none'} />
+        <div className="clinic-image-frame">
+          <img src={details.clinicImage} alt="Clinic Facility" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
         </div>
       )}
 

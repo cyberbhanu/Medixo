@@ -73,6 +73,24 @@ const footerFeatures = [
   { title: "24/7 Support", icon: "headset" },
 ];
 
+const testimonials = [
+  {
+    name: "Ritika Sharma",
+    role: "Patient",
+    quote: "Finding a specialist and comparing clinic timings felt simple. I booked my appointment without calling multiple clinics.",
+  },
+  {
+    name: "Amit Verma",
+    role: "Caregiver",
+    quote: "The doctor cards showed fees, location, and availability clearly, which made family care decisions much faster.",
+  },
+  {
+    name: "Neha Kapoor",
+    role: "Wellness member",
+    quote: "Medixo made routine lab and consultation planning feel organized instead of scattered across different places.",
+  },
+];
+
 function Icon({ name }) {
   const paths = {
     search: <path d="m14 14-3.1-3.1m1-4.4a5.4 5.4 0 1 1-10.8 0 5.4 5.4 0 0 1 10.8 0Z" />,
@@ -794,7 +812,6 @@ export default function Home() {
               tabIndex="0"
               onClick={() => setActiveSpecialty(item.name)}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveSpecialty(item.name)}
-              style={{ cursor: "pointer" }}
             >
               <span className="soft-icon">
                 <Icon name={item.icon} />
@@ -847,7 +864,7 @@ export default function Home() {
 
       <section className="content-section shell" id="hospitals">
         <SectionHeader title="Hospitals & Clinics" linkTo="/doctors">
-          <p style={{ margin: 0, color: '#4d5f80' }}>Discover clinics, chambers, and hospital-based providers.</p>
+          <p className="section-kicker">Discover clinics, chambers, and hospital-based providers.</p>
         </SectionHeader>
         <div className="resource-grid">
           {loading ? (
@@ -870,7 +887,7 @@ export default function Home() {
 
       <section className="content-section shell" id="lab-tests">
         <SectionHeader title="Lab Tests" linkTo="/doctors">
-          <p style={{ margin: 0, color: '#4d5f80' }}>Schedule diagnostics, pathology tests, and wellness screenings.</p>
+          <p className="section-kicker">Schedule diagnostics, pathology tests, and wellness screenings.</p>
         </SectionHeader>
         <div className="resource-grid">
           {loading ? (
@@ -887,7 +904,7 @@ export default function Home() {
 
       <section className="content-section shell" id="health-packages">
         <SectionHeader title="Health Packages" linkTo="/doctors">
-          <p style={{ margin: 0, color: '#4d5f80' }}>Explore annual plans, screening bundles, and family care packages.</p>
+          <p className="section-kicker">Explore annual plans, screening bundles, and family care packages.</p>
         </SectionHeader>
         <div className="specialty-grid">
           {pageConfig.healthPackages.cards.map((card) => (
@@ -898,13 +915,37 @@ export default function Home() {
 
       <section className="content-section shell" id="about">
         <SectionHeader title="About Medixo" linkTo="/doctors">
-          <p style={{ margin: 0, color: '#4d5f80' }}>
+          <p className="section-kicker">
             Medixo helps patients discover doctors across a city and book appointments with confidence.
           </p>
         </SectionHeader>
         <div className="specialty-grid">
           {pageConfig.about.cards.map((card) => (
             <InfoCard key={card.title} card={card} />
+          ))}
+        </div>
+      </section>
+
+      <section className="content-section shell" id="testimonials">
+        <SectionHeader title="What Patients Say" linkTo="/doctors">
+          <p className="section-kicker">Clear care choices for everyday appointments, family visits, and follow-ups.</p>
+        </SectionHeader>
+        <div className="testimonial-grid">
+          {testimonials.map((item) => (
+            <article className="testimonial-card" key={item.name}>
+              <div className="testimonial-stars" aria-label="5 star rating">
+                <Icon name="star" />
+                <Icon name="star" />
+                <Icon name="star" />
+                <Icon name="star" />
+                <Icon name="star" />
+              </div>
+              <p>{item.quote}</p>
+              <div>
+                <strong>{item.name}</strong>
+                <span>{item.role}</span>
+              </div>
+            </article>
           ))}
         </div>
       </section>

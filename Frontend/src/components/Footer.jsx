@@ -11,7 +11,7 @@ function Icon({ name }) {
   };
 
   return (
-    <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" style={{display: 'inline', marginRight: '8px'}}>
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="site-footer-icon">
       {paths[name]}
     </svg>
   );

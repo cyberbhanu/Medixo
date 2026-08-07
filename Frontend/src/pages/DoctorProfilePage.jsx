@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getDoctorById, createAppointment } from "../api";
 import { getStoredUser } from "../utils/auth";
+import "../styles/dashboard.css";
 
 export default function DoctorProfilePage() {
   const { doctorId } = useParams();
@@ -93,40 +94,40 @@ export default function DoctorProfilePage() {
   return (
     <>
       <Navbar />
-      <main className="shell" style={{ padding: "48px 0", display: "grid", gap: "24px" }}>
+      <main className="doctor-profile-page shell">
         {loading ? (
           <p>Loading doctor profile...</p>
         ) : error && !doctor ? (
           <p>{error}</p>
         ) : doctor ? (
           <>
-            <section className="dashboard-form-card" style={{ padding: "24px", display: "grid", gap: "16px" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center" }}>
+            <section className="dashboard-form-card doctor-profile-hero-card">
+              <div className="doctor-profile-identity">
                 {doctor.profileImage ? (
-                  <img src={doctor.profileImage} alt={doctor.name} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "16px" }} />
+                  <img src={doctor.profileImage} alt={doctor.name} className="doctor-profile-photo" loading="lazy" />
                 ) : (
-                  <div style={{ width: "140px", height: "140px", borderRadius: "16px", display: "grid", placeItems: "center", background: "#eaf3ff", color: "#0f7bf5", fontSize: "36px", fontWeight: 700 }}>
+                  <div className="doctor-profile-photo doctor-profile-photo-fallback">
                     {doctor.name?.charAt(0) || "D"}
                   </div>
                 )}
                 <div>
-                  <h1 style={{ margin: 0 }}>Dr. {doctor.name}</h1>
-                  <p style={{ margin: "6px 0 0", color: "#4d5f80" }}>{doctor.specialization}</p>
+                  <h1>Dr. {doctor.name}</h1>
+                  <p>{doctor.specialization}</p>
                 </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+              <div className="doctor-profile-badge-row">
                 <span className="dashboard-inline-badge">{doctor.location}</span>
                 <span className="dashboard-inline-badge">{doctor.experience}+ yrs</span>
-                <span className="dashboard-inline-badge">₹{doctor.fees}</span>
+                <span className="dashboard-inline-badge">Rs. {doctor.fees}</span>
               </div>
             </section>
 
             {doctor.detailsSubmitted && doctor.hospitalClinicDetails ? (
-              <section className="dashboard-form-card" style={{ padding: "24px", display: "grid", gap: "16px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              <section className="dashboard-form-card doctor-profile-details-card">
+                <div className="doctor-profile-section-header">
                   <div>
-                    <h2 style={{ margin: 0 }}>Hospital & Clinic Details</h2>
-                    <p style={{ margin: "6px 0 0", color: "#4d5f80" }}>
+                    <h2>Hospital & Clinic Details</h2>
+                    <p>
                       Patients can see the care facility details and services offered before booking.
                     </p>
                   </div>
@@ -136,48 +137,49 @@ export default function DoctorProfilePage() {
                   <img
                     src={doctor.hospitalClinicDetails.clinicImage}
                     alt={`${doctor.name} clinic`}
-                    style={{ width: "100%", maxHeight: "220px", objectFit: "cover", borderRadius: "16px" }}
+                    className="doctor-profile-clinic-image"
+                    loading="lazy"
                   />
                 )}
 
-                <div style={{ display: "grid", gap: "12px", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="doctor-profile-facility-grid">
                   {(doctor.hospitalClinicDetails.hospitalName || doctor.hospitalClinicDetails.clinicName) && (
-                    <div style={{ padding: "14px 16px", borderRadius: "12px", background: "#f7faff", border: "1px solid #e2ecff" }}>
-                      <strong style={{ display: "block", marginBottom: "6px", color: "#0b5ed7" }}>Facility</strong>
+                    <div className="doctor-profile-facility-card">
+                      <strong>Facility</strong>
                       <div>{doctor.hospitalClinicDetails.clinicName || doctor.hospitalClinicDetails.hospitalName}</div>
                       {doctor.hospitalClinicDetails.hospitalName && doctor.hospitalClinicDetails.clinicName && (
-                        <div style={{ color: "#5b6b85", marginTop: "4px" }}>{doctor.hospitalClinicDetails.hospitalName}</div>
+                        <div className="doctor-profile-muted-text">{doctor.hospitalClinicDetails.hospitalName}</div>
                       )}
                     </div>
                   )}
 
                   {doctor.hospitalClinicDetails.clinicAddress && (
-                    <div style={{ padding: "14px 16px", borderRadius: "12px", background: "#f7faff", border: "1px solid #e2ecff" }}>
-                      <strong style={{ display: "block", marginBottom: "6px", color: "#0b5ed7" }}>Address</strong>
+                    <div className="doctor-profile-facility-card">
+                      <strong>Address</strong>
                       <div>{doctor.hospitalClinicDetails.clinicAddress}</div>
                     </div>
                   )}
 
                   {doctor.hospitalClinicDetails.phoneNumber && (
-                    <div style={{ padding: "14px 16px", borderRadius: "12px", background: "#f7faff", border: "1px solid #e2ecff" }}>
-                      <strong style={{ display: "block", marginBottom: "6px", color: "#0b5ed7" }}>Phone</strong>
-                      <a href={`tel:${doctor.hospitalClinicDetails.phoneNumber}`} style={{ color: "#0b5ed7" }}>
+                    <div className="doctor-profile-facility-card">
+                      <strong>Phone</strong>
+                      <a href={`tel:${doctor.hospitalClinicDetails.phoneNumber}`}>
                         {doctor.hospitalClinicDetails.phoneNumber}
                       </a>
                     </div>
                   )}
 
                   {doctor.hospitalClinicDetails.timings && (
-                    <div style={{ padding: "14px 16px", borderRadius: "12px", background: "#f7faff", border: "1px solid #e2ecff" }}>
-                      <strong style={{ display: "block", marginBottom: "6px", color: "#0b5ed7" }}>Timings</strong>
+                    <div className="doctor-profile-facility-card">
+                      <strong>Timings</strong>
                       <div>{doctor.hospitalClinicDetails.timings}</div>
                     </div>
                   )}
                 </div>
 
                 {(doctor.hospitalClinicDetails.licenseNumber || doctor.hospitalClinicDetails.registrationNumber) && (
-                  <div style={{ padding: "14px 16px", borderRadius: "12px", background: "#f7faff", border: "1px solid #e2ecff" }}>
-                    <strong style={{ display: "block", marginBottom: "6px", color: "#0b5ed7" }}>Professional Details</strong>
+                  <div className="doctor-profile-facility-card">
+                    <strong>Professional Details</strong>
                     {doctor.hospitalClinicDetails.licenseNumber && <div>License: {doctor.hospitalClinicDetails.licenseNumber}</div>}
                     {doctor.hospitalClinicDetails.registrationNumber && <div>Registration: {doctor.hospitalClinicDetails.registrationNumber}</div>}
                   </div>
@@ -185,10 +187,10 @@ export default function DoctorProfilePage() {
 
                 {doctor.hospitalClinicDetails.services?.length > 0 && (
                   <div>
-                    <h3 style={{ margin: "0 0 8px" }}>Facilities & Services</h3>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    <h3 className="doctor-profile-subtitle">Facilities & Services</h3>
+                    <div className="doctor-profile-services">
                       {doctor.hospitalClinicDetails.services.map((service, index) => (
-                        <span key={`${service}-${index}`} className="dashboard-inline-badge" style={{ background: "#eaf3ff", color: "#0b5ed7" }}>
+                        <span key={`${service}-${index}`} className="dashboard-inline-badge">
                           {service}
                         </span>
                       ))}
@@ -198,10 +200,10 @@ export default function DoctorProfilePage() {
               </section>
             ) : null}
 
-            <section className="dashboard-form-card" style={{ padding: "24px" }}>
-              <div style={{ marginBottom: "16px" }}>
-                <h2 style={{ margin: 0 }}>Book Appointment</h2>
-                <p style={{ margin: "6px 0 0", color: "#4d5f80" }}>
+            <section className="dashboard-form-card doctor-profile-booking-card">
+              <div className="doctor-profile-section-header">
+                <h2>Book Appointment</h2>
+                <p>
                   {isLoggedIn
                     ? `Fill in your details below to request an appointment with Dr. ${doctor.name}.`
                     : "Please log in to book an appointment with this doctor."}

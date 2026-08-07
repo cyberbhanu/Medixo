@@ -350,3 +350,71 @@
     transform: translateY(0);
   }
 }
+
+/* Responsive production polish */
+.modal-overlay {
+  overflow-y: auto;
+}
+
+.modal-content {
+  border-radius: 16px;
+}
+
+.modal-input,
+.modal-submit-btn,
+.modal-cancel-btn,
+.add-service-btn,
+.modal-tab-btn,
+.availability-time-input {
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.modal-input {
+  font-size: 15px;
+}
+
+.modal-close-btn {
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 12px;
+  background: #f5f8fc;
+}
+
+.modal-buttons {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .modal-content,
+  .modal-content.large {
+    width: min(100%, 640px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .modal-header,
+  .modal-form {
+    padding: 18px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 18px;
+  }
+
+  .modal-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
