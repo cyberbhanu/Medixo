@@ -347,7 +347,10 @@ svg {
 .mobile-menu-inner {
   width: min(100%, 420px);
   max-height: min(100vh, 92vh);
-  overflow-y: auto;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 20px;
   background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
   border-radius: 32px;
@@ -378,9 +381,13 @@ svg {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 12px;
   border-bottom: 1px solid #eef2f7;
   padding: 10px 0 12px;
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 2;
 }
 
 @media (max-width: 820px) {
@@ -391,8 +398,9 @@ svg {
     }
 
     .mobile-menu-inner {
-      width: min(92vw, 360px);
-      padding: 20px;
+      width: clamp(240px, 58vw, 420px);
+      height: clamp(420px, 78vh, 720px);
+      padding: 18px;
       margin: 10px 10px 10px auto;
       border-radius: 24px 0 0 24px;
       box-shadow:
@@ -432,9 +440,20 @@ svg {
   gap: 12px;
 }
 
+.mobile-menu-links {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 4px;
+  padding-bottom: 8px;
+}
+
 .mobile-menu-section {
-  padding-top: 18px;
+  padding-top: 14px;
+  margin-top: 8px;
   border-top: 1px solid #edf2f7;
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0) 0%, #f8fbff 30%, #f8fbff 100%);
 }
 
 .mobile-menu-auth-toggle {
