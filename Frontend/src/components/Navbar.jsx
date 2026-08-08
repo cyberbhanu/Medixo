@@ -57,7 +57,7 @@ function RoleLinks({ role, onNavigate }) {
   if (role === "super_admin") {
     return (
       <>
-        <Link to="/admin-dashboard" onClick={getClickHandler("/admin-dashboard")}>Home</Link>
+        <Link to="/" onClick={getClickHandler("/")}>Home</Link>
         <Link to="/admin-dashboard" onClick={getClickHandler("/admin-dashboard")}>Doctors</Link>
         <Link to="/admin-dashboard" onClick={getClickHandler("/admin-dashboard")}>Appointments</Link>
       </>
@@ -144,7 +144,25 @@ export default function Navbar() {
 
   const handleMobileNav = (path) => {
     closeMobileMenu();
-    navigate(path);
+
+    requestAnimationFrame(() => {
+      navigate(path);
+    });
+  };
+
+  const handleMobileProfile = () => {
+    if (!user) {
+      closeMobileMenu();
+
+      requestAnimationFrame(() => {
+        navigate("/login");
+      });
+
+      return;
+    }
+
+    setShowMobileMenu(true);
+    setShowMobileAuthMenu(true);
   };
 
   const handleOverlayClick = (event) => {
@@ -155,9 +173,15 @@ export default function Navbar() {
 
   const handleLogout = () => {
     clearStoredAuth();
+
     setUser(null);
-    closeMobileMenu();
-    navigate("/");
+    setShowAuthMenu(false);
+    setShowMobileAuthMenu(false);
+    setShowMobileMenu(false);
+
+    requestAnimationFrame(() => {
+      navigate("/");
+    });
   };
 
   const isHashActive = (hash) => location.pathname === "/" && location.hash === hash;
@@ -315,27 +339,81 @@ export default function Navbar() {
           document.body
         )}
 
-        <nav className="mobile-bottom-nav" aria-label="Mobile quick navigation">
-          <NavLink to="/" end>
+        <nav
+          className="mobile-bottom-nav"
+          aria-label="Mobile quick navigation"
+        >
+          {/* HOME */}
+          <button
+            type="button"
+            className={
+              location.pathname === "/" && !location.hash
+                ? "active"
+                : ""
+            }
+            onClick={() => handleMobileNav("/")}
+          >
             <Icon name="home" />
             <span>Home</span>
-          </NavLink>
-          <NavLink to="/doctors">
+          </button>
+
+          {/* DOCTORS */}
+          <button
+            type="button"
+            className={
+              location.pathname === "/doctors"
+                ? "active"
+                : ""
+            }
+            onClick={() => handleMobileNav("/doctors")}
+          >
             <Icon name="doctor" />
             <span>Doctors</span>
-          </NavLink>
-          <Link to="/#hospitals" className={isHashActive("#hospitals") ? "active" : ""}>
+          </button>
+
+          {/* HOSPITALS */}
+          <button
+            type="button"
+            className={
+              isHashActive("#hospitals")
+                ? "active"
+                : ""
+            }
+            onClick={() => handleMobileNav("/#hospitals")}
+          >
             <Icon name="hospital" />
             <span>Hospitals</span>
-          </Link>
-          <NavLink to={dashboardPath}>
+          </button>
+
+          {/* APPOINTMENTS */}
+          <button
+            type="button"
+            className={
+              user && location.pathname === dashboardPath
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              handleMobileNav(user ? dashboardPath : "/login")
+            }
+          >
             <Icon name="calendar" />
             <span>Appointments</span>
-          </NavLink>
-          <NavLink to={dashboardPath}>
+          </button>
+
+          {/* PROFILE */}
+          <button
+            type="button"
+            className={
+              showMobileMenu && showMobileAuthMenu
+                ? "active"
+                : ""
+            }
+            onClick={handleMobileProfile}
+          >
             <Icon name="user" />
             <span>Profile</span>
-          </NavLink>
+          </button>
         </nav>
       </nav>
     </header>

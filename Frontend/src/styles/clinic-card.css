@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .clinic-card-header {
@@ -21,11 +22,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   font-size: 22px;
   font-weight: 700;
   color: #0d5bdd;
   margin: 0;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .clinic-card-icon {
@@ -65,9 +68,10 @@
 /* Cards Grid */
 .clinic-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 16px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 
 .clinic-info-card {
@@ -75,6 +79,7 @@
   border: 1px solid #dfeeff;
   border-radius: 8px;
   padding: 20px;
+  min-width: 0;
   transition: all 0.3s ease;
   box-shadow: 0 6px 18px rgba(13, 91, 221, 0.06);
 }
@@ -113,6 +118,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
 
 .clinic-info-main {
@@ -129,6 +135,7 @@
   color: #666;
   margin: 0;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .clinic-info-item {
@@ -149,7 +156,9 @@
 .clinic-info-item-value {
   color: #1a1a1a;
   text-align: right;
-  word-break: break-all;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .clinic-info-link {
@@ -192,12 +201,14 @@
 .clinic-service-tag {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   padding: 8px 14px;
   background: #0d5bdd;
   color: white;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
+  overflow-wrap: anywhere;
   box-shadow: 0 4px 12px rgba(13, 91, 221, 0.18);
   transition: all 0.3s ease;
 }
@@ -234,10 +245,13 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+  min-width: 0;
   font-size: 14px;
   line-height: 1.6;
   padding-bottom: 14px;
   border-bottom: 1px solid #f0f4f9;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .clinic-details-list li:last-child {
@@ -256,6 +270,8 @@
   color: #0d5bdd;
   text-decoration: none;
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
   transition: color 0.3s ease;
 }
 
@@ -442,6 +458,16 @@
 }
 
 @media (max-width: 767px) {
+  .clinic-card-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .clinic-card-title {
+    align-items: flex-start;
+  }
+
   .clinic-cards-grid {
     grid-template-columns: 1fr;
   }

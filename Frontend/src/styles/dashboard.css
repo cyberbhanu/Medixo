@@ -141,6 +141,19 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.dashboard-stat-card > div,
+.dashboard-panel,
+.dashboard-card-list,
+.dashboard-table,
+.dashboard-table-row,
+.dashboard-record-identity,
+.dashboard-detail-stack,
+.dashboard-mini-row p,
+.dashboard-metric-row span,
+.dashboard-metric-row strong {
+  min-width: 0;
+}
+
 .dashboard-stat-card:hover,
 .dashboard-panel:hover,
 .dashboard-appointment-card:hover,
@@ -317,6 +330,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-doctor-grid {
@@ -695,6 +710,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-filter-row,
@@ -1144,6 +1161,7 @@
 @media (max-width: 1024px) {
   .dashboard-stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 20px;
   }
 
   .dashboard-content-grid,
@@ -1182,6 +1200,26 @@
   .dashboard-secondary-action,
   .dashboard-admin-record button {
     width: 100%;
+  }
+
+  .dashboard-stat-card,
+  .dashboard-appointment-card,
+  .dashboard-table-row,
+  .dashboard-admin-record,
+  .dashboard-record-header,
+  .dashboard-patient-row-header,
+  .dashboard-action-row,
+  .dashboard-metric-row {
+    align-items: stretch;
+  }
+
+  .dashboard-stat-card,
+  .dashboard-metric-row {
+    flex-direction: column;
+  }
+
+  .dashboard-table-row {
+    min-width: 0;
   }
 
   .doctor-profile-page {

@@ -164,7 +164,7 @@
 /* Doctors Grid */
 .doctors-directory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
   gap: 24px;
   animation: fadeInUp 0.6s ease-out;
 }
@@ -274,6 +274,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .detail-label {
@@ -286,6 +287,7 @@
   font-size: 14px;
   color: #1a1a1a;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 /* Clinic Info Section */
@@ -365,13 +367,14 @@
 
 .service-badge {
   display: inline-block;
+  max-width: 100%;
   padding: 4px 10px;
   background: #e3f0ff;
   color: #0d5bdd;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .service-badge.more {
@@ -569,6 +572,16 @@
   align-items: stretch;
 }
 
+.doctors-directory-filters,
+.doctors-directory-grid,
+.doctor-profile-card,
+.doctor-profile-header,
+.doctor-profile-info,
+.doctor-clinic-info,
+.clinic-detail {
+  min-width: 0;
+}
+
 .doctor-profile-card {
   min-width: 0;
 }
@@ -661,6 +674,12 @@
 
   .doctors-directory-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .doctors-directory-range-filters {
+    grid-template-columns: 1fr;
   }
 }
 
