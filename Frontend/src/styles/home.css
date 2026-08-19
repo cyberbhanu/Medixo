@@ -1185,3 +1185,747 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Hero visual: keep the doctor artwork in a clear card beside the copy. */
+.home-page .hero-visual {
+  align-self: center;
+  min-height: 390px;
+  height: 390px;
+  margin: 24px 0;
+  overflow: hidden;
+  background: linear-gradient(160deg, #e9f5ff 0%, #d9edff 58%, #c8e8f3 100%);
+  border: 1px solid rgba(183, 215, 242, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 22px 44px rgba(48, 91, 143, 0.14);
+}
+
+.home-page .hero-visual::before {
+  content: "Medixo care network";
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 1;
+  padding: 8px 12px;
+  color: #0b5ccc;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.home-page .hero-visual img {
+  position: absolute;
+  top: 0;
+  right: 2%;
+  bottom: auto;
+  width: 96%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 14px 24px rgba(64, 111, 165, 0.16));
+}
+
+.home-page .care-badge {
+  left: 18px;
+  top: 18px;
+  width: 88px;
+  height: 88px;
+  z-index: 2;
+  box-shadow: 0 12px 24px rgba(13, 91, 221, 0.16);
+}
+
+@media (max-width: 1100px) and (min-width: 821px) {
+  .home-page .hero-visual {
+    min-height: 340px;
+    height: 340px;
+  }
+
+  .home-page .hero-visual img {
+    width: 108%;
+    right: -4%;
+  }
+}
+
+@media (max-width: 820px) {
+  .home-page .hero-section {
+    min-height: auto;
+    padding: 24px 0 20px;
+    background: linear-gradient(180deg, #f7fbff 0%, #eaf5ff 100%);
+  }
+
+  .home-page .hero-section::after {
+    display: none;
+  }
+
+  .home-page .hero-grid {
+    gap: 16px;
+  }
+
+  .home-page .hero-copy {
+    order: 1;
+  }
+
+  .home-page .hero-visual {
+    order: 2;
+    min-height: 250px;
+    height: 250px;
+    margin: 0;
+    border-radius: 20px;
+  }
+
+  .home-page .hero-visual::before {
+    top: 12px;
+    right: 12px;
+    padding: 6px 9px;
+    font-size: 9px;
+  }
+
+  .home-page .hero-visual img {
+    width: 100%;
+    height: 100%;
+    right: 0;
+  }
+
+  .home-page .care-badge {
+    left: 12px;
+    top: 12px;
+    width: 70px;
+    height: 70px;
+  }
+
+  .home-page .trust-row {
+    gap: 10px;
+    margin-top: 18px;
+    justify-content: space-between;
+  }
+
+  .home-page .trust-row span {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .home-page .popular-searches {
+    gap: 8px 14px;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+
+  .home-page .search-panel {
+    margin-top: 22px;
+    padding: 12px;
+    border-radius: 16px;
+    box-shadow: 0 14px 28px rgba(33, 82, 139, 0.1);
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page .hero-section {
+    padding-top: 18px;
+  }
+
+  .home-page .hero-copy h1 {
+    font-size: clamp(1.8rem, 9vw, 2.35rem);
+  }
+
+  .home-page .hero-copy > p {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .home-page .trust-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .home-page .hero-visual {
+    min-height: 220px;
+    height: 220px;
+  }
+
+  .home-page .home-filter-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keep the hero artwork visible beside the headline on narrow phones. */
+@media (max-width: 767px) {
+  .home-page .hero-grid {
+    display: block;
+    position: relative;
+  }
+
+  .home-page .hero-copy {
+    position: relative;
+    z-index: 2;
+  }
+
+  .home-page .hero-copy h1,
+  .home-page .hero-copy > p {
+    width: calc(100% - 108px);
+    max-width: 210px;
+  }
+
+  .home-page .hero-visual {
+    position: absolute;
+    display: block;
+    opacity: 1;
+    top: 2px;
+    right: 0;
+    z-index: 1;
+    width: 102px;
+    min-height: 142px;
+    height: 142px;
+    margin: 0;
+    border-radius: 18px;
+  }
+
+  .home-page .hero-visual::before {
+    content: "Medixo";
+    top: 8px;
+    right: 8px;
+    padding: 4px 7px;
+    font-size: 8px;
+  }
+
+  .home-page .hero-visual img {
+    width: 118%;
+    height: 118%;
+    right: -9%;
+    bottom: -8%;
+    top: auto;
+  }
+
+  .home-page .care-badge {
+    left: 7px;
+    top: 8px;
+    width: 46px;
+    height: 46px;
+    font-size: 7px;
+  }
+
+  .home-page .care-badge svg {
+    font-size: 17px;
+  }
+
+  .home-page .care-badge strong,
+  .home-page .care-badge span {
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .home-page .trust-row,
+  .home-page .search-panel,
+  .home-page .popular-searches {
+    position: relative;
+    z-index: 3;
+  }
+
+  .home-page .search-panel,
+  .home-page .popular-searches {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .hero-copy h1,
+  .home-page .hero-copy > p {
+    width: calc(100% - 96px);
+    max-width: 190px;
+  }
+
+  .home-page .hero-visual {
+    width: 90px;
+    min-height: 132px;
+    height: 132px;
+  }
+}
+
+/* Keep the homepage metrics in one compact row on phones. */
+@media (max-width: 767px) {
+  .home-page .stats-section {
+    margin-top: 14px;
+  }
+
+  .home-page .stats-card {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 12px 8px;
+    border-radius: 16px;
+  }
+
+  .home-page .stat-item {
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .home-page .stat-item .soft-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .home-page .stat-item > div {
+    min-width: 0;
+  }
+
+  .home-page .stat-item strong {
+    display: block;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .home-page .stat-item p {
+    margin: 5px 0 0;
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .stats-card {
+    padding-inline: 4px;
+  }
+
+  .home-page .stat-item .soft-icon {
+    width: 29px;
+    height: 29px;
+    font-size: 14px;
+  }
+
+  .home-page .stat-item strong {
+    font-size: 16px;
+  }
+
+  .home-page .stat-item p {
+    font-size: 9px;
+  }
+}
+
+/* Keep popular search shortcuts on one swipeable line on phones. */
+@media (max-width: 767px) {
+  .home-page .popular-searches {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 38px;
+    margin-top: 12px;
+    padding-bottom: 3px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .home-page .popular-searches::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-page .popular-searches strong,
+  .home-page .popular-searches a {
+    flex: 0 0 auto;
+  }
+
+  .home-page .popular-searches strong {
+    font-size: 11px;
+  }
+
+  .home-page .popular-searches a {
+    padding: 7px 11px;
+    color: #3f5877;
+    background: rgba(255, 255, 255, 0.38);
+    border: 1px solid #d7e7fb;
+    border-radius: 999px;
+    font-size: 11px;
+  }
+}
+
+/* Compact the phone hero so the headline and supporting cards stay balanced. */
+@media (max-width: 767px) {
+  .home-page .hero-copy h1 {
+    width: calc(100% - 82px);
+    max-width: 230px;
+    font-size: clamp(1.55rem, 7.2vw, 1.9rem);
+    line-height: 1.12;
+    letter-spacing: 0;
+  }
+
+  .home-page .hero-copy > p {
+    width: 100%;
+    max-width: none;
+    margin-top: 14px;
+    padding: 13px 14px;
+    color: #40536e;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(213, 228, 245, 0.92);
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .home-page .trust-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 7px;
+    margin-top: 13px;
+  }
+
+  .home-page .trust-row span {
+    min-width: 0;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    padding: 8px 6px;
+    color: #263b58;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid #d9e8f8;
+    border-radius: 12px;
+    font-size: 9px;
+    line-height: 1.18;
+    white-space: normal;
+  }
+
+  .home-page .trust-row svg {
+    flex: 0 0 auto;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .hero-copy h1 {
+    width: calc(100% - 76px);
+    max-width: 210px;
+    font-size: 1.5rem;
+  }
+
+  .home-page .trust-row span {
+    min-height: 54px;
+    padding-inline: 5px;
+    font-size: 8px;
+  }
+}
+
+/* Let the doctor artwork read clearly behind the mobile hero content. */
+@media (max-width: 767px) {
+  .home-page .hero-section {
+    background-image: url("../assets/medixo-hero-doctor.png"), linear-gradient(180deg, #f7fbff 0%, #eaf5ff 100%);
+    background-repeat: no-repeat;
+    background-position: right 2px, 0 0;
+    background-size: 142px auto, 100% 100%;
+  }
+
+  .home-page .hero-grid,
+  .home-page .hero-copy {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .home-page .hero-copy {
+    background-image: none;
+  }
+
+  .home-page .hero-visual {
+    display: none;
+  }
+
+  .home-page .hero-visual {
+    top: -4px;
+    right: -8px;
+    width: 142px;
+    min-height: 178px;
+    height: 178px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    opacity: 1;
+  }
+
+  .home-page .hero-visual::before,
+  .home-page .care-badge {
+    display: none;
+  }
+
+  .home-page .hero-visual img {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    object-fit: contain;
+    object-position: right top;
+    filter: drop-shadow(0 12px 18px rgba(64, 111, 165, 0.18));
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .hero-visual {
+    right: -12px;
+    width: 128px;
+    min-height: 165px;
+    height: 165px;
+  }
+}
+
+.home-page .hero-heart {
+  position: absolute;
+  top: 44%;
+  right: 42%;
+  z-index: 3;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  color: #e5484d;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #ffd4d6;
+  border-radius: 999px;
+  box-shadow: 0 10px 20px rgba(180, 55, 65, 0.16);
+}
+
+.home-page .hero-heart svg {
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.home-page .hero-heart span {
+  color: #b42318;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .home-page .hero-heart {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-page .hero-heart {
+    top: 72px;
+    right: 112px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .home-page .hero-heart svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-page .hero-heart span {
+    font-size: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .hero-heart {
+    top: 66px;
+    right: 101px;
+    width: 29px;
+    height: 29px;
+  }
+}
+
+/* Explicit mobile image layer for browsers that do not paint the CSS artwork background. */
+@media (max-width: 767px) {
+  .home-page .hero-visual {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: calc(100vw - 150px);
+    right: auto;
+    z-index: 1;
+    width: 142px;
+    height: 178px;
+    min-height: 178px;
+    margin: 0;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    visibility: visible;
+  }
+
+  .home-page .hero-visual img {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: contain;
+    object-position: right top;
+  }
+
+  .home-page .hero-visual::before,
+  .home-page .hero-visual .care-badge,
+  .home-page .care-badge {
+    display: none;
+  }
+}
+
+/* Final mobile hero layout: one viewport-bound artwork layer and no horizontal bleed. */
+.home-page .hero-mobile-art {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .home-page .hero-section {
+    overflow-x: clip;
+  }
+
+  .home-page .hero-section > .hero-grid,
+  .home-page .hero-section > .stats-section {
+    width: min(calc(100% - 32px), 640px);
+    max-width: calc(100% - 32px);
+    min-width: 0;
+    margin-inline: auto;
+  }
+
+  .home-page .hero-grid {
+    display: block;
+    min-width: 0;
+  }
+
+  .home-page .hero-copy {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .home-page .hero-mobile-art {
+    display: block;
+    position: absolute;
+    top: 4px;
+    right: 12px;
+    z-index: 1;
+    width: 118px;
+    height: 158px;
+    max-width: none;
+    object-fit: contain;
+    object-position: right top;
+    pointer-events: none;
+    filter: drop-shadow(0 12px 18px rgba(64, 111, 165, 0.18));
+  }
+
+  .home-page .hero-copy h1 {
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 96px);
+    max-width: 225px;
+  }
+
+  .home-page .hero-copy > p,
+  .home-page .trust-row,
+  .home-page .search-panel,
+  .home-page .popular-searches {
+    position: relative;
+    z-index: 3;
+    max-width: 100%;
+  }
+
+  .home-page .search-panel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .home-page .popular-searches {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .hero-mobile-art {
+    right: 7px;
+    width: 106px;
+    height: 146px;
+  }
+
+  .home-page .hero-copy h1 {
+    width: calc(100% - 86px);
+    max-width: 210px;
+  }
+}
+
+/* Keep the four service highlights in one row on mobile. */
+@media (max-width: 767px) {
+  .home-page .feature-strip {
+    overflow: hidden;
+  }
+
+  .home-page .feature-strip-inner {
+    width: min(calc(100% - 20px), 640px);
+    max-width: calc(100% - 20px);
+    min-height: 104px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 12px 8px;
+    box-sizing: border-box;
+  }
+
+  .home-page .feature-item {
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .home-page .feature-item span {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .home-page .feature-item strong {
+    max-width: 70px;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-page .feature-strip-inner {
+    width: calc(100% - 12px);
+    max-width: calc(100% - 12px);
+    gap: 2px;
+    padding: 10px 6px;
+  }
+
+  .home-page .feature-item span {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+
+  .home-page .feature-item strong {
+    max-width: 62px;
+    font-size: 8px;
+  }
+}

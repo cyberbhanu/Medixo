@@ -2420,3 +2420,69 @@ table {
     height: 17px;
   }
 }
+
+/* Compact profile and role-login menu on phones. */
+@media (max-width: 767px) {
+  .mobile-menu-panel.open {
+    align-items: flex-start;
+    padding-top: 72px;
+    padding-right: 10px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-inner {
+    width: min(286px, calc(100vw - 28px));
+    height: auto;
+    max-height: calc(100dvh - 92px);
+    min-height: 0;
+    margin: 0 0 0 auto;
+    padding: 14px;
+    border-radius: 18px;
+    overflow: hidden auto;
+    box-shadow: 0 18px 50px rgba(10, 18, 32, 0.2);
+  }
+
+  .mobile-menu-panel.open .mobile-menu-header {
+    min-height: 44px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-header .brand {
+    font-size: 18px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-close {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 10px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-links {
+    flex: 0 1 auto;
+    gap: 2px;
+    padding-bottom: 8px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-links a,
+  .mobile-menu-panel.open .mobile-menu-link,
+  .mobile-menu-panel.open .mobile-menu-action,
+  .mobile-menu-panel.open .mobile-menu-auth-toggle {
+    min-height: 40px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-section {
+    gap: 6px;
+    margin-top: 4px;
+    padding-top: 10px;
+  }
+
+  .mobile-menu-panel.open .mobile-menu-auth-panel {
+    gap: 5px;
+    padding-top: 2px;
+  }
+}

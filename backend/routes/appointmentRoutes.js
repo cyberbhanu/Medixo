@@ -34,6 +34,8 @@ const EDITABLE_FIELDS = [
 const PATIENT_EDITABLE_FIELDS = ["appointmentDate", "appointmentTime", "status", "notes"];
 const LAB_EDITABLE_FIELDS = ["status", "reportUrl", "notes"];
 const ACTIVE_SLOT_STATUSES = ["Scheduled", "Approved", "Rescheduled"];
+const SLOT_ALREADY_BOOKED_MESSAGE =
+  "This appointment slot is already booked. Please choose another time.";
 
 const isValidDateString = (date) => /^\d{4}-\d{2}-\d{2}$/.test(String(date || ""));
 const isValidTimeString = (time) => /^\d{2}:\d{2}$/.test(String(time || ""));
@@ -157,7 +159,21 @@ const ensureSlotIsAvailable = async (appointmentPayload, excludeId = null) => {
     })
   );
 
-  return conflict ? "This appointment slot is already booked. Please choose another time." : null;
+  return conflict ? SLOT_ALREADY_BOOKED_MESSAGE : null;
+};
+
+const isDuplicateSlotError = (error) => error?.code === 11000;
+
+const sendAppointmentWriteError = (res, error) => {
+  if (isDuplicateSlotError(error)) {
+    return res.status(409).json({
+      error: SLOT_ALREADY_BOOKED_MESSAGE,
+    });
+  }
+
+  return res.status(400).json({
+    error: error.message,
+  });
 };
 
 const buildAppointmentPayload = (body) => ({
@@ -250,7 +266,189 @@ const attachQueueDetails = (appointments) => {
     .sort((left, right) => getAppointmentTimestamp(left) - getAppointmentTimestamp(right));
 };
 
+const getStaffAccess = async (userId) => {
+  const staffUser = await User.findById(userId)
+    .select("clinicId doctorId isActive role")
+    .lean();
+
+  if (!staffUser || staffUser.isActive === false || staffUser.role !== ROLES.STAFF) {
+    return { staffUser: null, doctorIds: [] };
+  }
+
+  if (staffUser.doctorId) {
+    return {
+      staffUser,
+      doctorIds: [staffUser.doctorId],
+    };
+  }
+
+  if (staffUser.clinicId) {
+    const clinicDoctors = await Doctor.find({
+      $or: [
+        { clinic: staffUser.clinicId },
+        { clinics: staffUser.clinicId },
+      ],
+      isActive: { $ne: false },
+    })
+      .select("_id")
+      .lean();
+
+    return {
+      staffUser,
+      doctorIds: clinicDoctors.map((doctor) => doctor._id),
+    };
+  }
+
+  return {
+    staffUser,
+    doctorIds: [],
+  };
+};
+
+const staffCanAccessAppointment = async (userId, appointment) => {
+  const { staffUser, doctorIds } = await getStaffAccess(userId);
+
+  if (!staffUser || !doctorIds.length || !appointment?.doctorId) {
+    return false;
+  }
+
+  return doctorIds.some(
+    (doctorId) => String(doctorId) === String(appointment.doctorId)
+  );
+};
+
 router.use(authenticateUser);
+
+router.get("/reports/patients", async (req, res) => {
+  try {
+    const month = /^\d{4}-\d{2}$/.test(String(req.query.month || ""))
+      ? String(req.query.month)
+      : new Date().toISOString().slice(0, 7);
+    const [year, monthNumber] = month.split("-").map(Number);
+    const nextMonthDate = new Date(Date.UTC(year, monthNumber, 1));
+    const nextMonth = nextMonthDate.toISOString().slice(0, 7);
+    const filters = {
+      type: "doctor",
+      appointmentDate: {
+        $gte: `${month}-01`,
+        $lt: `${nextMonth}-01`,
+      },
+    };
+
+    if (hasRole(req.user, ROLES.SUPER_ADMIN)) {
+      if (req.query.doctorId) {
+        if (!mongoose.isValidObjectId(req.query.doctorId)) {
+          return res.status(400).json({ error: "Invalid doctor filter" });
+        }
+        filters.doctorId = req.query.doctorId;
+      }
+
+      if (req.query.clinicId) {
+        if (!mongoose.isValidObjectId(req.query.clinicId)) {
+          return res.status(400).json({ error: "Invalid clinic filter" });
+        }
+        filters.clinic = req.query.clinicId;
+      }
+    } else if (hasRole(req.user, ROLES.DOCTOR)) {
+      const doctorProfile = await getDoctorProfileForUser(req.user);
+      if (!doctorProfile) return res.json({ month, summary: {}, patients: [] });
+      filters.doctorId = doctorProfile._id;
+    } else if (hasRole(req.user, ROLES.STAFF)) {
+      const { staffUser, doctorIds } = await getStaffAccess(req.user.id);
+      if (!staffUser || !doctorIds.length) {
+        return res.json({ month, summary: {}, patients: [] });
+      }
+      filters.doctorId = { $in: doctorIds };
+    } else {
+      return res.status(403).json({ error: "You are not allowed to view patient reports" });
+    }
+
+    const appointments = await Appointment.find(filters)
+      .populate("doctorId", "name specialization")
+      .populate("clinic", "name city state")
+      .lean()
+      .sort({ appointmentDate: 1, appointmentTime: 1 });
+
+    const patientMap = new Map();
+    const doctorIds = new Set();
+    const clinicIds = new Set();
+    let completedVisits = 0;
+
+    appointments.forEach((appointment) => {
+      const patientKey = String(
+        appointment.patientId?._id ||
+          appointment.patientId ||
+          appointment.patientEmail ||
+          appointment.patientPhone ||
+          appointment.patientName
+      ).toLowerCase();
+
+      if (!patientMap.has(patientKey)) {
+        patientMap.set(patientKey, {
+          patientId: appointment.patientId?._id || appointment.patientId || null,
+          name: appointment.patientName || "Unknown Patient",
+          email: appointment.patientEmail || "",
+          phone: appointment.patientPhone || "",
+          age: appointment.patientAge || "",
+          gender: appointment.patientGender || "",
+          visits: 0,
+          completedVisits: 0,
+          lastVisit: appointment.appointmentDate || "",
+          lastStatus: appointment.status || "",
+          lastReason: appointment.reason || "",
+          doctors: new Map(),
+          clinics: new Map(),
+        });
+      }
+
+      const patient = patientMap.get(patientKey);
+      patient.visits += 1;
+      if (appointment.status === "Completed") {
+        patient.completedVisits += 1;
+        completedVisits += 1;
+      }
+
+      if ((appointment.appointmentDate || "") >= patient.lastVisit) {
+        patient.lastVisit = appointment.appointmentDate || patient.lastVisit;
+        patient.lastStatus = appointment.status || patient.lastStatus;
+        patient.lastReason = appointment.reason || patient.lastReason;
+        patient.age = appointment.patientAge || patient.age;
+        patient.gender = appointment.patientGender || patient.gender;
+      }
+
+      if (appointment.doctorId?._id) {
+        doctorIds.add(String(appointment.doctorId._id));
+        patient.doctors.set(String(appointment.doctorId._id), appointment.doctorId.name);
+      }
+      if (appointment.clinic?._id) {
+        clinicIds.add(String(appointment.clinic._id));
+        patient.clinics.set(String(appointment.clinic._id), appointment.clinic.name);
+      }
+    });
+
+    const patients = Array.from(patientMap.values())
+      .map((patient) => ({
+        ...patient,
+        doctors: Array.from(patient.doctors.values()),
+        clinics: Array.from(patient.clinics.values()),
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    return res.json({
+      month,
+      summary: {
+        totalVisits: appointments.length,
+        uniquePatients: patients.length,
+        completedVisits,
+        doctorCount: doctorIds.size,
+        clinicCount: clinicIds.size,
+      },
+      patients,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 router.get("/", async (_req, res) => {
   try {
@@ -286,7 +484,17 @@ router.get("/", async (_req, res) => {
       filters.type = "lab";
       filters.labId = labProfile._id;
     } else if (hasRole(_req.user, ROLES.STAFF)) {
-      // Staff can view all appointments and assist with scheduling.
+      const { staffUser, doctorIds } = await getStaffAccess(_req.user.id);
+
+      if (!staffUser) {
+        return res.json([]);
+      }
+
+      if (!doctorIds.length) {
+        return res.json([]);
+      }
+
+      filters.doctorId = { $in: doctorIds };
     } else {
       filters.$or = [
         { patientId: _req.user.id },
@@ -297,6 +505,9 @@ router.get("/", async (_req, res) => {
     const appointments = await Appointment.find(filters)
       .populate("doctorId", "name specialization location fees userId email")
       .populate("labId", "name location email")
+      .populate("clinic", "name city state address phone")
+      .populate("hospital", "name city state address phone")
+      .populate("department", "name")
       .populate("referredBy", "name")
       .populate("patientId", "name email role")
       .sort({ createdAt: -1 });
@@ -398,12 +609,40 @@ router.post("/", async (req, res) => {
     }
     await appointment.populate("doctorId", "name specialization location fees userId email");
     await appointment.populate("labId", "name location email");
+    await appointment.populate("clinic", "name city state address phone");
+    await appointment.populate("hospital", "name city state address phone");
+    await appointment.populate("department", "name");
     await appointment.populate("referredBy", "name");
     await appointment.populate("patientId", "name email role");
 
-    res.status(201).json(appointment);
+    const queueFilter = {
+      type: appointment.type,
+      appointmentDate: appointment.appointmentDate,
+      status: { $in: ACTIVE_SLOT_STATUSES },
+    };
+
+    if (appointment.type === "lab") {
+      queueFilter.labId = appointment.labId;
+    } else {
+      queueFilter.doctorId = appointment.doctorId;
+    }
+
+    const queueAppointments = await Appointment.find(queueFilter)
+      .select("_id type doctorId labId appointmentDate appointmentTime createdAt status")
+      .lean();
+    const queueAppointment = attachQueueDetails(queueAppointments).find(
+      (item) => String(item._id) === String(appointment._id)
+    );
+    const appointmentWithQueue = {
+      ...appointment.toObject(),
+      queueNumber: queueAppointment?.queueNumber || null,
+      dailyQueueSize: queueAppointment?.dailyQueueSize || 0,
+      patientsAhead: queueAppointment?.patientsAhead ?? null,
+    };
+
+    res.status(201).json(appointmentWithQueue);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    sendAppointmentWriteError(res, error);
   }
 });
 
@@ -441,6 +680,18 @@ router.put("/:id", async (req, res) => {
         return res.status(403).json({ error: "Laboratories can only update test status, reports, and notes" });
       }
     } else if (hasRole(req.user, ROLES.STAFF)) {
+      const hasAccess = await staffCanAccessAppointment(
+        req.user.id,
+        appointment
+      );
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          error:
+            "You can only manage appointments assigned to your doctor or clinic",
+        });
+      }
+
       const requestedFields = Object.keys(req.body).filter((field) =>
         EDITABLE_FIELDS.includes(field)
       );
@@ -463,7 +714,10 @@ router.put("/:id", async (req, res) => {
       );
 
       if (!hasOnlyStaffFields) {
-        return res.status(403).json({ error: "Staff can only manage appointment details, status, and notes" });
+        return res.status(403).json({
+          error:
+            "Staff can only manage appointment details, status, and notes",
+        });
       }
     } else if (hasRole(req.user, ROLES.PATIENT)) {
       const isOwnAppointment =
@@ -567,6 +821,9 @@ router.put("/:id", async (req, res) => {
     )
       .populate("doctorId", "name specialization location fees userId email")
       .populate("labId", "name location email")
+      .populate("clinic", "name city state address phone")
+      .populate("hospital", "name city state address phone")
+      .populate("department", "name")
       .populate("referredBy", "name")
       .populate("patientId", "name email role");
 
@@ -576,7 +833,7 @@ router.put("/:id", async (req, res) => {
 
     res.json(updatedAppointment);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    sendAppointmentWriteError(res, error);
   }
 });
 

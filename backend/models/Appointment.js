@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const ACTIVE_SLOT_STATUSES = ["Scheduled", "Approved", "Rescheduled"];
+
 const AppointmentSchema = new mongoose.Schema(
   {
     doctorId: {
@@ -145,5 +147,35 @@ AppointmentSchema.index({ patientEmail: 1, createdAt: -1 });
 AppointmentSchema.index({ appointmentDate: 1, appointmentTime: 1, createdAt: 1 });
 AppointmentSchema.index({ hospital: 1, appointmentDate: 1 });
 AppointmentSchema.index({ clinic: 1, appointmentDate: 1 });
+AppointmentSchema.index(
+  {
+    type: 1,
+    doctorId: 1,
+    appointmentDate: 1,
+    appointmentTime: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      type: "doctor",
+      status: { $in: ACTIVE_SLOT_STATUSES },
+    },
+  }
+);
+AppointmentSchema.index(
+  {
+    type: 1,
+    labId: 1,
+    appointmentDate: 1,
+    appointmentTime: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      type: "lab",
+      status: { $in: ACTIVE_SLOT_STATUSES },
+    },
+  }
+);
 
 module.exports = mongoose.model("Appointment", AppointmentSchema);

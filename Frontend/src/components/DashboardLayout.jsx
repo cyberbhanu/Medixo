@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Navbar from "./Navbar";
 import "../styles/dashboard.css";
 
@@ -18,6 +19,7 @@ const iconPaths = {
   bell: <path d="M8 14a1.7 1.7 0 0 0 1.6-1H6.4A1.7 1.7 0 0 0 8 14Zm4-2H4l1-1.4V7.4a3 3 0 1 1 6 0v3.2L12 12Z" />,
   lightning: <path d="M8.7 1.8 4.8 8h2.4L6.6 14.2 11.3 7H8.8l-.1-5.2Z" />,
   refresh: <path d="M4.75 3.75A4.75 4.75 0 0 1 10.35 1.5l.82.82M10.25 1.5 12 3.25m-5.5 10.5a4.75 4.75 0 0 1-4.1-2.65l-.84.84M5.75 14.5 4 13" />,
+  chevron: <path d="m4.5 6 3.5 4 3.5-4" />,
 };
 
 export function DashboardIcon({ name }) {
@@ -43,14 +45,37 @@ function StatCard({ item }) {
   );
 }
 
-export function DashboardSection({ title, action, onActionClick, children }) {
+export function DashboardSection({
+  title,
+  action,
+  onActionClick,
+  children,
+  collapsible = false,
+  defaultOpen = true,
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
   return (
     <section className="dashboard-panel">
       <div className="dashboard-panel-header">
-        <h2>{title}</h2>
+        <div className="dashboard-panel-title-row">
+          {collapsible ? (
+            <button
+              type="button"
+              className={`dashboard-collapse-toggle ${isOpen ? "open" : ""}`}
+              onClick={() => setIsOpen((current) => !current)}
+              aria-label={`${isOpen ? "Hide" : "Show"} ${title}`}
+              aria-expanded={isOpen}
+              title={`${isOpen ? "Hide" : "Show"} ${title}`}
+            >
+              <DashboardIcon name="chevron" />
+            </button>
+          ) : null}
+          <h2>{title}</h2>
+        </div>
         {action ? <button type="button" onClick={onActionClick}>{action}</button> : null}
       </div>
-      {children}
+      {!collapsible || isOpen ? children : null}
     </section>
   );
 }
@@ -71,7 +96,7 @@ export default function DashboardLayout({
 
       <section className="dashboard-hero">
         <div className="shell dashboard-hero-inner">
-          <div>
+          <div className="dashboard-hero-copy">
             <span className="dashboard-role-badge">{role}</span>
             <h1>{title}</h1>
             <p>{subtitle}</p>
@@ -85,13 +110,14 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          <div className="dashboard-quick-actions">
+          <div className="dashboard-quick-actions" aria-label="Dashboard quick actions">
             {quickActions.map((action) => (
               <button
                 key={action.label}
                 type="button"
-                className={action.variant || "secondary"}
+                className={`dashboard-quick-action ${action.variant || "secondary"}`}
                 onClick={action.onClick}
+                disabled={action.disabled}
               >
                 <DashboardIcon name={action.icon} />
                 {action.label}

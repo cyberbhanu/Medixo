@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
     email: {
       type: String,
       required: true,
@@ -15,20 +16,76 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+
     password: {
       type: String,
       required: true,
       minlength: 6,
       select: false,
     },
+
     role: {
       type: String,
-      enum: ["super_admin", "doctor", "patient", "laboratory", "staff"],
+      enum: [
+        "super_admin",
+        "doctor",
+        "patient",
+        "laboratory",
+        "staff",
+      ],
       default: "patient",
     },
+
     isActive: {
       type: Boolean,
       default: true,
+    },
+
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other", ""],
+      default: "",
+    },
+
+    address: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    // Staff assignment
+    clinicId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Clinic",
+      default: null,
+    },
+
+    doctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
+      default: null,
+    },
+
+    staffRole: {
+      type: String,
+      default: "Receptionist",
+      trim: true,
+    },
+
+    joiningDate: {
+      type: Date,
+      default: null,
+    },
+
+    profileImage: {
+      type: String,
+      default: "",
     },
   },
   {

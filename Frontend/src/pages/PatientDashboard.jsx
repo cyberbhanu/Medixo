@@ -294,8 +294,12 @@ export default function PatientDashboard() {
     setSavingAppointment(true);
 
     try {
-      await createAppointment(appointmentForm);
-      setSuccess("Appointment booked successfully");
+      const bookedAppointment = await createAppointment(appointmentForm);
+      setSuccess(
+        bookedAppointment?.queueNumber
+          ? `Appointment booked successfully. Your queue number is #${bookedAppointment.queueNumber} of ${bookedAppointment.dailyQueueSize}.`
+          : "Appointment booked successfully"
+      );
       setAppointmentForm({
         type: "doctor",
         doctorId: "",

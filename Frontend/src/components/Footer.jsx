@@ -27,7 +27,7 @@ export default function Footer() {
             <div className="site-footer-stack">
               <div className="site-footer-contact-row">
                 <Icon name="phone" />
-                <a href="tel:+919876543210">+91 98765 43210</a>
+                <a href="tel:+919473361594">+91 9473361594</a>
               </div>
               <div className="site-footer-contact-row">
                 <Icon name="mail" />

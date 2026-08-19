@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getAppointments, getDoctors, updateDoctorHospitalDetails, updateDoctorAvailability, getLabs, createAppointment, updateAppointment } from "../api";
 import DashboardLayout, {
   DashboardIcon,
@@ -7,6 +7,8 @@ import DashboardLayout, {
 import ClinicDetailsCard from "../components/ClinicDetailsCard";
 import EditClinicDetailsModal from "../components/EditClinicDetailsModal";
 import ManageAppointmentModal from "../components/ManageAppointmentModal";
+import PrescriptionPrintButton from "../components/PrescriptionPrintButton";
+import QueueTicketPrintButton from "../components/QueueTicketPrintButton";
 import "../styles/modal.css";
 import { getStoredUser } from "../utils/auth";
 
@@ -22,6 +24,8 @@ export default function DoctorDashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [managingAppointment, setManagingAppointment] = useState(null);
+  const [queueSearch, setQueueSearch] = useState("");
+  const [queueStatus, setQueueStatus] = useState("active");
 
   useEffect(() => {
     if (!user?.id && !user?.email) {
@@ -161,6 +165,36 @@ export default function DoctorDashboard() {
     },
   ];
 
+  const doctorQueue = useMemo(() => {
+    const query = queueSearch.trim().toLowerCase();
+
+    return appointments
+      .filter((appointment) => {
+        if (queueStatus === "active" && ["Scheduled", "Approved", "Rescheduled"].indexOf(appointment.status) === -1) {
+          return false;
+        }
+
+        if (queueStatus !== "active" && queueStatus !== "all" && appointment.status !== queueStatus) {
+          return false;
+        }
+
+        if (!query) return true;
+
+        return [appointment.patientName, appointment.patientPhone, appointment.reason]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      })
+      .sort((left, right) => {
+        const queueDifference = (left.queueNumber || 9999) - (right.queueNumber || 9999);
+        if (queueDifference) return queueDifference;
+        return `${left.appointmentDate} ${left.appointmentTime}`.localeCompare(
+          `${right.appointmentDate} ${right.appointmentTime}`
+        );
+      });
+  }, [appointments, queueSearch, queueStatus]);
+
   return (
     <DashboardLayout
       role="Doctor Dashboard"
@@ -239,38 +273,69 @@ export default function DoctorDashboard() {
       </DashboardSection>
 
       <DashboardSection title="Patient Care Queue" action="Professional view">
-        <div className="dashboard-table">
+        <div className="staff-queue-toolbar">
+          <label className="dashboard-input-group">
+            <span>Find patient</span>
+            <input
+              value={queueSearch}
+              onChange={(event) => setQueueSearch(event.target.value)}
+              placeholder="Name, phone or reason"
+            />
+          </label>
+          <label className="dashboard-input-group">
+            <span>Queue status</span>
+            <select value={queueStatus} onChange={(event) => setQueueStatus(event.target.value)}>
+              <option value="active">Open queue</option>
+              <option value="Scheduled">Waiting</option>
+              <option value="Approved">Checked in</option>
+              <option value="Completed">Completed</option>
+              <option value="all">All statuses</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="staff-queue-list">
           {loading ? (
             <p className="dashboard-empty-state">Loading appointments...</p>
           ) : doctorProfile ? (
-            appointments.length ? (
-              appointments.map((item) => (
-                <article key={item._id} className="dashboard-table-row dashboard-patient-row">
-                  <div className="dashboard-patient-row-header">
-                    <div>
-                      <h3>{item.patientName}</h3>
-                      <p>{item.reason}</p>
-                      <p className="dashboard-muted-note">
-                        {item.disease ? `Condition: ${item.disease}` : "No diagnosis recorded yet"}
-                      </p>
-                    </div>
-                    <div className="dashboard-action-row">
-                      <span className="dashboard-time-pill">
-                        <DashboardIcon name="clock" /> {item.appointmentTime}
-                      </span>
-                      <span className="dashboard-inline-badge">{item.status}</span>
-                    </div>
+            doctorQueue.length ? (
+              doctorQueue.map((item) => (
+                <article key={item._id} className="staff-queue-card">
+                  <div className="staff-queue-number">
+                    <span>Queue</span>
+                    <strong>{item.queueNumber || "-"}</strong>
+                    <small>{item.dailyQueueSize ? `of ${item.dailyQueueSize}` : "Visit"}</small>
                   </div>
-                  <div className="dashboard-action-row">
-                    <button type="button" onClick={() => setManagingAppointment(item)} className="dashboard-primary-action dashboard-compact-action">
-                      Manage Patient
-                    </button>
+                  <div className="staff-queue-main">
+                    <div className="dashboard-record-header">
+                      <div>
+                        <h3>{item.patientName}</h3>
+                        <p>{item.reason || "Consultation appointment"}</p>
+                      </div>
+                      <span className="dashboard-badge">{item.status === "Approved" ? "Checked in" : item.status}</span>
+                    </div>
+                    <div className="dashboard-record-meta">
+                      <span><DashboardIcon name="calendar" /> {item.appointmentDate}</span>
+                      <span><DashboardIcon name="clock" /> {item.appointmentTime || "Not scheduled"}</span>
+                      <span><DashboardIcon name="users" /> {item.patientsAhead ? `${item.patientsAhead} ahead` : "Next in queue"}</span>
+                      <span><DashboardIcon name="message" /> {item.patientPhone || "No phone"}</span>
+                    </div>
+                    <div className="staff-queue-patient-meta">
+                      <span>{item.patientAge || "-"} yrs</span>
+                      <span>{item.patientGender || "-"}</span>
+                      <span>{item.disease || "No diagnosis recorded"}</span>
+                    </div>
+                    <div className="dashboard-record-actions">
+                      <button type="button" onClick={() => setManagingAppointment(item)} className="dashboard-primary-action dashboard-compact-action">Manage Patient</button>
+                      <QueueTicketPrintButton appointment={item} />
+                      <PrescriptionPrintButton appointment={item} compact />
+                    </div>
                   </div>
                 </article>
               ))
             ) : (
               <p className="dashboard-empty-state">
-                No appointments are assigned to your doctor profile yet. Bookings linked to your profile will appear here automatically.
+                No appointments match this queue view. New bookings linked to your doctor profile will appear here automatically.
               </p>
             )
           ) : (

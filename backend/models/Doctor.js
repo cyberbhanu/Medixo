@@ -8,123 +8,146 @@ const DoctorSchema = new mongoose.Schema(
       sparse: true,
       unique: true,
     },
+
     email: {
       type: String,
       trim: true,
       lowercase: true,
       default: "",
     },
+
     name: {
       type: String,
       required: true,
       trim: true,
     },
+
     specialization: {
       type: String,
       required: true,
       trim: true,
     },
+
     qualification: {
       type: String,
       trim: true,
       default: "",
     },
+
     hospital: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Hospital",
       default: null,
     },
+
     hospitals: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Hospital",
       },
     ],
+
     clinic: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Clinic",
       default: null,
     },
+
     clinics: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Clinic",
       },
     ],
+
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
       default: null,
     },
+
     experience: {
       type: Number,
       required: true,
       min: 0,
     },
+
     location: {
       type: String,
       required: true,
       trim: true,
     },
+
     fees: {
       type: Number,
       required: true,
       min: 0,
     },
+
     profileImage: {
       type: String,
       trim: true,
       default: "",
     },
+
     languages: [
       {
         type: String,
         trim: true,
       },
     ],
+
     rating: {
       type: Number,
       min: 0,
       max: 5,
       default: 4.8,
     },
+
     reviewCount: {
       type: Number,
       min: 0,
       default: 0,
     },
+
     consultationType: {
       type: String,
       enum: ["Online", "Offline", "Online/Offline"],
       default: "Offline",
     },
+
     nextAvailableSlot: {
       type: String,
       trim: true,
       default: "",
     },
+
     shortDescription: {
       type: String,
       trim: true,
       default: "",
     },
+
     about: {
       type: String,
       trim: true,
       default: "",
     },
+
     treatmentsOffered: [
       {
         type: String,
         trim: true,
       },
     ],
+
     diseasesTreated: [
       {
         type: String,
         trim: true,
       },
     ],
+
     reviews: [
       {
         patientName: {
@@ -144,6 +167,7 @@ const DoctorSchema = new mongoose.Schema(
         },
       },
     ],
+
     hospitalClinicDetails: {
       hospitalName: {
         type: String,
@@ -192,10 +216,12 @@ const DoctorSchema = new mongoose.Schema(
         },
       ],
     },
+
     detailsSubmitted: {
       type: Boolean,
       default: false,
     },
+
     availability: [
       {
         day: String,
@@ -204,6 +230,7 @@ const DoctorSchema = new mongoose.Schema(
         isAvailable: Boolean,
       },
     ],
+
     slots: [
       {
         date: String,
@@ -215,24 +242,28 @@ const DoctorSchema = new mongoose.Schema(
         },
       },
     ],
+
     labReferrals: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Appointment",
       },
     ],
+
     appointmentIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Appointment",
       },
     ],
+
     patientIds: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
+
     isActive: {
       type: Boolean,
       default: true,

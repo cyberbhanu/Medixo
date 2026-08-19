@@ -1,14 +1,20 @@
 import axios from "axios";
 
-const PRODUCTION_API_URL = "https://medixo-yj2x.onrender.com/api";
+const PRODUCTION_API_URL =
+  "https://medixo-yj2x.onrender.com/api";
 
 const resolveApiBaseUrl = () => {
   const configuredUrl = import.meta.env.VITE_API_URL?.trim();
+
   if (configuredUrl) {
     return configuredUrl;
   }
 
-  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1")
+  ) {
     return "http://127.0.0.1:5000/api";
   }
 
@@ -19,164 +25,432 @@ export const API = axios.create({
   baseURL: resolveApiBaseUrl(),
 });
 
-// Add token to requests
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// =====================================================
+// TOKEN INTERCEPTOR
+// =====================================================
 
-// Handle expired/invalid tokens automatically
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// =====================================================
+// RESPONSE INTERCEPTOR
+// =====================================================
+
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     const requestUrl = error.config?.url || "";
-    const isAuthRequest = requestUrl.includes("/auth/login") || requestUrl.includes("/auth/signup");
 
-    if (error.response && error.response.status === 401 && !isAuthRequest) {
+    const isAuthRequest =
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/signup");
+
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !isAuthRequest
+    ) {
       localStorage.clear();
       window.location.href = "/login";
     }
+
     return Promise.reject(error);
   }
 );
 
-// Auth functions
+// =====================================================
+// AUTH
+// =====================================================
+
 export const signup = async (userData) => {
-  const response = await API.post("/auth/signup", userData);
+  const response = await API.post(
+    "/auth/signup",
+    userData
+  );
+
   return response.data;
 };
 
 export const login = async (userData) => {
-  const response = await API.post("/auth/login", userData);
+  const response = await API.post(
+    "/auth/login",
+    userData
+  );
+
   return response.data;
 };
 
 export const adminCreateUser = async (userData) => {
-  const response = await API.post("/auth/admin/create-user", userData);
+  const response = await API.post(
+    "/auth/admin/create-user",
+    userData
+  );
+
   return response.data;
 };
 
+// =====================================================
+// DOCTORS
+// =====================================================
+
 export const getDoctors = async (params = {}) => {
-  const response = await API.get("/doctors", { params });
+  const response = await API.get("/doctors", {
+    params,
+  });
+
   return response.data;
 };
 
 export const getDoctorById = async (doctorId) => {
-  const response = await API.get(`/doctors/${doctorId}`);
+  const response = await API.get(
+    `/doctors/${doctorId}`
+  );
+
   return response.data;
 };
 
 export const getSpecialties = async () => {
-  const response = await API.get("/doctors/specialties");
+  const response = await API.get(
+    "/doctors/specialties"
+  );
+
   return response.data;
 };
 
 export const getCities = async () => {
-  const response = await API.get("/doctors/locations");
-  return response.data;
-};
+  const response = await API.get(
+    "/doctors/locations"
+  );
 
-export const getLabs = async (params = {}) => {
-  const response = await API.get("/labs", { params });
-  return response.data;
-};
-
-export const getLabById = async (labId) => {
-  const response = await API.get(`/labs/${labId}`);
-  return response.data;
-};
-
-export const getLabTests = async () => {
-  const response = await API.get("/labs/tests");
-  return response.data;
-};
-
-export const getHospitals = async (params = {}) => {
-  const response = await API.get("/hospitals", { params });
-  return response.data;
-};
-
-export const getHospitalById = async (hospitalId) => {
-  const response = await API.get(`/hospitals/${hospitalId}`);
-  return response.data;
-};
-
-export const getClinics = async (params = {}) => {
-  const response = await API.get("/clinics", { params });
-  return response.data;
-};
-
-export const getClinicById = async (clinicId) => {
-  const response = await API.get(`/clinics/${clinicId}`);
-  return response.data;
-};
-
-export const getDepartments = async (params = {}) => {
-  const response = await API.get("/departments", { params });
-  return response.data;
-};
-
-export const getHomepageData = async () => {
-  const response = await API.get("/home");
   return response.data;
 };
 
 export const createDoctor = async (doctorData) => {
-  const response = await API.post("/doctors", doctorData);
+  const response = await API.post(
+    "/doctors",
+    doctorData
+  );
+
   return response.data;
 };
 
-export const updateDoctor = async (doctorId, doctorData) => {
-  const response = await API.put(`/doctors/${doctorId}`, doctorData);
+export const updateDoctor = async (
+  doctorId,
+  doctorData
+) => {
+  const response = await API.put(
+    `/doctors/${doctorId}`,
+    doctorData
+  );
+
   return response.data;
 };
 
 export const deleteDoctor = async (doctorId) => {
-  const response = await API.delete(`/doctors/${doctorId}`);
+  const response = await API.delete(
+    `/doctors/${doctorId}`
+  );
+
   return response.data;
 };
 
-export const updateDoctorHospitalDetails = async (doctorId, hospitalDetails, token) => {
+export const updateDoctorHospitalDetails = async (
+  doctorId,
+  hospitalDetails,
+  token
+) => {
   const response = await API.put(
     `/doctors/${doctorId}/hospital-details`,
-    { hospitalClinicDetails: hospitalDetails },
+    {
+      hospitalClinicDetails:
+        hospitalDetails,
+    },
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
   );
+
   return response.data;
 };
 
-export const updateDoctorAvailability = async (doctorId, availability) => {
-  const response = await API.put(`/doctors/${doctorId}/availability`, { availability });
+export const updateDoctorAvailability = async (
+  doctorId,
+  availability
+) => {
+  const response = await API.put(
+    `/doctors/${doctorId}/availability`,
+    {
+      availability,
+    }
+  );
+
   return response.data;
 };
 
 export const uploadClinicImage = async (file) => {
   const formData = new FormData();
+
   formData.append("image", file);
-  const response = await API.post("/doctors/upload-image", formData);
+
+  const response = await API.post(
+    "/doctors/upload-image",
+    formData
+  );
+
   return response.data;
 };
 
-export const uploadDoctorImage = uploadClinicImage;
+export const uploadDoctorImage =
+  uploadClinicImage;
 
-export const getAppointments = async (params = {}) => {
-  const response = await API.get("/appointments", { params });
+// =====================================================
+// LABS
+// =====================================================
+
+export const getLabs = async (params = {}) => {
+  const response = await API.get("/labs", {
+    params,
+  });
+
   return response.data;
 };
 
-export const createAppointment = async (appointmentData) => {
-  const response = await API.post("/appointments", appointmentData);
+export const getLabById = async (labId) => {
+  const response = await API.get(
+    `/labs/${labId}`
+  );
+
   return response.data;
 };
 
-export const updateAppointment = async (appointmentId, appointmentData) => {
-  const response = await API.put(`/appointments/${appointmentId}`, appointmentData);
+export const getLabTests = async () => {
+  const response = await API.get(
+    "/labs/tests"
+  );
+
+  return response.data;
+};
+
+// =====================================================
+// HOSPITALS
+// =====================================================
+
+export const getHospitals = async (params = {}) => {
+  const response = await API.get("/hospitals", {
+    params,
+  });
+
+  return response.data;
+};
+
+export const getHospitalById = async (
+  hospitalId
+) => {
+  const response = await API.get(
+    `/hospitals/${hospitalId}`
+  );
+
+  return response.data;
+};
+
+// =====================================================
+// CLINICS
+// =====================================================
+
+export const getClinics = async (params = {}) => {
+  const response = await API.get("/clinics", {
+    params,
+  });
+
+  return response.data;
+};
+
+export const getClinicById = async (
+  clinicId
+) => {
+  const response = await API.get(
+    `/clinics/${clinicId}`
+  );
+
+  return response.data;
+};
+
+// =====================================================
+// ADMIN CLINIC MANAGEMENT
+// =====================================================
+
+export const createClinic = async (
+  clinicData
+) => {
+  const response = await API.post(
+    "/clinics",
+    clinicData
+  );
+
+  return response.data;
+};
+
+export const updateClinic = async (
+  clinicId,
+  clinicData
+) => {
+  const response = await API.put(
+    `/clinics/${clinicId}`,
+    clinicData
+  );
+
+  return response.data;
+};
+
+export const deleteClinic = async (
+  clinicId
+) => {
+  const response = await API.delete(
+    `/clinics/${clinicId}`
+  );
+
+  return response.data;
+};
+
+// =====================================================
+// DEPARTMENTS
+// =====================================================
+
+export const getDepartments = async (
+  params = {}
+) => {
+  const response = await API.get(
+    "/departments",
+    {
+      params,
+    }
+  );
+
+  return response.data;
+};
+
+// =====================================================
+// HOMEPAGE
+// =====================================================
+
+export const getHomepageData = async () => {
+  const response = await API.get("/home");
+
+  return response.data;
+};
+
+// =====================================================
+// APPOINTMENTS
+// =====================================================
+
+export const getAppointments = async (
+  params = {}
+) => {
+  const response = await API.get(
+    "/appointments",
+    {
+      params,
+    }
+  );
+
+  return response.data;
+};
+
+export const createAppointment = async (
+  appointmentData
+) => {
+  const response = await API.post(
+    "/appointments",
+    appointmentData
+  );
+
+  return response.data;
+};
+
+export const updateAppointment = async (
+  appointmentId,
+  appointmentData
+) => {
+  const response = await API.put(
+    `/appointments/${appointmentId}`,
+    appointmentData
+  );
+
+  return response.data;
+};
+
+export const getPatientReport = async (params = {}) => {
+  const response = await API.get("/appointments/reports/patients", { params });
+  return response.data;
+};
+
+// =====================================================
+// ADMIN STAFF MANAGEMENT
+// =====================================================
+
+export const getAdminStaff = async () => {
+  const response = await API.get(
+    "/admin/staff"
+  );
+
+  return response.data;
+};
+
+export const createAdminStaff = async (
+  staffData
+) => {
+  const response = await API.post(
+    "/admin/staff",
+    staffData
+  );
+
+  return response.data;
+};
+
+export const updateAdminStaff = async (
+  staffId,
+  staffData
+) => {
+  const response = await API.put(
+    `/admin/staff/${staffId}`,
+    staffData
+  );
+
+  return response.data;
+};
+
+export const toggleAdminStaffStatus = async (
+  staffId,
+  isActive
+) => {
+  const response = await API.patch(
+    `/admin/staff/${staffId}/status`,
+    {
+      isActive,
+    }
+  );
+
+  return response.data;
+};
+
+export const deleteAdminStaff = async (
+  staffId
+) => {
+  const response = await API.delete(
+    `/admin/staff/${staffId}`
+  );
+
   return response.data;
 };

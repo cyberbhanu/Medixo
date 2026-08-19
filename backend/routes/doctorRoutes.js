@@ -265,6 +265,19 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
       location: req.body.location.trim(),
       fees: Number(req.body.fees),
       profileImage: req.body.profileImage?.trim() || "",
+      clinic: req.body.clinicId || req.body.clinic || null,
+      clinics: Array.isArray(req.body.clinics)
+        ? req.body.clinics
+        : req.body.clinicId || req.body.clinic
+          ? [req.body.clinicId || req.body.clinic]
+          : [],
+      hospital: req.body.hospitalId || req.body.hospital || null,
+      hospitals: Array.isArray(req.body.hospitals)
+        ? req.body.hospitals
+        : req.body.hospitalId || req.body.hospital
+          ? [req.body.hospitalId || req.body.hospital]
+          : [],
+      department: req.body.departmentId || req.body.department || null,
     });
 
     if (req.body.userId) {
@@ -298,6 +311,19 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
       location: req.body.location.trim(),
       fees: Number(req.body.fees),
       profileImage: req.body.profileImage?.trim() || "",
+      clinic: req.body.clinicId || req.body.clinic || null,
+      clinics: Array.isArray(req.body.clinics)
+        ? req.body.clinics
+        : req.body.clinicId || req.body.clinic
+          ? [req.body.clinicId || req.body.clinic]
+          : [],
+      hospital: req.body.hospitalId || req.body.hospital || null,
+      hospitals: Array.isArray(req.body.hospitals)
+        ? req.body.hospitals
+        : req.body.hospitalId || req.body.hospital
+          ? [req.body.hospitalId || req.body.hospital]
+          : [],
+      department: req.body.departmentId || req.body.department || null,
     };
 
     if (req.body.userId) {

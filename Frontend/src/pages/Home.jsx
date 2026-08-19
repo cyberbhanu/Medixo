@@ -773,6 +773,11 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="hero-heart" aria-hidden="true">
+            <Icon name="heart" />
+            <span>24/7</span>
+          </div>
+
           <div className="hero-visual" aria-hidden="true">
             <img src={heroDoctor} alt="" />
             <div className="care-badge">
@@ -782,6 +787,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <img className="hero-mobile-art" src={heroDoctor} alt="" aria-hidden="true" />
         <div className="stats-section shell" aria-label="Medixo statistics">
           <div className="stats-card">
             {stats.map((item) => (

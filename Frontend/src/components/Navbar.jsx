@@ -152,17 +152,18 @@ export default function Navbar() {
 
   const handleMobileProfile = () => {
     if (!user) {
-      closeMobileMenu();
-
-      requestAnimationFrame(() => {
-        navigate("/login");
-      });
-
+      setShowMobileMenu(true);
+      setShowMobileAuthMenu(true);
       return;
     }
 
     setShowMobileMenu(true);
     setShowMobileAuthMenu(true);
+  };
+
+  const handleMobileMenu = () => {
+    setShowMobileMenu(true);
+    setShowMobileAuthMenu(false);
   };
 
   const handleOverlayClick = (event) => {
@@ -185,6 +186,7 @@ export default function Navbar() {
   };
 
   const isHashActive = (hash) => location.pathname === "/" && location.hash === hash;
+  const isHomePage = location.pathname === "/";
 
   return (
     <header className="site-header">
@@ -401,7 +403,7 @@ export default function Navbar() {
             <span>Appointments</span>
           </button>
 
-          {/* PROFILE */}
+          {/* MENU ON PUBLIC HOME, PROFILE ON ROLE DASHBOARDS */}
           <button
             type="button"
             className={
@@ -409,10 +411,11 @@ export default function Navbar() {
                 ? "active"
                 : ""
             }
-            onClick={handleMobileProfile}
+            aria-label={isHomePage ? "Open menu" : "Open profile"}
+            onClick={isHomePage ? handleMobileMenu : handleMobileProfile}
           >
-            <Icon name="user" />
-            <span>Profile</span>
+            <Icon name={isHomePage ? "menu" : "user"} />
+            <span>{isHomePage ? "Menu" : "Profile"}</span>
           </button>
         </nav>
       </nav>
