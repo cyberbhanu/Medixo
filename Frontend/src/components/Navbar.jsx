@@ -57,9 +57,9 @@ function RoleLinks({ role, onNavigate }) {
   if (role === "super_admin") {
     return (
       <>
-        <Link to="/" onClick={getClickHandler("/")}>Home</Link>
+        <Link to="/admin-dashboard?view=home" onClick={getClickHandler("/admin-dashboard?view=home")}>Home</Link>
         <Link to="/admin-dashboard" onClick={getClickHandler("/admin-dashboard")}>Doctors</Link>
-        <Link to="/admin-dashboard" onClick={getClickHandler("/admin-dashboard")}>Appointments</Link>
+        <Link to="/admin-dashboard?view=appointments" onClick={getClickHandler("/admin-dashboard?view=appointments")}>Appointments</Link>
       </>
     );
   }
@@ -187,6 +187,13 @@ export default function Navbar() {
 
   const isHashActive = (hash) => location.pathname === "/" && location.hash === hash;
   const isHomePage = location.pathname === "/";
+  const isAdminUser = normalizeRole(user?.role) === "super_admin";
+  const adminAppointmentsPath = "/admin-dashboard?view=appointments";
+  const isAppointmentsActive = user && (
+    isAdminUser
+      ? location.pathname === "/admin-dashboard" && new URLSearchParams(location.search).get("view") === "appointments"
+      : location.pathname === dashboardPath
+  );
 
   return (
     <header className="site-header">
@@ -349,11 +356,11 @@ export default function Navbar() {
           <button
             type="button"
             className={
-              location.pathname === "/" && !location.hash
+              (!user && location.pathname === "/") && !location.hash
                 ? "active"
                 : ""
             }
-            onClick={() => handleMobileNav("/")}
+            onClick={() => handleMobileNav(user ? dashboardPath : "/")}
           >
             <Icon name="home" />
             <span>Home</span>
@@ -381,7 +388,7 @@ export default function Navbar() {
                 ? "active"
                 : ""
             }
-            onClick={() => handleMobileNav("/#hospitals")}
+            onClick={() => handleMobileNav("/?view=public#hospitals")}
           >
             <Icon name="hospital" />
             <span>Hospitals</span>
@@ -391,12 +398,12 @@ export default function Navbar() {
           <button
             type="button"
             className={
-              user && location.pathname === dashboardPath
+              isAppointmentsActive
                 ? "active"
                 : ""
             }
             onClick={() =>
-              handleMobileNav(user ? dashboardPath : "/login")
+              handleMobileNav(user ? (isAdminUser ? adminAppointmentsPath : dashboardPath) : "/login")
             }
           >
             <Icon name="calendar" />

@@ -23,6 +23,7 @@ import DashboardLayout, {
   DashboardSection,
 } from "../components/DashboardLayout";
 import { getStoredUser } from "../utils/auth";
+import { useLocation } from "react-router-dom";
 import PrescriptionPrintButton from "../components/PrescriptionPrintButton";
 
 const EMPTY_DOCTOR = {
@@ -134,6 +135,7 @@ const formatDate = (value) => {
 };
 
 export default function AdminDashboard() {
+  const location = useLocation();
   const user = getStoredUser();
   const firstName = user?.name?.split(" ")[0] || "Admin";
 
@@ -193,6 +195,19 @@ export default function AdminDashboard() {
   const scrollTo = (ref) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  useEffect(() => {
+    const view = new URLSearchParams(location.search).get("view");
+    const timer = window.setTimeout(() => {
+      if (view === "appointments") {
+        scrollTo(appointmentSectionRef);
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [location.search]);
 
   const staffDoctors = useMemo(() => {
     return Array.isArray(doctors) ? doctors : [];

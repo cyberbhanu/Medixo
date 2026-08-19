@@ -40,7 +40,14 @@ function ProtectedDashboard({ allowedRole, children }) {
 }
 
 function RoleAwareHome() {
+  const location = useLocation();
   const user = getStoredUser();
+
+  const isPublicBrowse = new URLSearchParams(location.search).get("view") === "public";
+
+  if (isPublicBrowse) {
+    return <Home />;
+  }
 
   const role = normalizeRole(user?.role);
 
