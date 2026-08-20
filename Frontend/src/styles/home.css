@@ -175,6 +175,90 @@
   background: #e0efff;
 }
 
+/* Keep desktop doctor cards aligned even when names and descriptions differ in length. */
+@media (min-width: 768px) {
+  .home-page .doctor-card {
+    min-height: 360px;
+  }
+
+  .home-page .doctor-card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .home-page .doctor-card-title-row {
+    min-height: 25px;
+  }
+
+  .home-page .doctor-card h3,
+  .home-page .doctor-card-content > p:first-of-type,
+  .home-page .doctor-bottom span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .home-page .doctor-card-content > p:first-of-type {
+    min-height: 35px;
+  }
+
+  .home-page .doctor-specialization {
+    min-height: 20px;
+  }
+
+  .home-page .doctor-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    min-height: 34px;
+  }
+
+  .home-page .doctor-meta span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .home-page .doctor-card-description {
+    min-height: 35px;
+  }
+
+  .home-page .doctor-badge-row {
+    min-height: 32px;
+  }
+
+  .home-page .doctor-bottom {
+    min-height: 28px;
+  }
+
+  .home-page .home-card-actions {
+    margin-top: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-page .home-card-actions.has-visit {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-page .home-card-actions button,
+  .home-page .visit-card-action {
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    min-height: 46px;
+    box-sizing: border-box;
+    margin: 0;
+    align-self: stretch;
+    padding: 8px 5px;
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 .home-search-overlay {
   position: fixed;
   inset: 0;
@@ -1294,21 +1378,38 @@
   }
 
   .home-page .home-card-actions.has-visit {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(44px, 0.55fr) minmax(0, 1.25fr);
   }
 
   .home-page .home-card-actions button {
+    width: 100%;
+    height: 42px;
     min-height: 42px;
-    padding: 7px 5px;
+    min-width: 0;
+    margin: 0;
+    align-self: stretch;
+    padding: 7px 2px;
     border-radius: 10px;
-    font-size: 10px;
+    font-size: 8px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .home-page .visit-card-action {
+    width: 100%;
+    height: 42px;
     min-height: 42px;
-    padding: 7px 5px;
+    min-width: 0;
+    margin: 0;
+    align-self: stretch;
+    padding: 7px 2px;
     border-radius: 10px;
-    font-size: 10px;
+    font-size: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -1373,12 +1474,20 @@
 @media (max-width: 767px) {
   .home-page .doctor-card-side > img,
   .home-page .doctor-card-side > .doctor-card-avatar {
-    width: 64px;
-    height: 64px;
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px;
+    min-height: 64px;
+    flex: 0 0 64px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50% !important;
+    object-fit: cover;
+    object-position: center;
   }
 
   .home-page .doctor-card {
     grid-template-columns: minmax(0, 1fr) 64px;
+    flex-basis: min(94vw, 380px);
     min-height: 0;
     padding-bottom: 7px;
   }
@@ -1425,18 +1534,6 @@
   min-width: 0;
   color: inherit;
   text-decoration: none;
-}
-
-.doctor-location-cta {
-  flex: 0 0 auto;
-  padding: 3px 7px;
-  color: var(--blue);
-  background: #eef6ff;
-  border: 1px solid #d8e8ff;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1.2;
 }
 
 .doctor-location-link:hover {
@@ -1767,6 +1864,44 @@
     width: 90px;
     min-height: 132px;
     height: 132px;
+  }
+}
+
+/* Final desktop readability pass: show card content while preserving one action row. */
+@media (min-width: 1025px) {
+  .home-page .doctor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .home-page .doctor-card h3,
+  .home-page .doctor-card-content > p:first-of-type,
+  .home-page .doctor-bottom span,
+  .home-page .doctor-meta span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .home-page .doctor-card h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .home-page .doctor-meta span {
+    line-height: 1.25;
+  }
+
+  .home-page .home-card-actions,
+  .home-page .home-card-actions.has-visit {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-page .home-card-actions button,
+  .home-page .visit-card-action {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
   }
 }
 

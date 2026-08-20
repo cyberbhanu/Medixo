@@ -612,11 +612,6 @@
   text-underline-offset: 2px;
 }
 
-.doctor-map-link span {
-  color: #0d5bdd;
-  font-size: 11px;
-  font-weight: 800;
-}
 
 /* Keep directory doctor photos circular at every responsive breakpoint. */
 .doctor-profile-avatar {

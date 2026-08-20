@@ -252,7 +252,6 @@ function DoctorLocation({ doctor }) {
       aria-label={`Open ${label} in maps`}
     >
       {content}
-      <span className="doctor-location-cta">Open map</span>
     </a>
   ) : (
     <span>{content}</span>
