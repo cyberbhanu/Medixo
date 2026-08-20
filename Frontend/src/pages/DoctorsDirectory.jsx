@@ -83,7 +83,7 @@ const DoctorCard = ({ doctor, onBookAppointment }) => {
 
       <div className="doctor-profile-details">
         <div className="doctor-profile-detail-item"><Icon name="award" /><div><span className="detail-label">Experience</span><span className="detail-value">{doctor.experience} years</span></div></div>
-        <div className="doctor-profile-detail-item"><Icon name="location" /><div><span className="detail-label">Location</span><span className="detail-value">{doctor.location}</span></div></div>
+        <div className="doctor-profile-detail-item"><Icon name="location" /><div><span className="detail-label">Location</span>{doctor.locationUrl ? <a className="doctor-map-link detail-value" href={doctor.locationUrl} target="_blank" rel="noreferrer">{doctor.location} <span>Open map</span></a> : <span className="detail-value">{doctor.location}</span>}</div></div>
         <div className="doctor-profile-detail-item"><Icon name="phone" /><div><span className="detail-label">Consultation Fee</span><span className="detail-value">Rs. {doctor.fees}</span></div></div>
       </div>
 

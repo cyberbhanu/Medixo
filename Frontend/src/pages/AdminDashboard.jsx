@@ -16,6 +16,7 @@ import {
   updateAdminStaff,
   toggleAdminStaffStatus,
   deleteAdminStaff,
+  updateAdminCustomerPassword,
   updateAppointment,
 } from "../api";
 import DashboardLayout, {
@@ -33,6 +34,7 @@ const EMPTY_DOCTOR = {
   specialization: "",
   experience: "",
   location: "",
+  locationUrl: "",
   fees: "",
   profileImage: "",
   clinicId: "",
@@ -182,11 +184,13 @@ export default function AdminDashboard() {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [clinicSearch, setClinicSearch] = useState("");
   const [staffSearch, setStaffSearch] = useState("");
+  const [customerPasswordDrafts, setCustomerPasswordDrafts] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [savingDoctor, setSavingDoctor] = useState(false);
   const [savingClinic, setSavingClinic] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
+  const [savingCustomerPasswordKey, setSavingCustomerPasswordKey] = useState("");
   const [uploadingDoctorImage, setUploadingDoctorImage] = useState(false);
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState("");
   const [error, setError] = useState("");
@@ -617,6 +621,7 @@ export default function AdminDashboard() {
       specialization: doctor.specialization || "",
       experience: String(doctor.experience ?? ""),
       location: doctor.location || "",
+      locationUrl: doctor.locationUrl || "",
       fees: String(doctor.fees ?? ""),
       profileImage: doctor.profileImage || "",
       clinicId: getId(doctor.clinic),
@@ -761,6 +766,35 @@ export default function AdminDashboard() {
       setError(errorMessage(requestError, "Unable to save staff account."));
     } finally {
       setSavingStaff(false);
+    }
+  };
+
+  const handleCustomerPasswordUpdate = async (patient) => {
+    const email = patient.email?.trim();
+    const password = customerPasswordDrafts[patient.key] || "";
+
+    if (!email) {
+      setError("This customer does not have an email login.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Customer password must be at least 6 characters long.");
+      return;
+    }
+
+    setSavingCustomerPasswordKey(patient.key);
+    setError("");
+    setSuccess("");
+
+    try {
+      await updateAdminCustomerPassword(email, password);
+      setCustomerPasswordDrafts((current) => ({ ...current, [patient.key]: "" }));
+      setSuccess(`Password updated for ${patient.name || "customer"}.`);
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Unable to update customer password."));
+    } finally {
+      setSavingCustomerPasswordKey("");
     }
   };
 
@@ -1091,19 +1125,18 @@ export default function AdminDashboard() {
                 />
               </label>
 
-              {!editingDoctorId ? (
-                <label className="dashboard-input-group">
-                  <span>Password *</span>
-                  <input
-                    type="password"
-                    minLength="6"
-                    value={doctorForm.password}
-                    onChange={(e) => setDoctorForm({ ...doctorForm, password: e.target.value })}
-                    placeholder="Minimum 6 characters"
-                    required
-                  />
-                </label>
-              ) : null}
+              <label className="dashboard-input-group">
+                <span>{editingDoctorId ? "New password (optional)" : "Password *"}</span>
+                <input
+                  type="password"
+                  minLength="6"
+                  value={doctorForm.password}
+                  onChange={(e) => setDoctorForm({ ...doctorForm, password: e.target.value })}
+                  placeholder={editingDoctorId ? "Leave blank to keep current password" : "Minimum 6 characters"}
+                  autoComplete="new-password"
+                  required={!editingDoctorId}
+                />
+              </label>
 
               <label className="dashboard-input-group">
                 <span>Specialization *</span>
@@ -1146,6 +1179,16 @@ export default function AdminDashboard() {
                   onChange={(e) => setDoctorForm({ ...doctorForm, location: e.target.value })}
                   placeholder="Muzaffarpur"
                   required
+                />
+              </label>
+
+              <label className="dashboard-input-group">
+                <span>Map link (optional)</span>
+                <input
+                  type="url"
+                  value={doctorForm.locationUrl}
+                  onChange={(e) => setDoctorForm({ ...doctorForm, locationUrl: e.target.value })}
+                  placeholder="https://maps.google.com/..."
                 />
               </label>
 
@@ -1628,6 +1671,35 @@ export default function AdminDashboard() {
                     </button>
                   </div>
 
+                  {patient.email ? (
+                    <div className="dashboard-action-row dashboard-customer-password-row">
+                      <label className="dashboard-input-group">
+                        <span>Set customer password</span>
+                        <input
+                          type="password"
+                          minLength="6"
+                          value={customerPasswordDrafts[patient.key] || ""}
+                          onChange={(event) =>
+                            setCustomerPasswordDrafts((current) => ({
+                              ...current,
+                              [patient.key]: event.target.value,
+                            }))
+                          }
+                          placeholder="Minimum 6 characters"
+                          autoComplete="new-password"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="dashboard-secondary-action"
+                        onClick={() => handleCustomerPasswordUpdate(patient)}
+                        disabled={savingCustomerPasswordKey === patient.key}
+                      >
+                        {savingCustomerPasswordKey === patient.key ? "Updating..." : "Update Password"}
+                      </button>
+                    </div>
+                  ) : null}
+
                   {selectedPatientKey === patient.key ? (
                     <div className="dashboard-card-list">
                       {patient.appointments.map((appointment) => (
@@ -1761,19 +1833,18 @@ export default function AdminDashboard() {
                 />
               </label>
 
-              {!editingStaffId ? (
-                <label className="dashboard-input-group">
-                  <span>Password *</span>
-                  <input
-                    type="password"
-                    minLength="6"
-                    value={staffForm.password}
-                    onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
-                    placeholder="Minimum 6 characters"
-                    required
-                  />
-                </label>
-              ) : null}
+              <label className="dashboard-input-group">
+                <span>{editingStaffId ? "New password (optional)" : "Password *"}</span>
+                <input
+                  type="password"
+                  minLength="6"
+                  value={staffForm.password}
+                  onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+                  placeholder={editingStaffId ? "Leave blank to keep current password" : "Minimum 6 characters"}
+                  autoComplete="new-password"
+                  required={!editingStaffId}
+                />
+              </label>
 
               <label className="dashboard-input-group">
                 <span>Phone *</span>

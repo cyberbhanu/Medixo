@@ -170,6 +170,7 @@ router.put("/staff/:id", async (req, res) => {
     const {
       name,
       email,
+      password,
       phone,
       gender,
       address,
@@ -187,6 +188,12 @@ router.put("/staff/:id", async (req, res) => {
     if (!staff) {
       return res.status(404).json({
         error: "Staff member not found",
+      });
+    }
+
+    if (password && password.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters long",
       });
     }
 
@@ -216,6 +223,10 @@ router.put("/staff/:id", async (req, res) => {
 
     staff.staffRole = staffRole || staff.staffRole;
 
+    if (password) {
+      staff.password = password;
+    }
+
     if (joiningDate) {
       staff.joiningDate = joiningDate;
     }
@@ -234,6 +245,43 @@ router.put("/staff/:id", async (req, res) => {
     res.status(500).json({
       error: error.message || "Failed to update staff",
     });
+  }
+});
+
+// =====================================================
+// UPDATE CUSTOMER PASSWORD
+// PUT /api/admin/customer-password
+// =====================================================
+
+router.put("/customer-password", async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase();
+    const { password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Customer email and password are required" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    }
+
+    const customer = await User.findOne({
+      email,
+      role: { $in: ["patient", "customer"] },
+    });
+
+    if (!customer) {
+      return res.status(404).json({ error: "Customer login account not found" });
+    }
+
+    customer.password = password;
+    await customer.save();
+
+    res.json({ message: "Customer password updated successfully" });
+  } catch (error) {
+    console.error("Update customer password error:", error);
+    res.status(500).json({ error: error.message || "Failed to update customer password" });
   }
 });
 

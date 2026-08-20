@@ -257,12 +257,17 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
       return res.status(400).json({ error: validationError });
     }
 
+    if (req.body.password && req.body.password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters long" });
+    }
+
     const doctor = new Doctor({
       email: req.body.email?.trim().toLowerCase() || "",
       name: req.body.name.trim(),
       specialization: req.body.specialization.trim(),
       experience: Number(req.body.experience),
       location: req.body.location.trim(),
+      locationUrl: req.body.locationUrl?.trim() || "",
       fees: Number(req.body.fees),
       profileImage: req.body.profileImage?.trim() || "",
       clinic: req.body.clinicId || req.body.clinic || null,
@@ -309,6 +314,7 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
       specialization: req.body.specialization.trim(),
       experience: Number(req.body.experience),
       location: req.body.location.trim(),
+      locationUrl: req.body.locationUrl?.trim() || "",
       fees: Number(req.body.fees),
       profileImage: req.body.profileImage?.trim() || "",
       clinic: req.body.clinicId || req.body.clinic || null,
@@ -338,6 +344,19 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
 
     if (!doctor) {
       return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    if (req.body.password) {
+      const doctorUser = doctor.userId
+        ? await User.findById(doctor.userId)
+        : await User.findOne({ email: doctor.email });
+
+      if (!doctorUser) {
+        return res.status(404).json({ error: "Doctor login account not found" });
+      }
+
+      doctorUser.password = req.body.password;
+      await doctorUser.save();
     }
 
     console.info("admin_action", {

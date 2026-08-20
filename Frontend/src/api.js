@@ -431,6 +431,15 @@ export const updateAdminStaff = async (
   return response.data;
 };
 
+export const updateAdminCustomerPassword = async (email, password) => {
+  const response = await API.put(
+    "/admin/customer-password",
+    { email, password }
+  );
+
+  return response.data;
+};
+
 export const toggleAdminStaffStatus = async (
   staffId,
   isActive

@@ -116,7 +116,11 @@ export default function DoctorProfilePage() {
                 </div>
               </div>
               <div className="doctor-profile-badge-row">
-                <span className="dashboard-inline-badge">{doctor.location}</span>
+                {doctor.locationUrl ? (
+                  <a className="dashboard-inline-badge doctor-map-link" href={doctor.locationUrl} target="_blank" rel="noreferrer">
+                    {doctor.location} · Open map
+                  </a>
+                ) : <span className="dashboard-inline-badge">{doctor.location}</span>}
                 <span className="dashboard-inline-badge">{doctor.experience}+ yrs</span>
                 <span className="dashboard-inline-badge">Rs. {doctor.fees}</span>
               </div>

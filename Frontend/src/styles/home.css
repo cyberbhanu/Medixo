@@ -126,15 +126,53 @@
 
 .home-card-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 9px;
   margin-top: 14px;
+}
+
+.home-card-actions button {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  height: auto;
+  padding: 10px 8px;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .home-card-actions button.secondary-card-action {
   color: #0d5bdd;
   background: #eef6ff;
   border: 1px solid #d8e8ff;
+}
+
+.home-card-actions.has-visit {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr) minmax(0, 1fr);
+}
+
+.visit-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 60px;
+  padding: 10px 8px;
+  color: #0d5bdd;
+  background: #eef6ff;
+  border: 1px solid #d8e8ff;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+}
+
+.visit-card-action:hover {
+  background: #e0efff;
 }
 
 .home-search-overlay {
@@ -1151,6 +1189,293 @@
 
   .home-page .mobile-label {
     display: inline;
+  }
+}
+
+/* Compact swipeable doctor cards on phones. */
+@media (max-width: 767px) {
+  .home-page .doctor-grid {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    padding: 2px 2px 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .home-page .doctor-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-page .doctor-card {
+    flex: 0 0 min(84vw, 340px);
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    min-height: 0;
+    height: auto;
+    padding: 12px;
+    scroll-snap-align: start;
+  }
+
+  .home-page .doctor-card img,
+  .home-page .doctor-card-avatar {
+    width: 64px;
+    height: 88px;
+    border-radius: 9px;
+  }
+
+  .home-page .doctor-card-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .home-page .doctor-card-title-row {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .home-page .doctor-card h3 {
+    margin-top: 1px;
+    font-size: 14px;
+  }
+
+  .home-page .doctor-card-title-row .rating {
+    font-size: 10px;
+  }
+
+  .home-page .doctor-card p,
+  .home-page .doctor-specialization {
+    font-size: 11px;
+  }
+
+  .home-page .doctor-meta {
+    gap: 5px;
+    margin-top: 10px;
+    font-size: 10px;
+  }
+
+  .home-page .doctor-card-description {
+    font-size: 11px;
+    line-height: 1.35;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .home-page .doctor-badge-row {
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .home-page .availability-badge {
+    min-height: 22px;
+    padding: 0 6px;
+    font-size: 9px;
+  }
+
+  .home-page .doctor-bottom {
+    gap: 6px;
+    margin-top: 9px;
+    font-size: 10px;
+  }
+
+  .home-page .doctor-bottom strong {
+    font-size: 11px;
+  }
+
+  .home-page .home-card-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .home-page .home-card-actions.has-visit {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr) minmax(0, 1fr);
+  }
+
+  .home-page .home-card-actions button {
+    min-height: 42px;
+    padding: 7px 5px;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+
+  .home-page .visit-card-action {
+    min-height: 42px;
+    padding: 7px 5px;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+}
+
+/* Doctor profile photos use a consistent circular treatment everywhere on the home page. */
+.home-page .doctor-card img,
+.home-page .doctor-card-avatar,
+.home-page .home-search-result-card img,
+.home-page .home-search-avatar {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+.home-page .doctor-card img,
+.home-page .doctor-card-avatar {
+  width: 92px;
+  height: 92px;
+}
+
+.home-page .home-search-result-card img,
+.home-page .home-search-avatar {
+  width: 86px;
+  height: 86px;
+}
+
+/* Place the doctor portrait in the open right column and preserve the full image. */
+.home-page .doctor-card {
+  grid-template-columns: minmax(0, 1fr) 92px;
+}
+
+.home-page .doctor-card-side > img,
+.home-page .doctor-card-side > .doctor-card-avatar {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: end;
+  object-fit: contain;
+  object-position: center;
+  background: #eef4ff;
+}
+
+.home-page .doctor-card-content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.home-page .doctor-card-side {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  align-self: start;
+  justify-self: end;
+}
+
+.home-page .doctor-card-side .rating {
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+@media (max-width: 767px) {
+  .home-page .doctor-card-side > img,
+  .home-page .doctor-card-side > .doctor-card-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .home-page .doctor-card {
+    grid-template-columns: minmax(0, 1fr) 64px;
+    min-height: 0;
+    padding-bottom: 7px;
+  }
+
+  .home-page .home-search-result-card img,
+  .home-page .home-search-avatar {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+/* Match clinic, hospital, and laboratory cards to the doctor-card layout. */
+.home-page .resource-card {
+  grid-template-columns: minmax(0, 1fr) 92px;
+}
+
+.home-page .resource-media {
+  grid-column: 2;
+  grid-row: 1;
+  width: 92px;
+  height: 92px;
+  min-height: 0;
+  align-self: start;
+  justify-self: end;
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+.home-page .resource-media img {
+  object-fit: contain;
+  object-position: center;
+  border-radius: 50%;
+}
+
+.home-page .resource-body {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.doctor-location-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.doctor-location-cta {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  color: var(--blue);
+  background: #eef6ff;
+  border: 1px solid #d8e8ff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.doctor-location-link:hover {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .home-page .resource-card {
+    grid-template-columns: minmax(0, 1fr) 64px;
+  }
+
+  .home-page .resource-media {
+    width: 64px;
+    height: 64px;
+  }
+
+  .home-page .resource-grid {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    padding: 2px 2px 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .home-page .resource-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-page .resource-grid .resource-card {
+    flex: 0 0 min(84vw, 340px);
+    min-height: 0;
+    padding-bottom: 7px;
+    scroll-snap-align: start;
   }
 }
 

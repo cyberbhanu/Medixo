@@ -377,6 +377,7 @@ router.post(
         specialization,
         experience,
         location,
+        locationUrl,
         fees,
         profileImage,
 
@@ -543,6 +544,9 @@ router.post(
 
             location:
               location.trim(),
+
+            locationUrl:
+              locationUrl?.trim() || "",
 
             fees: Number(fees),
 

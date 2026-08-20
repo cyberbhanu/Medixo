@@ -504,6 +504,11 @@
   align-items: center;
 }
 
+.dashboard-customer-password-row .dashboard-input-group {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
 .dashboard-muted-note {
   margin-top: 4px;
   color: #4b5563;
@@ -716,7 +721,7 @@
   flex: 0 0 auto;
   object-fit: cover;
   object-position: center top;
-  border-radius: 8px;
+  border-radius: 50%;
   background: #eef5ff;
 }
 
@@ -806,10 +811,13 @@
 }
 
 .dashboard-upload-box img {
-  width: 100%;
+  width: 128px;
+  max-width: 100%;
   height: 128px;
+  aspect-ratio: 1;
   object-fit: cover;
   object-position: center top;
+  border-radius: 50%;
 }
 
 .dashboard-url-input {
@@ -1132,6 +1140,29 @@
   font-weight: 800;
 }
 
+.dashboard-recommend-card img,
+.dashboard-doctor-avatar {
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.doctor-profile-photo {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+.doctor-map-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.doctor-map-link:hover {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .doctor-profile-identity h1,
 .doctor-profile-section-header h2 {
   margin: 0;
@@ -1278,9 +1309,9 @@
   }
 
   .doctor-profile-photo {
-    width: 100%;
+    width: min(100%, 180px);
     height: auto;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 1;
   }
 
   .doctor-profile-facility-grid {

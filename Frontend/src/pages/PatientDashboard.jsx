@@ -862,7 +862,7 @@ export default function PatientDashboard() {
                 </div>
                 <div>
                   <h3>{doctor.name}</h3>
-                  <p>{doctor.specialization} - {doctor.location}</p>
+                  <p>{doctor.specialization} - {doctor.locationUrl ? <a className="doctor-map-link" href={doctor.locationUrl} target="_blank" rel="noreferrer">{doctor.location} · Open map</a> : doctor.location}</p>
                   <strong>Rs. {doctor.fees}</strong>
                 </div>
                 <button type="button" onClick={() => startFollowUpBooking(doctor)}>

@@ -78,6 +78,12 @@ const DoctorSchema = new mongoose.Schema(
       trim: true,
     },
 
+    locationUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     fees: {
       type: Number,
       required: true,

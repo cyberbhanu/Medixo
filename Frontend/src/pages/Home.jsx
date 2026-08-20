@@ -221,6 +221,16 @@ const getFacilityName = (doctor) =>
   doctor.hospitals?.[0]?.name ||
   "Independent Practice";
 
+const getDoctorVisitUrl = (doctor) => {
+  if (doctor.locationUrl) return doctor.locationUrl;
+
+  const searchText = [getFacilityName(doctor), getDoctorCity(doctor), "India"]
+    .filter(Boolean)
+    .join(", ");
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchText)}`;
+};
+
 const getDoctorCity = (doctor) =>
   doctor.location ||
   doctor.clinic?.city ||
@@ -228,6 +238,26 @@ const getDoctorCity = (doctor) =>
   doctor.clinics?.[0]?.city ||
   doctor.hospitals?.[0]?.city ||
   "";
+
+function DoctorLocation({ doctor }) {
+  const label = getDoctorCity(doctor) || "Location pending";
+  const content = <><Icon name="pin" /> {label}</>;
+
+  return doctor.locationUrl ? (
+    <a
+      className="doctor-location-link"
+      href={doctor.locationUrl}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Open ${label} in maps`}
+    >
+      {content}
+      <span className="doctor-location-cta">Open map</span>
+    </a>
+  ) : (
+    <span>{content}</span>
+  );
+}
 
 const isAvailableToday = (doctor) => {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
@@ -345,7 +375,7 @@ function SearchResultsModal({ doctors, filters, loading, error, onClose, onBook,
                   </div>
                   <p>{doctor.specialization} - {doctor.qualification || "Verified Medical Practitioner"}</p>
                   <div className="doctor-meta">
-                    <span><Icon name="pin" /> {getDoctorCity(doctor) || "Location pending"}</span>
+                     <DoctorLocation doctor={doctor} />
                     <span><Icon name="clock" /> {doctor.experience || 0}+ yrs</span>
                     <span>{getNextSlot(doctor)}</span>
                   </div>
@@ -408,23 +438,25 @@ function DoctorCard({ doctor, onBook, onView }) {
 
   return (
     <article className="doctor-card premium-doctor-card">
-      {doctor.profileImage || doctor.image ? (
-        <img src={doctor.profileImage || doctor.image} alt={doctor.name} loading="lazy" />
-      ) : (
-        <div className="doctor-card-avatar" aria-hidden="true">
-          {doctor.name?.charAt(0) || "D"}
-        </div>
-      )}
+      <div className="doctor-card-side">
+        <span className="rating"><Icon name="star" /> {Number(doctor.rating || 4.8).toFixed(1)} ({doctor.reviewCount || 0})</span>
+        {doctor.profileImage || doctor.image ? (
+          <img src={doctor.profileImage || doctor.image} alt={doctor.name} loading="lazy" />
+        ) : (
+          <div className="doctor-card-avatar" aria-hidden="true">
+            {doctor.name?.charAt(0) || "D"}
+          </div>
+        )}
+      </div>
       <div className="doctor-card-content">
         <div className="doctor-card-title-row">
           <h3>Dr. {doctor.name}</h3>
-          <span className="rating"><Icon name="star" /> {Number(doctor.rating || 4.8).toFixed(1)} ({doctor.reviewCount || 0})</span>
         </div>
         <p>{doctor.qualification || "Verified Medical Practitioner"}</p>
         <strong className="doctor-specialization">{doctor.specialization}</strong>
         <div className="doctor-meta">
           <span><Icon name="clock" /> {doctor.experience}+ yrs</span>
-          <span><Icon name="pin" /> {getDoctorCity(doctor)}</span>
+           <DoctorLocation doctor={doctor} />
           <span>{languages}</span>
         </div>
         <p className="doctor-card-description">{getDoctorDescription(doctor)}</p>
@@ -439,8 +471,17 @@ function DoctorCard({ doctor, onBook, onView }) {
           <span><Icon name="hospital" /> {facilityName}</span>
           <strong>Rs. {doctor.fees}</strong>
         </div>
-        <div className="home-card-actions">
+        <div className="home-card-actions has-visit">
           <button type="button" onClick={() => onView(doctor)}>View Profile</button>
+          <a
+            className="visit-card-action"
+            href={getDoctorVisitUrl(doctor)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Visit ${getDoctorCity(doctor) || "doctor location"}`}
+          >
+            Visit
+          </a>
           <button type="button" className="secondary-card-action" onClick={() => onBook(doctor)}>Book Appointment</button>
         </div>
       </div>
