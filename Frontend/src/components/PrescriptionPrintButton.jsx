@@ -27,6 +27,7 @@ const getDisplayValue = (value, fallback = "Not provided") =>
 const printPrescription = (appointment) => {
   const doctor = appointment?.doctorId || {};
   const clinic = appointment?.clinic || {};
+  const hospital = appointment?.hospital || {};
   const printWindow = window.open("", "medixo-prescription", "width=960,height=760");
 
   if (!printWindow) {
@@ -42,8 +43,33 @@ const printPrescription = (appointment) => {
     ["Age / gender", `${getDisplayValue(appointment?.patientAge)} / ${getDisplayValue(appointment?.patientGender)}`],
     ["Phone", getDisplayValue(appointment?.patientPhone)],
     ["Email", getDisplayValue(appointment?.patientEmail)],
+    ["Booking ID", getDisplayValue(appointment?.bookingReference)],
+    ["Queue", appointment?.queueNumber ? `#${appointment.queueNumber} of ${appointment.dailyQueueSize || "-"}` : "Not assigned"],
+    ["Patients ahead", appointment?.patientsAhead ? String(appointment.patientsAhead) : "Next in queue"],
     ["Appointment", `${formatDate(appointment?.appointmentDate)} at ${getDisplayValue(appointment?.appointmentTime)}`],
+    ["Status", getDisplayValue(appointment?.status)],
+    ["Visit type", appointment?.type === "lab" ? "Laboratory test" : "Doctor consultation"],
+    ["Doctor", getDisplayValue(doctor.name, "Assigned doctor")],
+    ["Specialization", getDisplayValue(doctor.specialization)],
+    ["Doctor location", getDisplayValue(doctor.location)],
+    ["Doctor fees", doctor.fees !== undefined && doctor.fees !== null ? `Rs. ${doctor.fees}` : "Not provided"],
+    ["Clinic", clinicName],
+    ["Clinic address", getDisplayValue(clinic.address)],
+    ["Clinic phone", getDisplayValue(clinic.phone)],
+    ["Hospital", getDisplayValue(hospital.name)],
+    ["Hospital address", getDisplayValue(hospital.address)],
+    ["Department", getDisplayValue(appointment?.department?.name)],
+    ["Laboratory", getDisplayValue(appointment?.labId?.name)],
+    ["Lab location", getDisplayValue(appointment?.labId?.location)],
     ["Reason for visit", getDisplayValue(appointment?.reason)],
+    ["Disease / diagnosis", getDisplayValue(appointment?.disease)],
+    ["Test name", getDisplayValue(appointment?.testName)],
+    ["Payment status", getDisplayValue(appointment?.paymentStatus)],
+    ["Patient notes", getDisplayValue(appointment?.notes)],
+    ["Treatment plan", getDisplayValue(appointment?.treatmentPlan)],
+    ["Existing prescription", getDisplayValue(appointment?.prescription)],
+    ["Prescription link", getDisplayValue(appointment?.prescriptionUrl)],
+    ["Report link", getDisplayValue(appointment?.reportUrl)],
   ];
 
   const detailsMarkup = patientDetails
@@ -75,7 +101,7 @@ const printPrescription = (appointment) => {
           .detail:nth-child(2n) { border-right: 0; }
           .detail:nth-last-child(-n + 2) { border-bottom: 0; }
           .detail span { color: #60708a; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
-          .detail strong { color: #172033; font-size: 13px; font-weight: 700; }
+          .detail strong { color: #172033; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
           .rx-heading { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; color: #0d5bdd; font-size: 18px; font-weight: 800; }
           .rx-heading::before { content: "Rx"; display: grid; place-items: center; width: 34px; height: 34px; color: #fff; background: #0d5bdd; border-radius: 50%; font-family: Georgia, serif; font-size: 19px; font-style: italic; }
           .line { height: 30px; border-bottom: 1px solid #b9c6d8; }

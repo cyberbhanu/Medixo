@@ -46,11 +46,11 @@ const Login = () => {
               {error && <div className="auth-error">{error}</div>}
               
               <div className="form-group">
-                <label className="form-label">Email Address</label>
+                <label className="form-label">Email or Patient ID</label>
                 <input
-                  type="email"
+                  type="text"
                   name="email"
-                  placeholder="Enter your email"
+                  placeholder="Enter email or Patient ID"
                   value={formData.email}
                   onChange={handleChange}
                   className="form-input"

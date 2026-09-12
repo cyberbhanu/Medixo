@@ -228,27 +228,36 @@ export default function DoctorProfilePage() {
               {guestBooking ? (
                 <div className="guest-booking-confirmation">
                   <h3>Keep these booking details</h3>
-                  <p>Use them on My Booking to view or manage this appointment.</p>
+                  <p>Use the Patient Login ID and password to open the Patient Dashboard, or use My Booking to manage this appointment directly.</p>
                   <div className="guest-booking-credentials">
                     <div><span>Booking ID</span><strong>{guestBooking.bookingReference}</strong></div>
                     <div><span>Password</span><strong>{guestBooking.bookingPassword}</strong></div>
                     <div><span>Queue</span><strong>#{guestBooking.appointment?.queueNumber || "-"}</strong></div>
                   </div>
+                  <div className="guest-booking-credentials">
+                    <div><span>Patient Login ID</span><strong>{guestBooking.patientLoginId}</strong></div>
+                    <div><span>Patient Login Password</span><strong>{guestBooking.patientLoginPassword || "Use your existing patient password"}</strong></div>
+                  </div>
+                  <p>{guestBooking.patientAccountExists ? "This email already has a patient account, so use its existing password to sign in." : "Use the Patient Login section with the Patient Login ID and password above."}</p>
                   <button type="button" className="dashboard-primary-action" onClick={() => navigate("/my-booking")}>Open My Booking</button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="dashboard-form-grid">
+                  <label className="dashboard-input-group">
+                    <span>Your name</span>
+                    <input
+                      required
+                      value={form.patientName}
+                      onChange={(event) => setForm({ ...form, patientName: event.target.value })}
+                      placeholder="Full name"
+                      readOnly={isLoggedIn}
+                    />
+                  </label>
                   {!isLoggedIn ? (
-                    <>
-                      <label className="dashboard-input-group">
-                        <span>Your name</span>
-                        <input required value={form.patientName} onChange={(event) => setForm({ ...form, patientName: event.target.value })} placeholder="Full name" />
-                      </label>
-                      <label className="dashboard-input-group">
+                    <label className="dashboard-input-group">
                         <span>Email</span>
                         <input required type="email" value={form.patientEmail} onChange={(event) => setForm({ ...form, patientEmail: event.target.value })} placeholder="you@example.com" />
                       </label>
-                    </>
                   ) : null}
                   <label className="dashboard-input-group">
                     <span>Phone</span>

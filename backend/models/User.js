@@ -17,6 +17,13 @@ const UserSchema = new mongoose.Schema(
       lowercase: true,
     },
 
+    patientId: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: undefined,
+    },
+
     password: {
       type: String,
       required: true,
@@ -100,6 +107,8 @@ UserSchema.pre("save", async function saveUser() {
 
   this.password = await bcrypt.hash(this.password, 10);
 });
+
+UserSchema.index({ patientId: 1 }, { unique: true, sparse: true });
 
 UserSchema.methods.comparePassword = function comparePassword(password) {
   return bcrypt.compare(password, this.password);

@@ -1,5 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
@@ -21,12 +22,16 @@ const VALID_ROLES = Object.values(ROLES);
 // Fixed email regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const generatePatientId = () =>
+  `PAT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
 // =====================================================
 // FORMAT USER RESPONSE
 // =====================================================
 
 const formatUserResponse = (user) => ({
   id: user._id,
+  patientId: user.patientId || null,
   name: user.name,
   email: user.email,
   role: normalizeRole(user.role) || user.role,
@@ -192,6 +197,7 @@ router.post("/signup", async (req, res) => {
       email: normalizedEmail,
       password,
       role: selectedRole,
+      patientId: selectedRole === ROLES.PATIENT ? generatePatientId() : undefined,
     });
 
     await user.save();
@@ -284,10 +290,7 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const {
-      email,
-      password,
-    } = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -296,11 +299,12 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const normalizedEmail =
-      email.trim().toLowerCase();
-
+    const identifier = String(email).trim();
     const user = await User.findOne({
-      email: normalizedEmail,
+      $or: [
+        { email: identifier.toLowerCase() },
+        { patientId: identifier.toUpperCase() },
+      ],
     }).select("+password");
 
     if (!user) {
@@ -493,6 +497,7 @@ router.post(
         email: normalizedEmail,
         password,
         role: selectedRole,
+        patientId: selectedRole === ROLES.PATIENT ? generatePatientId() : undefined,
       });
 
       await user.save();

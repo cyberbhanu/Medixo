@@ -367,6 +367,8 @@ const attachQueueDetails = (appointments) => {
 };
 
 router.post("/guest", async (req, res) => {
+  let createdPatient = null;
+
   try {
     const requestBody = {
       ...req.body,
@@ -387,8 +389,33 @@ router.post("/guest", async (req, res) => {
 
     const bookingReference = generateBookingReference();
     const bookingPassword = generateBookingPassword();
+    const normalizedEmail = requestBody.patientEmail.trim().toLowerCase();
+    let patientUser = await User.findOne({ email: normalizedEmail });
+
+    if (patientUser && patientUser.role !== ROLES.PATIENT) {
+      return res.status(409).json({ error: "This email is already assigned to a staff or provider account" });
+    }
+
+    if (!patientUser) {
+      patientUser = new User({
+        name: requestBody.patientName.trim(),
+        email: normalizedEmail,
+        password: bookingPassword,
+        role: ROLES.PATIENT,
+        patientId: `PAT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
+        phone: requestBody.patientPhone.trim(),
+        gender: requestBody.patientGender || "Other",
+      });
+      await patientUser.save();
+      createdPatient = patientUser;
+    } else if (!patientUser.patientId) {
+      patientUser.patientId = `PAT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+      await patientUser.save();
+    }
+
     const appointment = new Appointment({
       ...buildAppointmentPayload(requestBody),
+      patientId: patientUser._id,
       bookingReference,
       bookingPasswordHash: await bcrypt.hash(bookingPassword, 10),
     });
@@ -407,6 +434,9 @@ router.post("/guest", async (req, res) => {
       message: "Appointment booked successfully",
       bookingReference,
       bookingPassword,
+      patientLoginId: patientUser.patientId,
+      patientLoginPassword: createdPatient ? bookingPassword : null,
+      patientAccountExists: !createdPatient,
       appointment: {
         ...sanitizeGuestAppointment(populatedAppointment),
         queueNumber: queueDetails?.queueNumber || null,
@@ -415,6 +445,9 @@ router.post("/guest", async (req, res) => {
       },
     });
   } catch (error) {
+    if (createdPatient?._id) {
+      await User.findByIdAndDelete(createdPatient._id).catch(() => null);
+    }
     return sendAppointmentWriteError(res, error);
   }
 });
