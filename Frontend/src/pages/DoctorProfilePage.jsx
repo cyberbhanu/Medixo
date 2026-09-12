@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getDoctorById, createAppointment } from "../api";
+import { getDoctorById, createAppointment, createGuestAppointment } from "../api";
 import { getStoredUser } from "../utils/auth";
 import "../styles/dashboard.css";
 
@@ -15,6 +15,7 @@ export default function DoctorProfilePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [slotConflict, setSlotConflict] = useState(false);
+  const [guestBooking, setGuestBooking] = useState(null);
   const [form, setForm] = useState({
     patientName: user?.name || "",
     patientEmail: user?.email || "",
@@ -66,13 +67,17 @@ export default function DoctorProfilePage() {
     setSlotConflict(false);
 
     try {
-      await createAppointment({
+      const appointmentData = {
         doctorId: doctor._id,
         type: "doctor",
         ...form,
         patientAge: Number(form.patientAge),
-      });
+      };
+      const bookingResponse = user
+        ? await createAppointment(appointmentData)
+        : await createGuestAppointment(appointmentData);
       setSuccess("Appointment booked successfully");
+      setGuestBooking(user ? null : bookingResponse);
       setForm({
         patientName: user?.name || "",
         patientEmail: user?.email || "",
@@ -215,13 +220,36 @@ export default function DoctorProfilePage() {
                 <p>
                   {isLoggedIn
                     ? `Fill in your details below to request an appointment with Dr. ${doctor.name}.`
-                    : "Please log in to book an appointment with this doctor."}
+                    : "Book directly without creating an account. You will receive a booking ID and password."}
                 </p>
               </div>
               {error ? <div className="dashboard-banner error">{error}</div> : null}
               {success ? <div className="dashboard-banner success">{success}</div> : null}
-              {isLoggedIn ? (
+              {guestBooking ? (
+                <div className="guest-booking-confirmation">
+                  <h3>Keep these booking details</h3>
+                  <p>Use them on My Booking to view or manage this appointment.</p>
+                  <div className="guest-booking-credentials">
+                    <div><span>Booking ID</span><strong>{guestBooking.bookingReference}</strong></div>
+                    <div><span>Password</span><strong>{guestBooking.bookingPassword}</strong></div>
+                    <div><span>Queue</span><strong>#{guestBooking.appointment?.queueNumber || "-"}</strong></div>
+                  </div>
+                  <button type="button" className="dashboard-primary-action" onClick={() => navigate("/my-booking")}>Open My Booking</button>
+                </div>
+              ) : (
                 <form onSubmit={handleSubmit} className="dashboard-form-grid">
+                  {!isLoggedIn ? (
+                    <>
+                      <label className="dashboard-input-group">
+                        <span>Your name</span>
+                        <input required value={form.patientName} onChange={(event) => setForm({ ...form, patientName: event.target.value })} placeholder="Full name" />
+                      </label>
+                      <label className="dashboard-input-group">
+                        <span>Email</span>
+                        <input required type="email" value={form.patientEmail} onChange={(event) => setForm({ ...form, patientEmail: event.target.value })} placeholder="you@example.com" />
+                      </label>
+                    </>
+                  ) : null}
                   <label className="dashboard-input-group">
                     <span>Phone</span>
                     <input required value={form.patientPhone} onChange={(event) => setForm({ ...form, patientPhone: event.target.value })} placeholder="9876543210" />
@@ -285,8 +313,6 @@ export default function DoctorProfilePage() {
                     </button>
                   </div>
                 </form>
-              ) : (
-                <button type="button" className="dashboard-primary-action" onClick={() => navigate("/login")}>Login to Book Appointment</button>
               )}
             </section>
           </>

@@ -10,6 +10,7 @@ const StaffLogin = lazy(() => import("./components/StaffLogin"));
 const Signup = lazy(() => import("./components/Signup"));
 const DoctorsDirectory = lazy(() => import("./pages/DoctorsDirectory"));
 const DoctorProfilePage = lazy(() => import("./pages/DoctorProfilePage"));
+const GuestBookingPage = lazy(() => import("./pages/GuestBookingPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const DoctorDashboard = lazy(() => import("./pages/DoctorDashboard"));
 const PatientDashboard = lazy(() => import("./pages/PatientDashboard"));
@@ -101,6 +102,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/doctors" element={<DoctorsDirectory />} />
           <Route path="/doctors/:doctorId" element={<DoctorProfilePage />} />
+          <Route path="/my-booking" element={<GuestBookingPage />} />
           <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
           <Route path="/terms-conditions" element={<LegalPage type="terms" />} />
           <Route

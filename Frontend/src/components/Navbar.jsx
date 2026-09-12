@@ -92,6 +92,7 @@ function RoleLinks({ role, onNavigate }) {
       <Link to="/#hospitals" onClick={getClickHandler("/#hospitals")}>Hospitals</Link>
       <Link to="/#lab-tests" onClick={getClickHandler("/#lab-tests")}>Lab Tests</Link>
       <Link to="/#health-packages" onClick={getClickHandler("/#health-packages")}>Health Packages</Link>
+      <Link to="/my-booking" onClick={getClickHandler("/my-booking")}>My Booking</Link>
     </>
   );
 }

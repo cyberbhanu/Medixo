@@ -1109,6 +1109,73 @@
   font-weight: 700;
 }
 
+.guest-booking-confirmation,
+.guest-booking-actions {
+  display: grid;
+  gap: 14px;
+}
+
+.guest-booking-confirmation {
+  padding: 20px;
+  background: #f5f9ff;
+  border: 1px solid #d9e8fb;
+  border-radius: 12px;
+}
+
+.guest-booking-confirmation h3,
+.guest-booking-confirmation p,
+.guest-booking-actions h2 {
+  margin: 0;
+}
+
+.guest-booking-confirmation p {
+  color: #526582;
+}
+
+.guest-booking-credentials,
+.guest-booking-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.guest-booking-credentials > div,
+.guest-booking-details > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #dbe7f5;
+  border-radius: 8px;
+}
+
+.guest-booking-credentials span,
+.guest-booking-details span {
+  color: #60728d;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.guest-booking-credentials strong,
+.guest-booking-details strong {
+  color: #15345f;
+  overflow-wrap: anywhere;
+}
+
+.guest-booking-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.guest-booking-status-row strong {
+  color: #15345f;
+  overflow-wrap: anywhere;
+}
+
 .dashboard-form-actions.full-width {
   grid-column: 1 / -1;
 }
@@ -1340,6 +1407,16 @@
 
   .doctor-profile-facility-grid {
     grid-template-columns: 1fr;
+  }
+
+  .guest-booking-credentials,
+  .guest-booking-details {
+    grid-template-columns: 1fr;
+  }
+
+  .guest-booking-status-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

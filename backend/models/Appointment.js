@@ -69,6 +69,17 @@ const AppointmentSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
       default: "Other",
     },
+    bookingReference: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: undefined,
+    },
+    bookingPasswordHash: {
+      type: String,
+      select: false,
+      default: undefined,
+    },
     appointmentDate: {
       type: String,
       required: true,
@@ -144,6 +155,7 @@ AppointmentSchema.index({ doctorId: 1, createdAt: -1 });
 AppointmentSchema.index({ labId: 1, createdAt: -1 });
 AppointmentSchema.index({ patientId: 1, createdAt: -1 });
 AppointmentSchema.index({ patientEmail: 1, createdAt: -1 });
+AppointmentSchema.index({ bookingReference: 1 }, { unique: true, sparse: true });
 AppointmentSchema.index({ appointmentDate: 1, appointmentTime: 1, createdAt: 1 });
 AppointmentSchema.index({ hospital: 1, appointmentDate: 1 });
 AppointmentSchema.index({ clinic: 1, appointmentDate: 1 });

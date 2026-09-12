@@ -54,11 +54,13 @@ API.interceptors.response.use(
     const isAuthRequest =
       requestUrl.includes("/auth/login") ||
       requestUrl.includes("/auth/signup");
+    const isGuestBookingRequest = requestUrl.includes("/appointments/guest");
 
     if (
       error.response &&
       error.response.status === 401 &&
-      !isAuthRequest
+      !isAuthRequest &&
+      !isGuestBookingRequest
     ) {
       localStorage.clear();
       window.location.href = "/login";
@@ -376,6 +378,33 @@ export const createAppointment = async (
     appointmentData
   );
 
+  return response.data;
+};
+
+export const createGuestAppointment = async (appointmentData) => {
+  const response = await API.post("/appointments/guest", appointmentData);
+  return response.data;
+};
+
+export const accessGuestBooking = async (bookingReference, bookingPassword) => {
+  const response = await API.post("/appointments/guest/access", {
+    bookingReference,
+    bookingPassword,
+  });
+  return response.data;
+};
+
+export const getGuestBooking = async (appointmentId, guestToken) => {
+  const response = await API.get(`/appointments/guest/${appointmentId}`, {
+    headers: { Authorization: `Bearer ${guestToken}` },
+  });
+  return response.data;
+};
+
+export const updateGuestBooking = async (appointmentId, guestToken, appointmentData) => {
+  const response = await API.put(`/appointments/guest/${appointmentId}`, appointmentData, {
+    headers: { Authorization: `Bearer ${guestToken}` },
+  });
   return response.data;
 };
 

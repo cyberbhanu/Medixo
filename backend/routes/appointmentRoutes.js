@@ -1,11 +1,15 @@
 const router = require("express").Router();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const User = require("../models/User");
 const Lab = require("../models/Lab");
 const { authenticateUser } = require("../middleware/auth");
 const { ROLES, hasRole } = require("../utils/roles");
+const { getJwtSecret } = require("../utils/jwt");
 
 const VALID_STATUSES = ["Scheduled", "Approved", "Rejected", "Completed", "Cancelled", "Rescheduled"];
 const VALID_GENDERS = ["Male", "Female", "Other"];
@@ -36,6 +40,74 @@ const LAB_EDITABLE_FIELDS = ["status", "reportUrl", "notes"];
 const ACTIVE_SLOT_STATUSES = ["Scheduled", "Approved", "Rescheduled"];
 const SLOT_ALREADY_BOOKED_MESSAGE =
   "This appointment slot is already booked. Please choose another time.";
+
+const generateBookingReference = () =>
+  `MX-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+const generateBookingPassword = () => crypto.randomBytes(4).toString("hex").toUpperCase();
+
+const guestAppointmentFields = [
+  "_id",
+  "type",
+  "doctorId",
+  "labId",
+  "patientName",
+  "patientEmail",
+  "patientPhone",
+  "patientAge",
+  "patientGender",
+  "appointmentDate",
+  "appointmentTime",
+  "status",
+  "reason",
+  "notes",
+  "bookingReference",
+  "queueNumber",
+  "dailyQueueSize",
+  "patientsAhead",
+  "createdAt",
+];
+
+const populateAppointment = (query) =>
+  query
+    .populate("doctorId", "name specialization location fees")
+    .populate("labId", "name location")
+    .populate("clinic", "name city state address phone")
+    .populate("hospital", "name city state address phone")
+    .populate("department", "name");
+
+const sanitizeGuestAppointment = (appointment) => {
+  const data = appointment?.toObject ? appointment.toObject() : { ...appointment };
+  delete data.bookingPasswordHash;
+  return data;
+};
+
+const authenticateGuestBooking = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const [scheme, token] = authHeader.split(" ");
+    if (scheme !== "Bearer" || !token) {
+      return res.status(401).json({ error: "Booking access is required" });
+    }
+
+    const payload = jwt.verify(token, getJwtSecret());
+    if (payload.type !== "guest_booking" || String(payload.id) !== String(req.params.id)) {
+      return res.status(401).json({ error: "Invalid booking access" });
+    }
+
+    const appointment = await populateAppointment(
+      Appointment.findById(req.params.id).select(guestAppointmentFields.join(" "))
+    );
+    if (!appointment || appointment.bookingReference !== payload.bookingReference) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    req.guestAppointment = appointment;
+    next();
+  } catch (_error) {
+    return res.status(401).json({ error: "Booking access has expired. Please enter your booking ID and password again." });
+  }
+};
 
 const isValidDateString = (date) => /^\d{4}-\d{2}-\d{2}$/.test(String(date || ""));
 const isValidTimeString = (time) => /^\d{2}:\d{2}$/.test(String(time || ""));
@@ -212,6 +284,28 @@ const getLabProfileForUser = async (user) =>
     $or: [{ userId: user.id }, { email: user.email }],
   });
 
+const getQueueDetailsForAppointment = async (appointment) => {
+  const queueFilter = {
+    type: appointment.type,
+    appointmentDate: appointment.appointmentDate,
+    status: { $in: ACTIVE_SLOT_STATUSES },
+  };
+
+  if (appointment.type === "lab") {
+    queueFilter.labId = appointment.labId?._id || appointment.labId;
+  } else {
+    queueFilter.doctorId = appointment.doctorId?._id || appointment.doctorId;
+  }
+
+  const queueAppointments = await Appointment.find(queueFilter)
+    .select("_id type doctorId labId appointmentDate appointmentTime createdAt status")
+    .lean();
+
+  return attachQueueDetails(queueAppointments).find(
+    (item) => String(item._id) === String(appointment._id)
+  );
+};
+
 const attachQueueDetails = (appointments) => {
   const queueMap = new Map();
 
@@ -271,6 +365,168 @@ const attachQueueDetails = (appointments) => {
       return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
     });
 };
+
+router.post("/guest", async (req, res) => {
+  try {
+    const requestBody = {
+      ...req.body,
+      type: "doctor",
+      status: "Scheduled",
+      patientId: null,
+    };
+    const validationError = validateAppointmentPayload(requestBody);
+    if (validationError) return res.status(400).json({ error: validationError });
+
+    const doctor = await Doctor.findById(requestBody.doctorId);
+    if (!doctor || doctor.isActive === false) {
+      return res.status(404).json({ error: "Selected doctor was not found" });
+    }
+
+    const slotError = await ensureSlotIsAvailable(requestBody);
+    if (slotError) return res.status(409).json({ error: slotError });
+
+    const bookingReference = generateBookingReference();
+    const bookingPassword = generateBookingPassword();
+    const appointment = new Appointment({
+      ...buildAppointmentPayload(requestBody),
+      bookingReference,
+      bookingPasswordHash: await bcrypt.hash(bookingPassword, 10),
+    });
+    await appointment.save();
+
+    await Doctor.findByIdAndUpdate(appointment.doctorId, {
+      $addToSet: { appointmentIds: appointment._id },
+    }).catch(() => null);
+
+    const populatedAppointment = await populateAppointment(
+      Appointment.findById(appointment._id)
+    );
+    const queueDetails = await getQueueDetailsForAppointment(appointment);
+
+    return res.status(201).json({
+      message: "Appointment booked successfully",
+      bookingReference,
+      bookingPassword,
+      appointment: {
+        ...sanitizeGuestAppointment(populatedAppointment),
+        queueNumber: queueDetails?.queueNumber || null,
+        dailyQueueSize: queueDetails?.dailyQueueSize || 0,
+        patientsAhead: queueDetails?.patientsAhead ?? null,
+      },
+    });
+  } catch (error) {
+    return sendAppointmentWriteError(res, error);
+  }
+});
+
+router.post("/guest/access", async (req, res) => {
+  try {
+    const bookingReference = String(req.body.bookingReference || "").trim().toUpperCase();
+    const bookingPassword = String(req.body.bookingPassword || "").trim().toUpperCase();
+    if (!bookingReference || !bookingPassword) {
+      return res.status(400).json({ error: "Booking ID and password are required" });
+    }
+
+    const appointment = await populateAppointment(
+      Appointment.findOne({ bookingReference }).select("+bookingPasswordHash")
+    );
+    if (!appointment || !appointment.bookingPasswordHash) {
+      return res.status(401).json({ error: "Invalid booking ID or password" });
+    }
+
+    if (!(await bcrypt.compare(bookingPassword, appointment.bookingPasswordHash))) {
+      return res.status(401).json({ error: "Invalid booking ID or password" });
+    }
+
+    const guestToken = jwt.sign(
+      {
+        type: "guest_booking",
+        id: appointment._id,
+        bookingReference: appointment.bookingReference,
+      },
+      getJwtSecret(),
+      { expiresIn: "30m" }
+    );
+    const queueDetails = await getQueueDetailsForAppointment(appointment);
+
+    return res.json({
+      guestToken,
+      bookingReference: appointment.bookingReference,
+      appointment: {
+        ...sanitizeGuestAppointment(appointment),
+        queueNumber: queueDetails?.queueNumber || null,
+        dailyQueueSize: queueDetails?.dailyQueueSize || 0,
+        patientsAhead: queueDetails?.patientsAhead ?? null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/guest/:id", authenticateGuestBooking, async (req, res) => {
+  const queueDetails = await getQueueDetailsForAppointment(req.guestAppointment);
+  return res.json({
+    bookingReference: req.guestAppointment.bookingReference,
+    appointment: {
+      ...sanitizeGuestAppointment(req.guestAppointment),
+      queueNumber: queueDetails?.queueNumber || null,
+      dailyQueueSize: queueDetails?.dailyQueueSize || 0,
+      patientsAhead: queueDetails?.patientsAhead ?? null,
+    },
+  });
+});
+
+router.put("/guest/:id", authenticateGuestBooking, async (req, res) => {
+  try {
+    const allowedFields = ["appointmentDate", "appointmentTime", "status", "notes"];
+    if (Object.keys(req.body).some((field) => !allowedFields.includes(field))) {
+      return res.status(400).json({ error: "Only rescheduling, cancellation, and notes are allowed" });
+    }
+
+    const sanitizedPayload = {};
+    ["appointmentDate", "appointmentTime", "notes", "status"].forEach((field) => {
+      if (req.body[field] !== undefined) sanitizedPayload[field] = String(req.body[field]).trim();
+    });
+
+    if (sanitizedPayload.status && !["Cancelled", "Rescheduled"].includes(sanitizedPayload.status)) {
+      return res.status(400).json({ error: "Guests can only cancel or reschedule bookings" });
+    }
+
+    if ((sanitizedPayload.appointmentDate || sanitizedPayload.appointmentTime) && sanitizedPayload.status !== "Cancelled") {
+      sanitizedPayload.status = "Rescheduled";
+    }
+
+    const validationError = validateAppointmentPayload({
+      ...req.guestAppointment.toObject(),
+      ...sanitizedPayload,
+      status: sanitizedPayload.status || req.guestAppointment.status,
+    });
+    if (validationError) return res.status(400).json({ error: validationError });
+
+    const slotError = await ensureSlotIsAvailable(
+      { ...req.guestAppointment.toObject(), ...sanitizedPayload, status: sanitizedPayload.status || req.guestAppointment.status },
+      req.guestAppointment._id
+    );
+    if (slotError) return res.status(409).json({ error: slotError });
+
+    const updatedAppointment = await populateAppointment(
+      Appointment.findByIdAndUpdate(req.guestAppointment._id, sanitizedPayload, { new: true, runValidators: true })
+    );
+    const queueDetails = await getQueueDetailsForAppointment(updatedAppointment);
+    return res.json({
+      bookingReference: updatedAppointment.bookingReference,
+      appointment: {
+        ...sanitizeGuestAppointment(updatedAppointment),
+        queueNumber: queueDetails?.queueNumber || null,
+        dailyQueueSize: queueDetails?.dailyQueueSize || 0,
+        patientsAhead: queueDetails?.patientsAhead ?? null,
+      },
+    });
+  } catch (error) {
+    return sendAppointmentWriteError(res, error);
+  }
+});
 
 const getStaffAccess = async (userId) => {
   const staffUser = await User.findById(userId)
