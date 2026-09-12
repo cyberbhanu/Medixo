@@ -1789,6 +1789,18 @@
   background: #fff;
 }
 
+.dashboard-report-table th:first-child,
+.dashboard-report-table td:first-child {
+  min-width: 190px;
+}
+
+.dashboard-report-table td:first-child strong {
+  display: block;
+  padding-left: 2px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .dashboard-report-table th,
 .dashboard-report-table td {
   padding: 13px 14px;
@@ -2099,8 +2111,8 @@
   }
 
   .dashboard-report-table {
-    margin-inline: -16px;
-    width: calc(100% + 32px);
+    width: 780px;
+    margin: 0;
   }
 }
 

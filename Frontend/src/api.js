@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Capacitor } from "@capacitor/core";
 
 const PRODUCTION_API_URL =
   "https://medixo-yj2x.onrender.com/api";
@@ -11,6 +12,7 @@ const resolveApiBaseUrl = () => {
   }
 
   if (
+    !Capacitor.isNativePlatform() &&
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1")

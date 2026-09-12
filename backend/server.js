@@ -48,6 +48,15 @@ const defaultClientUrls = [
   "https://medixo-git-main-cyberbhanus-projects.vercel.app",
 ];
 
+// Capacitor Android WebViews send requests from a localhost-style origin.
+// Keep these origins available in production so the installed app can use the API.
+const nativeClientUrls = [
+  "http://localhost",
+  "https://localhost",
+  "capacitor://localhost",
+  "ionic://localhost",
+];
+
 const normalizeOrigin = (origin) =>
   origin.trim().replace(/\/+$/, "");
 
@@ -61,6 +70,7 @@ const configuredClientUrls = (
 const allowedOrigins = [
   ...new Set([
     ...configuredClientUrls,
+    ...nativeClientUrls,
     ...(process.env.NODE_ENV === "production"
       ? []
       : defaultClientUrls.filter((url) =>

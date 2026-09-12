@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Android signing and Firebase credentials
+*.jks
+*.keystore
+android/app/google-services.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
