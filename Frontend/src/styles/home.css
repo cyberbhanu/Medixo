@@ -1472,6 +1472,11 @@
 }
 
 @media (max-width: 767px) {
+  .home-page .doctor-card-content > .home-card-actions {
+    width: calc(100% + 76px);
+    padding-inline: 8px;
+  }
+
   .home-page .doctor-card-side > img,
   .home-page .doctor-card-side > .doctor-card-avatar {
     width: 64px !important;
@@ -1867,6 +1872,14 @@
   }
 }
 
+/* Keep the action row inside the card boundary at every breakpoint. */
+.home-page .doctor-card-content > .home-card-actions {
+  width: 100%;
+  max-width: 100%;
+  padding-inline: 0;
+  box-sizing: border-box;
+}
+
 /* Final desktop readability pass: show card content while preserving one action row. */
 @media (min-width: 1025px) {
   .home-page .doctor-grid {
@@ -1875,6 +1888,12 @@
 }
 
 @media (min-width: 768px) {
+  .home-page .doctor-card-content > .home-card-actions {
+    width: 100%;
+    max-width: 100%;
+    padding-inline: 0;
+  }
+
   .home-page .doctor-card h3,
   .home-page .doctor-card-content > p:first-of-type,
   .home-page .doctor-bottom span,
@@ -2256,6 +2275,11 @@
 @media (max-width: 767px) {
   .home-page .hero-section {
     overflow-x: clip;
+  }
+
+  /* Use only the compact mobile artwork layer to prevent duplicate portraits. */
+  .home-page .hero-visual {
+    display: none;
   }
 
   .home-page .hero-section > .hero-grid,

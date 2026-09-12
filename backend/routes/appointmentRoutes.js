@@ -212,25 +212,22 @@ const getLabProfileForUser = async (user) =>
     $or: [{ userId: user.id }, { email: user.email }],
   });
 
-const getAppointmentTimestamp = (appointment) =>
-  new Date(`${appointment.appointmentDate}T${appointment.appointmentTime}:00`).getTime();
-
 const attachQueueDetails = (appointments) => {
   const queueMap = new Map();
 
   const sortedForQueue = [...appointments].sort((left, right) => {
-    const leftTime = getAppointmentTimestamp(left);
-    const rightTime = getAppointmentTimestamp(right);
+    const leftCreatedAt = new Date(left.createdAt).getTime();
+    const rightCreatedAt = new Date(right.createdAt).getTime();
 
-    if (leftTime !== rightTime) {
-      return leftTime - rightTime;
+    if (leftCreatedAt !== rightCreatedAt) {
+      return leftCreatedAt - rightCreatedAt;
     }
 
-    return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    return String(left._id).localeCompare(String(right._id));
   });
 
   sortedForQueue.forEach((appointment) => {
-    if (appointment.status === "Cancelled") {
+    if (!ACTIVE_SLOT_STATUSES.includes(appointment.status)) {
       return;
     }
 
@@ -263,7 +260,16 @@ const attachQueueDetails = (appointments) => {
         patientsAhead: appointment.queueNumber ? appointment.queueNumber - 1 : null,
       };
     })
-    .sort((left, right) => getAppointmentTimestamp(left) - getAppointmentTimestamp(right));
+    .sort((left, right) => {
+      const dateDifference = String(left.appointmentDate || "").localeCompare(String(right.appointmentDate || ""));
+      if (dateDifference) return dateDifference;
+
+      const leftQueue = left.queueNumber || Number.MAX_SAFE_INTEGER;
+      const rightQueue = right.queueNumber || Number.MAX_SAFE_INTEGER;
+      if (leftQueue !== rightQueue) return leftQueue - rightQueue;
+
+      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    });
 };
 
 const getStaffAccess = async (userId) => {

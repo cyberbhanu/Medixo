@@ -491,7 +491,7 @@ export default function PatientDashboard() {
       {success ? <div className="dashboard-banner success">{success}</div> : null}
 
       <DashboardSection title="Patient Appointment Form" action="Book for yourself">
-        <form className="dashboard-form-card" onSubmit={handleAppointmentSubmit}>
+        <form className="dashboard-form-card patient-appointment-form-card" onSubmit={handleAppointmentSubmit}>
           <div className="dashboard-form-grid">
             <label className="dashboard-input-group full-width">
               <span>Booking Type</span>

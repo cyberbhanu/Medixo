@@ -14,6 +14,7 @@ export default function DoctorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [slotConflict, setSlotConflict] = useState(false);
   const [form, setForm] = useState({
     patientName: user?.name || "",
     patientEmail: user?.email || "",
@@ -62,6 +63,7 @@ export default function DoctorProfilePage() {
     setSaving(true);
     setError("");
     setSuccess("");
+    setSlotConflict(false);
 
     try {
       await createAppointment({
@@ -83,6 +85,9 @@ export default function DoctorProfilePage() {
         notes: "",
       });
     } catch (err) {
+      if (err.response?.status === 409) {
+        setSlotConflict(true);
+      }
       setError(err.response?.data?.error || "Unable to book appointment");
     } finally {
       setSaving(false);
@@ -235,11 +240,36 @@ export default function DoctorProfilePage() {
                   </label>
                   <label className="dashboard-input-group">
                     <span>Appointment date</span>
-                    <input required type="date" value={form.appointmentDate} onChange={(event) => setForm({ ...form, appointmentDate: event.target.value })} />
+                    <input
+                      required
+                      type="date"
+                      value={form.appointmentDate}
+                      onChange={(event) => {
+                        setSlotConflict(false);
+                        setError("");
+                        setForm({ ...form, appointmentDate: event.target.value });
+                      }}
+                    />
                   </label>
-                  <label className="dashboard-input-group">
+                  <label className={`dashboard-input-group ${slotConflict ? "has-slot-conflict" : ""}`}>
                     <span>Appointment time</span>
-                    <input required type="time" value={form.appointmentTime} onChange={(event) => setForm({ ...form, appointmentTime: event.target.value })} />
+                    <input
+                      required
+                      type="time"
+                      value={form.appointmentTime}
+                      aria-invalid={slotConflict}
+                      aria-describedby={slotConflict ? "appointment-time-conflict" : undefined}
+                      onChange={(event) => {
+                        setSlotConflict(false);
+                        setError("");
+                        setForm({ ...form, appointmentTime: event.target.value });
+                      }}
+                    />
+                    {slotConflict ? (
+                      <small id="appointment-time-conflict" className="slot-conflict-message">
+                        This time is already booked. Please choose another time.
+                      </small>
+                    ) : null}
                   </label>
                   <label className="dashboard-input-group full-width">
                     <span>Reason</span>

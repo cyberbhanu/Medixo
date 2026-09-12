@@ -1097,6 +1097,18 @@
   align-items: center;
 }
 
+.dashboard-input-group.has-slot-conflict input {
+  border-color: #dc2626;
+  background: #fff5f5;
+  box-shadow: 0 0 0 3px rgb(220 38 38 / 14%);
+}
+
+.slot-conflict-message {
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .dashboard-form-actions.full-width {
   grid-column: 1 / -1;
 }
@@ -1113,6 +1125,18 @@
   display: grid;
   gap: 16px;
   padding: clamp(18px, 3vw, 24px);
+}
+
+.doctor-profile-booking-card {
+  padding-inline: clamp(24px, 4vw, 40px);
+}
+
+.doctor-profile-booking-card > * {
+  min-width: 0;
+}
+
+.patient-appointment-form-card {
+  padding-inline: clamp(24px, 4vw, 40px);
 }
 
 .doctor-profile-identity {
