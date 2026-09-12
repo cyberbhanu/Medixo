@@ -69,6 +69,21 @@ const AppointmentSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
       default: "Other",
     },
+    patientWeight: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    patientAddress: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    bloodPressure: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     bookingReference: {
       type: String,
       trim: true,

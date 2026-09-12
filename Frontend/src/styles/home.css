@@ -131,6 +131,26 @@
   margin-top: 14px;
 }
 
+.home-see-more {
+  display: block;
+  min-height: 44px;
+  margin: 24px auto 0;
+  padding: 10px 20px;
+  color: #0d5bdd;
+  background: #eef6ff;
+  border: 1px solid #cfe0f5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.home-see-more:hover {
+  color: #fff;
+  background: #0d5bdd;
+  border-color: #0d5bdd;
+}
+
 .home-card-actions button {
   width: 100%;
   min-width: 0;

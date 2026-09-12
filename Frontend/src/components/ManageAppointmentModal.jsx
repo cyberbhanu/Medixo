@@ -9,6 +9,9 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
     patientPhone: appointment.patientPhone || "",
     patientAge: appointment.patientAge || "",
     patientGender: appointment.patientGender || "Other",
+    patientWeight: appointment.patientWeight || "",
+    patientAddress: appointment.patientAddress || "",
+    bloodPressure: appointment.bloodPressure || "",
     appointmentDate: appointment.appointmentDate || "",
     appointmentTime: appointment.appointmentTime || "",
     reason: appointment.reason || "",
@@ -86,6 +89,14 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
                 </select>
               </label>
               <label className="modal-form-group">
+                <span className="modal-label">Weight</span>
+                <input value={appointmentDraft.patientWeight} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, patientWeight: e.target.value })} className="modal-input" placeholder="e.g., 68 kg" />
+              </label>
+              <label className="modal-form-group">
+                <span className="modal-label">B.P.</span>
+                <input value={appointmentDraft.bloodPressure} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, bloodPressure: e.target.value })} className="modal-input" placeholder="e.g., 120/80" />
+              </label>
+              <label className="modal-form-group">
                 <span className="modal-label">Date</span>
                 <input type="date" value={appointmentDraft.appointmentDate} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, appointmentDate: e.target.value })} className="modal-input" />
               </label>
@@ -94,10 +105,14 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
                 <input type="time" value={appointmentDraft.appointmentTime} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, appointmentTime: e.target.value })} className="modal-input" />
               </label>
             </div>
-            <label className="modal-form-group">
-              <span className="modal-label">Primary Reason</span>
-              <input value={appointmentDraft.reason} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, reason: e.target.value })} className="modal-input" />
-            </label>
+              <label className="modal-form-group">
+                <span className="modal-label">Primary Reason</span>
+                <input value={appointmentDraft.reason} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, reason: e.target.value })} className="modal-input" />
+              </label>
+              <label className="modal-form-group">
+                <span className="modal-label">Address</span>
+                <input value={appointmentDraft.patientAddress} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, patientAddress: e.target.value })} className="modal-input" placeholder="Patient address" />
+              </label>
             <label className="modal-form-group">
               <span className="modal-label">Disease / Diagnosis</span>
               <input value={appointmentDraft.disease} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, disease: e.target.value })} className="modal-input" placeholder="e.g., Type 2 Diabetes" />

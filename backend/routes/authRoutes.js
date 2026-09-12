@@ -1,8 +1,10 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 
 const User = require("../models/User");
+const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const Lab = require("../models/Lab");
 const Clinic = require("../models/Clinic");
@@ -300,12 +302,45 @@ router.post("/login", async (req, res) => {
     }
 
     const identifier = String(email).trim();
-    const user = await User.findOne({
+    let user = await User.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { patientId: identifier.toUpperCase() },
       ],
     }).select("+password");
+
+    if (!user) {
+      const booking = await Appointment.findOne({
+        bookingReference: identifier.toUpperCase(),
+      }).select("+bookingPasswordHash");
+
+      if (booking?.bookingPasswordHash && await bcrypt.compare(password, booking.bookingPasswordHash)) {
+        user = await User.findOne({ email: booking.patientEmail });
+        if (!user) {
+          user = new User({
+            name: booking.patientName,
+            email: booking.patientEmail,
+            password,
+            role: ROLES.PATIENT,
+            patientId: booking.bookingReference,
+            phone: booking.patientPhone,
+            gender: booking.patientGender || "Other",
+          });
+          await user.save();
+        }
+
+        if (user.role === ROLES.PATIENT) {
+          if (!user.patientId) {
+            user.patientId = booking.bookingReference;
+            await user.save();
+          }
+          if (!booking.patientId) {
+            booking.patientId = user._id;
+            await booking.save();
+          }
+        }
+      }
+    }
 
     if (!user) {
       return res.status(401).json({

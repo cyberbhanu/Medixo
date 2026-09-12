@@ -600,6 +600,9 @@ export default function Home() {
   const [error, setError] = useState("");
   const [activeSpecialty, setActiveSpecialty] = useState("All Doctors");
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [showAllDoctors, setShowAllDoctors] = useState(false);
+  const [showAllFacilities, setShowAllFacilities] = useState(false);
+  const [showAllLabs, setShowAllLabs] = useState(false);
 
   useEffect(() => {
     const loadHomepageData = async () => {
@@ -686,23 +689,27 @@ export default function Home() {
   }, [filteredDoctors]);
 
   const visibleDoctors = useMemo(() => {
+    const limit = showAllDoctors ? filteredDoctors.length : 6;
     if (activeSpecialty === "All Doctors") {
-      return filteredDoctors.slice(0, 8);
+      return filteredDoctors.slice(0, limit);
     }
 
     const filtered = filteredDoctors.filter((doctor) => getDoctorCategory(doctor.specialization) === activeSpecialty);
-    return filtered.slice(0, 8);
-  }, [activeSpecialty, filteredDoctors]);
+    return filtered.slice(0, showAllDoctors ? filtered.length : 6);
+  }, [activeSpecialty, filteredDoctors, showAllDoctors]);
 
   const visibleFacilities = useMemo(
     () => [
       ...filteredHospitals.map((item) => ({ item, type: "hospital" })),
       ...filteredClinics.map((item) => ({ item, type: "clinic" })),
-    ].slice(0, 8),
-    [filteredClinics, filteredHospitals]
+    ].slice(0, showAllFacilities ? filteredHospitals.length + filteredClinics.length : 6),
+    [filteredClinics, filteredHospitals, showAllFacilities]
   );
 
-  const visibleLabs = useMemo(() => filteredLabs.slice(0, 8), [filteredLabs]);
+  const visibleLabs = useMemo(
+    () => filteredLabs.slice(0, showAllLabs ? filteredLabs.length : 6),
+    [filteredLabs, showAllLabs]
+  );
 
   const searchModalDoctors = useMemo(
     () => doctors.filter((doctor) => doctorMatchesFilters(doctor, filters)).slice(0, 12),
@@ -906,6 +913,11 @@ export default function Home() {
             <p className="dashboard-empty-state">No active doctors match these filters yet.</p>
           )}
         </div>
+        {!loading && filteredDoctors.length > 6 ? (
+          <button type="button" className="home-see-more" onClick={() => setShowAllDoctors((visible) => !visible)}>
+            {showAllDoctors ? "Show Less" : `See More Doctors (${filteredDoctors.length - 6})`}
+          </button>
+        ) : null}
       </section>
 
       <section className="content-section shell" id="hospitals">
@@ -929,6 +941,11 @@ export default function Home() {
             <p className="dashboard-empty-state">No active hospitals or clinics match these filters yet.</p>
           )}
         </div>
+        {!loading && filteredHospitals.length + filteredClinics.length > 6 ? (
+          <button type="button" className="home-see-more" onClick={() => setShowAllFacilities((visible) => !visible)}>
+            {showAllFacilities ? "Show Less" : `See More Facilities (${filteredHospitals.length + filteredClinics.length - 6})`}
+          </button>
+        ) : null}
       </section>
 
       <section className="content-section shell" id="lab-tests">
@@ -946,6 +963,11 @@ export default function Home() {
             <p className="dashboard-empty-state">No active laboratories match these filters yet.</p>
           )}
         </div>
+        {!loading && filteredLabs.length > 6 ? (
+          <button type="button" className="home-see-more" onClick={() => setShowAllLabs((visible) => !visible)}>
+            {showAllLabs ? "Show Less" : `See More Labs (${filteredLabs.length - 6})`}
+          </button>
+        ) : null}
       </section>
 
       <section className="content-section shell" id="health-packages">

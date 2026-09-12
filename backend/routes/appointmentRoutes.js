@@ -21,6 +21,9 @@ const EDITABLE_FIELDS = [
   "patientPhone",
   "patientAge",
   "patientGender",
+  "patientWeight",
+  "patientAddress",
+  "bloodPressure",
   "appointmentDate",
   "appointmentTime",
   "status",
@@ -259,6 +262,9 @@ const buildAppointmentPayload = (body) => ({
   patientPhone: body.patientPhone.trim(),
   patientAge: Number(body.patientAge),
   patientGender: body.patientGender || "Other",
+  patientWeight: body.patientWeight?.trim() || "",
+  patientAddress: body.patientAddress?.trim() || "",
+  bloodPressure: body.bloodPressure?.trim() || "",
   appointmentDate: body.appointmentDate.trim(),
   appointmentTime: body.appointmentTime.trim(),
   status: body.status || "Scheduled",
@@ -402,14 +408,14 @@ router.post("/guest", async (req, res) => {
         email: normalizedEmail,
         password: bookingPassword,
         role: ROLES.PATIENT,
-        patientId: `PAT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
+        patientId: bookingReference,
         phone: requestBody.patientPhone.trim(),
         gender: requestBody.patientGender || "Other",
       });
       await patientUser.save();
       createdPatient = patientUser;
     } else if (!patientUser.patientId) {
-      patientUser.patientId = `PAT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+      patientUser.patientId = bookingReference;
       await patientUser.save();
     }
 
@@ -471,6 +477,41 @@ router.post("/guest/access", async (req, res) => {
       return res.status(401).json({ error: "Invalid booking ID or password" });
     }
 
+    let patientLoginPassword = null;
+    let patientLoginId = appointment.bookingReference;
+    if (!appointment.patientId) {
+      let patientUser = await User.findOne({ email: appointment.patientEmail });
+      if (patientUser && patientUser.role !== ROLES.PATIENT) {
+        return res.status(409).json({ error: "This booking email belongs to a staff or provider account" });
+      }
+
+      if (!patientUser) {
+        patientUser = new User({
+          name: appointment.patientName,
+          email: appointment.patientEmail,
+          password: bookingPassword,
+          role: ROLES.PATIENT,
+          patientId: appointment.bookingReference,
+          phone: appointment.patientPhone,
+          gender: appointment.patientGender || "Other",
+        });
+        await patientUser.save();
+        patientLoginPassword = bookingPassword;
+      } else {
+        if (!patientUser.patientId) {
+          patientUser.patientId = appointment.bookingReference;
+          await patientUser.save();
+        }
+      }
+
+      appointment.patientId = patientUser._id;
+      await appointment.save();
+      patientLoginId = patientUser.patientId;
+    } else {
+      const patientUser = await User.findById(appointment.patientId).select("patientId");
+      patientLoginId = patientUser?.patientId || appointment.bookingReference;
+    }
+
     const guestToken = jwt.sign(
       {
         type: "guest_booking",
@@ -485,6 +526,8 @@ router.post("/guest/access", async (req, res) => {
     return res.json({
       guestToken,
       bookingReference: appointment.bookingReference,
+      patientLoginId,
+      patientLoginPassword,
       appointment: {
         ...sanitizeGuestAppointment(appointment),
         queueNumber: queueDetails?.queueNumber || null,
@@ -996,6 +1039,9 @@ router.put("/:id", async (req, res) => {
         "patientPhone",
         "patientAge",
         "patientGender",
+        "patientWeight",
+        "patientAddress",
+        "bloodPressure",
         "appointmentDate",
         "appointmentTime",
         "status",
@@ -1054,6 +1100,9 @@ router.put("/:id", async (req, res) => {
       } else if (
         field === "patientName" ||
         field === "patientPhone" ||
+        field === "patientWeight" ||
+        field === "patientAddress" ||
+        field === "bloodPressure" ||
         field === "appointmentDate" ||
         field === "appointmentTime" ||
         field === "reason" ||
