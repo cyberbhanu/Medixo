@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Navbar from "./Navbar";
+import NotificationCenter from "./NotificationCenter";
 import "../styles/dashboard.css";
 
 const iconPaths = {
@@ -124,6 +125,7 @@ export default function DashboardLayout({
               </button>
             ))}
           </div>
+          <NotificationCenter />
         </div>
         <div className="shell dashboard-stat-grid">
           {stats.map((item) => (

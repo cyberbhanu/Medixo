@@ -18,6 +18,7 @@ const hospitalRoutes = require("./routes/hospitalRoutes");
 const clinicRoutes = require("./routes/clinicRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
 const homeRoutes = require("./routes/homeRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // ==========================================
 // UTILITIES
@@ -239,6 +240,11 @@ app.use(
 app.use(
   "/api/appointments",
   appointmentRoutes
+);
+
+app.use(
+  "/api/notifications",
+  notificationRoutes
 );
 
 // ==========================================

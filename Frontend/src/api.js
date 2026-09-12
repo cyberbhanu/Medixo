@@ -420,6 +420,35 @@ export const updateAppointment = async (
   return response.data;
 };
 
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
+
+export const getNotifications = async () => {
+  const response = await API.get("/notifications");
+  return response.data;
+};
+
+export const getNotificationPublicKey = async () => {
+  const response = await API.get("/notifications/vapid-public-key");
+  return response.data;
+};
+
+export const subscribeToNotifications = async (subscription) => {
+  const response = await API.post("/notifications/subscribe", { subscription });
+  return response.data;
+};
+
+export const markNotificationRead = async (notificationId) => {
+  const response = await API.patch(`/notifications/${notificationId}/read`);
+  return response.data;
+};
+
+export const markAllNotificationsRead = async () => {
+  const response = await API.patch("/notifications/read-all");
+  return response.data;
+};
+
 export const getPatientReport = async (params = {}) => {
   const response = await API.get("/appointments/reports/patients", { params });
   return response.data;

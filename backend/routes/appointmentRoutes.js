@@ -10,6 +10,7 @@ const Lab = require("../models/Lab");
 const { authenticateUser } = require("../middleware/auth");
 const { ROLES, hasRole } = require("../utils/roles");
 const { getJwtSecret } = require("../utils/jwt");
+const { notifyAppointmentCreated, notifyAppointmentUpdated } = require("../utils/pushNotifications");
 
 const VALID_STATUSES = ["Scheduled", "Approved", "Rejected", "Completed", "Cancelled", "Rescheduled"];
 const VALID_GENDERS = ["Male", "Female", "Other"];
@@ -435,6 +436,12 @@ router.post("/guest", async (req, res) => {
       Appointment.findById(appointment._id)
     );
     const queueDetails = await getQueueDetailsForAppointment(appointment);
+
+    notifyAppointmentCreated({
+      ...appointment.toObject(),
+      doctorId: doctor,
+      queueNumber: queueDetails?.queueNumber || null,
+    }).catch((error) => console.error("Appointment notification failed:", error.message));
 
     return res.status(201).json({
       message: "Appointment booked successfully",
@@ -978,6 +985,12 @@ router.post("/", async (req, res) => {
       patientsAhead: queueAppointment?.patientsAhead ?? null,
     };
 
+    notifyAppointmentCreated({
+      ...appointmentWithQueue,
+      doctorId: appointment.doctorId,
+      labId: appointment.labId,
+    }).catch((error) => console.error("Appointment notification failed:", error.message));
+
     res.status(201).json(appointmentWithQueue);
   } catch (error) {
     sendAppointmentWriteError(res, error);
@@ -1174,6 +1187,9 @@ router.put("/:id", async (req, res) => {
     if (!updatedAppointment) {
       return res.status(404).json({ error: "Appointment not found" });
     }
+
+    notifyAppointmentUpdated(appointment.toObject(), updatedAppointment.toObject())
+      .catch((error) => console.error("Appointment notification failed:", error.message));
 
     res.json(updatedAppointment);
   } catch (error) {
