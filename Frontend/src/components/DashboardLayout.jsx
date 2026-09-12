@@ -125,7 +125,7 @@ export default function DashboardLayout({
               </button>
             ))}
           </div>
-          <NotificationCenter />
+          <NotificationCenter refreshInterval={role === "Staff Dashboard" ? 10000 : 30000} />
         </div>
         <div className="shell dashboard-stat-grid">
           {stats.map((item) => (

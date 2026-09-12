@@ -48,22 +48,29 @@ export default function StaffDashboard() {
   const [success, setSuccess] = useState("");
   const [managingAppointment, setManagingAppointment] = useState(null);
 
-  const loadDashboardData = async () => {
-    setLoading(true);
-    setError("");
+  const loadDashboardData = async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    if (!silent) setError("");
     try {
       const appointmentData = await getAppointments();
       setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
     } catch (requestError) {
-      setError(requestError.response?.data?.error || "Failed to load staff data");
+      if (!silent) setError(requestError.response?.data?.error || "Failed to load staff data");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (!managingAppointment) loadDashboardData({ silent: true });
+    }, 15000);
+    return () => window.clearInterval(interval);
+  }, [managingAppointment]);
 
   const handleSaveAppointment = async (appointmentId, draft) => {
     try {

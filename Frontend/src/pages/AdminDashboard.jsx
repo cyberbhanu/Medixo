@@ -187,6 +187,7 @@ export default function AdminDashboard() {
   const [customerPasswordDrafts, setCustomerPasswordDrafts] = useState({});
 
   const [loading, setLoading] = useState(true);
+  const [refreshingData, setRefreshingData] = useState(false);
   const [savingDoctor, setSavingDoctor] = useState(false);
   const [savingClinic, setSavingClinic] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
@@ -219,6 +220,7 @@ export default function AdminDashboard() {
 
   const loadDashboardData = async () => {
     setLoading(true);
+    setRefreshingData(true);
     setError("");
 
     try {
@@ -272,7 +274,13 @@ export default function AdminDashboard() {
       setError(errorMessage(requestError, "Failed to load admin data"));
     } finally {
       setLoading(false);
+      setRefreshingData(false);
     }
+  };
+
+  const handleRefreshData = async () => {
+    await loadDashboardData();
+    setSuccess("Admin data refreshed successfully.");
   };
 
   useEffect(() => {
@@ -1019,8 +1027,9 @@ export default function AdminDashboard() {
         },
         {
           icon: "refresh",
-          label: "Refresh Data",
-          onClick: loadDashboardData,
+          label: refreshingData ? "Refreshing..." : "Refresh Data",
+          onClick: handleRefreshData,
+          disabled: refreshingData,
         },
       ]}
       aside={
