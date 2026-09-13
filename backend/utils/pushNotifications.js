@@ -60,14 +60,22 @@ const createNotifications = async ({ userIds, title, message, type = "appointmen
 
 const getAppointmentRecipientIds = async (appointment) => {
   const ids = [];
+  const appointmentDoctorId = appointment.doctorId?._id || appointment.doctorId || null;
+
   if (appointment.patientId) ids.push(appointment.patientId._id || appointment.patientId);
 
-  if (appointment.doctorId) {
-    const doctor = await Doctor.findById(appointment.doctorId._id || appointment.doctorId).select("userId").lean();
+  if (appointmentDoctorId) {
+    const doctor = await Doctor.findById(appointmentDoctorId).select("userId").lean();
     if (doctor?.userId) ids.push(doctor.userId);
   }
 
-  const staffFilter = { role: ROLES.STAFF, isActive: { $ne: false } };
+  // Staff notifications must follow the doctor's assignment made by admin.
+  // Never broadcast a doctor's booking to staff assigned to other doctors.
+  const staffFilter = {
+    role: ROLES.STAFF,
+    isActive: { $ne: false },
+    doctorId: appointmentDoctorId,
+  };
   const staff = await User.find(staffFilter).select("_id").lean();
   ids.push(...staff.map((item) => item._id));
   return ids;

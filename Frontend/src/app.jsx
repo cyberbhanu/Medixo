@@ -1,6 +1,9 @@
-import { lazy, Suspense, useEffect } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Footer from "./components/Footer";
+import medixoLogo from "./assets/medixo logo .jpeg";
 import { getDashboardPath, getStoredUser, normalizeRole } from "./utils/auth";
 
 const Home = lazy(() => import("./pages/Home"));
@@ -89,9 +92,58 @@ function ScrollToHash() {
   return null;
 }
 
+function StartupScreen() {
+  return (
+    <div className="startup-screen" role="status" aria-label="Medixo">
+      <img className="startup-screen__logo" src={medixoLogo} alt="Medixo" />
+    </div>
+  );
+}
+
 function App() {
+  const [showStartup, setShowStartup] = useState(() => Capacitor.isNativePlatform());
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) {
+      return undefined;
+    }
+
+    const startupTimer = window.setTimeout(() => setShowStartup(false), 1200);
+    return () => window.clearTimeout(startupTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) {
+      return undefined;
+    }
+
+    let isMounted = true;
+    let backButtonListener;
+
+    CapacitorApp.addListener("backButton", ({ canGoBack }) => {
+      if (canGoBack && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      CapacitorApp.exitApp();
+    }).then((listener) => {
+      if (isMounted) {
+        backButtonListener = listener;
+      } else {
+        listener.remove();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      backButtonListener?.remove();
+    };
+  }, []);
+
   return (
     <>
+      {showStartup && <StartupScreen />}
       <ScrollToHash />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>

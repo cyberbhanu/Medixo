@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const Notification = require("../models/Notification");
 const PushSubscription = require("../models/PushSubscription");
+const Appointment = require("../models/Appointment");
+const User = require("../models/User");
 const { authenticateUser } = require("../middleware/auth");
 const { getVapidPublicKey } = require("../utils/pushNotifications");
 
@@ -10,13 +12,41 @@ router.get("/vapid-public-key", (_req, res) => {
 
 router.use(authenticateUser);
 
+const getNotificationQuery = async (userId) => {
+  const user = await User.findById(userId).select("role doctorId").lean();
+
+  if (user?.role !== "staff") {
+    return { userId };
+  }
+
+  if (!user.doctorId) {
+    return { userId, appointmentId: null };
+  }
+
+  const assignedAppointmentIds = await Appointment.distinct("_id", {
+    doctorId: user.doctorId,
+  });
+
+  return {
+    userId,
+    $or: [
+      { appointmentId: null },
+      { appointmentId: { $in: assignedAppointmentIds } },
+    ],
+  };
+};
+
 router.get("/", async (req, res) => {
   try {
-    const notifications = await Notification.find({ userId: req.user.id })
+    const notificationQuery = await getNotificationQuery(req.user.id);
+    const notifications = await Notification.find(notificationQuery)
       .sort({ createdAt: -1 })
       .limit(30)
       .lean();
-    const unreadCount = await Notification.countDocuments({ userId: req.user.id, readAt: null });
+    const unreadCount = await Notification.countDocuments({
+      ...notificationQuery,
+      readAt: null,
+    });
     res.json({ notifications, unreadCount });
   } catch (error) {
     res.status(500).json({ error: error.message });
