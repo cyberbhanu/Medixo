@@ -53,13 +53,13 @@ export default function Footer() {
               <Link to="/#about">About Us</Link>
               <Link to="/privacy-policy">Privacy Policy</Link>
               <Link to="/terms-conditions">Terms & Conditions</Link>
-              <Link to="/#contact">Contact</Link>
+              <a href="/#contact">Contact</a>
             </div>
           </div>
         </div>
 
         <div className="site-footer-bottom">
-          <p>&copy; 2024 Medixo. All rights reserved.</p>
+          <p>&copy; 2026 Medixo. All rights reserved.</p>
         </div>
       </div>
     </footer>
