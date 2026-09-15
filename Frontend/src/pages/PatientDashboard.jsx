@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
-import { createAppointment, getAppointments, getDoctors, getLabs, updateAppointment } from "../api";
+import { createAppointment, deleteAccount, getAppointments, getDoctors, getLabs, updateAppointment } from "../api";
 import DashboardLayout, {
   DashboardIcon,
   DashboardSection,
@@ -191,6 +191,8 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deletionPassword, setDeletionPassword] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [savingAppointment, setSavingAppointment] = useState(false);
   const [appointmentFormErrors, setAppointmentFormErrors] = useState({});
   const [appointmentActionLoadingId, setAppointmentActionLoadingId] = useState("");
@@ -359,6 +361,23 @@ export default function PatientDashboard() {
       setError(requestError.response?.data?.error || "Unable to cancel appointment");
     } finally {
       setAppointmentActionLoadingId("");
+    }
+  };
+
+  const handleAccountDeletion = async (event) => {
+    event.preventDefault();
+    if (!window.confirm("Delete your account and account-linked personal data? This cannot be undone.")) return;
+
+    setDeletingAccount(true);
+    setError("");
+    try {
+      await deleteAccount(deletionPassword);
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "/?accountDeleted=1";
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "Unable to delete your account");
+      setDeletingAccount(false);
     }
   };
 
@@ -684,6 +703,22 @@ export default function PatientDashboard() {
             </button>
           </div>
         </form>
+      </DashboardSection>
+
+      <DashboardSection title="Account and Privacy" collapsible defaultOpen={false}>
+        <div className="dashboard-form-card account-delete-panel">
+          <h3>Delete your Medixo account</h3>
+          <p>This permanently removes your account, notifications, and account-linked personal data. Provider records that must be retained are anonymized.</p>
+          <form onSubmit={handleAccountDeletion} className="dashboard-form-grid">
+            <label className="dashboard-input-group">
+              <span>Confirm with your password</span>
+              <input type="password" required value={deletionPassword} onChange={(event) => setDeletionPassword(event.target.value)} autoComplete="current-password" />
+            </label>
+            <div className="dashboard-form-actions full-width">
+              <button type="submit" className="dashboard-danger-action" disabled={deletingAccount}>{deletingAccount ? "Deleting account..." : "Delete my account"}</button>
+            </div>
+          </form>
+        </div>
       </DashboardSection>
 
       <DashboardSection title="Upcoming Appointments" action="View Calendar">

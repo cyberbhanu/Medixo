@@ -59,6 +59,12 @@ const DoctorCardSkeleton = () => (
   </div>
 );
 
+const HEALTH_PACKAGES = {
+  "annual-wellness": { title: "Annual Wellness", description: "Browse doctors for preventive check-ups and routine health planning." },
+  "family-care": { title: "Family Care", description: "Browse doctors for everyday care across adults, children, and family members." },
+  "chronic-care": { title: "Chronic Care", description: "Browse doctors for ongoing support, follow-ups, and long-term care planning." },
+};
+
 const DoctorCard = ({ doctor, onBookAppointment }) => {
   const rating = doctor.rating || 4.8;
   const reviewCount = doctor.reviewCount || 120;
@@ -113,6 +119,7 @@ export default function DoctorsDirectory() {
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get("search") || "");
   const [selectedSpecialty, setSelectedSpecialty] = useState(() => searchParams.get("specialty") || "all");
   const [selectedCity, setSelectedCity] = useState(() => searchParams.get("city") || "all");
+  const selectedPackage = HEALTH_PACKAGES[searchParams.get("package")];
 
   useEffect(() => {
     const loadFilterOptions = async () => {
@@ -176,6 +183,16 @@ export default function DoctorsDirectory() {
           <p>Browse our network of verified healthcare professionals</p>
         </div>
         <div className="doctors-directory-content">
+          {selectedPackage ? (
+            <section className="package-directory-banner" aria-label={`${selectedPackage.title} package`}>
+              <div>
+                <span className="package-directory-eyebrow">Health package preview</span>
+                <h2>{selectedPackage.title}</h2>
+                <p>{selectedPackage.description}</p>
+              </div>
+              <span className="package-directory-status">Package booking coming soon</span>
+            </section>
+          ) : null}
           {/* Filters */}
           <div className="doctors-directory-filters">
             <div className="doctors-directory-search">

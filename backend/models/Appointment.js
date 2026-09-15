@@ -23,6 +23,11 @@ const AppointmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
     },
+    referredByStaff: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

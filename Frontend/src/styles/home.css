@@ -859,6 +859,189 @@
   background: #fff;
 }
 
+.health-package-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #ffffff 0%, #f4f9ff 100%);
+}
+
+.health-package-card::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  bottom: -42px;
+  width: 120px;
+  height: 120px;
+  border: 18px solid rgba(15, 123, 245, 0.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.info-card-status {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #0757b8;
+  background: #e7f1ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.info-card-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-top: -2px;
+  border-radius: 9px;
+  color: #fff;
+  background: #0d5bdd;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.health-package-card h3 {
+  margin-top: 14px;
+}
+
+.health-package-card small {
+  display: block;
+  margin-top: 9px;
+  color: #68758a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.about-section {
+  padding-top: 18px;
+}
+
+.about-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 28px 0 24px;
+  border-top: 1px solid #dce7f3;
+  border-bottom: 1px solid #dce7f3;
+}
+
+.about-intro > div {
+  max-width: 720px;
+}
+
+.about-eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: #0d5bdd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.about-intro h2 {
+  max-width: 680px;
+  margin: 0;
+  color: #101828;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.12;
+}
+
+.about-intro p {
+  max-width: 650px;
+  margin: 12px 0 0;
+  color: #566070;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.about-directory-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: #fff;
+  background: #0d5bdd;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.about-directory-link:hover {
+  background: #06439f;
+}
+
+.about-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.about-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 18px 14px;
+  min-height: 190px;
+  padding: 20px;
+  border: 1px solid #dce7f3;
+  border-radius: 8px;
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.about-card:hover {
+  transform: translateY(-3px);
+  border-color: #a9c9ee;
+  box-shadow: 0 12px 28px rgba(31, 50, 81, 0.09);
+}
+
+.about-card-index {
+  color: #0d5bdd;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.about-card-copy > span {
+  color: #68758a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.about-card h3 {
+  margin: 8px 0 0;
+  color: #101828;
+  font-size: 19px;
+}
+
+.about-card p {
+  margin: 9px 0 0;
+  color: #566070;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.about-card > a {
+  grid-column: 2;
+  color: #0d5bdd;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.about-card > a:hover {
+  text-decoration: underline;
+}
+
 .info-card h3 {
   margin: 0;
   color: #101828;
@@ -1093,6 +1276,14 @@
   .home-page .testimonial-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .about-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-card:last-child {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 767px) {
@@ -1117,6 +1308,34 @@
     height: auto;
     min-height: 180px;
     aspect-ratio: 16 / 10;
+  }
+
+  .about-intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 0;
+  }
+
+  .about-intro h2 {
+    font-size: 28px;
+  }
+
+  .about-intro p {
+    font-size: 14px;
+  }
+
+  .about-directory-link {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .about-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-card:last-child {
+    grid-column: auto;
   }
 
   .home-search-modal {
@@ -1552,6 +1771,45 @@
   grid-row: 1;
 }
 
+.home-page .resource-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #0d5bdd;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.home-page .resource-body .doctor-card-title-row h3 {
+  margin-top: 0;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-body > p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.home-page .resource-meta span {
+  padding: 4px 7px;
+  border: 1px solid #e0eaf6;
+  border-radius: 5px;
+  background: #f7faff;
+  color: #5b6b82;
+  font-size: 11px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-body .home-card-actions {
+  margin-top: 16px;
+}
+
 .doctor-location-link {
   display: inline-flex;
   align-items: center;
@@ -1568,36 +1826,38 @@
 }
 
 @media (max-width: 767px) {
+  .home-page .resource-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    overflow: visible;
+    padding: 0;
+  }
+
   .home-page .resource-card {
-    grid-template-columns: minmax(0, 1fr) 64px;
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border-radius: 10px;
   }
 
   .home-page .resource-media {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
+    border-radius: 9px;
   }
 
-  .home-page .resource-grid {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-    max-width: 100%;
-    padding: 2px 2px 12px;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
+  .home-page .resource-body .doctor-card-title-row {
+    gap: 7px;
   }
 
-  .home-page .resource-grid::-webkit-scrollbar {
-    display: none;
+  .home-page .resource-body .doctor-card-title-row .rating {
+    flex: 0 0 auto;
+    font-size: 11px;
   }
 
-  .home-page .resource-grid .resource-card {
-    flex: 0 0 min(84vw, 340px);
-    min-height: 0;
-    padding-bottom: 7px;
-    scroll-snap-align: start;
+  .home-page .resource-body .home-card-actions {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -10,6 +10,7 @@ const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./components/Login"));
 const DoctorLogin = lazy(() => import("./components/DoctorLogin"));
 const StaffLogin = lazy(() => import("./components/StaffLogin"));
+const LaboratoryLogin = lazy(() => import("./components/LaboratoryLogin"));
 const Signup = lazy(() => import("./components/Signup"));
 const DoctorsDirectory = lazy(() => import("./pages/DoctorsDirectory"));
 const DoctorProfilePage = lazy(() => import("./pages/DoctorProfilePage"));
@@ -20,6 +21,8 @@ const PatientDashboard = lazy(() => import("./pages/PatientDashboard"));
 const LaboratoryDashboard = lazy(() => import("./pages/LaboratoryDashboard"));
 const StaffDashboard = lazy(() => import("./pages/StaffDashboard"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
+const AccountDeletionPage = lazy(() => import("./pages/AccountDeletionPage"));
+const ResourceDetailsPage = lazy(() => import("./pages/ResourceDetailsPage"));
 
 function LoadingFallback() {
   return (
@@ -151,12 +154,17 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/doctor-login" element={<DoctorLogin />} />
           <Route path="/staff-login" element={<StaffLogin />} />
+          <Route path="/lab-login" element={<LaboratoryLogin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/doctors" element={<DoctorsDirectory />} />
           <Route path="/doctors/:doctorId" element={<DoctorProfilePage />} />
           <Route path="/my-booking" element={<GuestBookingPage />} />
           <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
           <Route path="/terms-conditions" element={<LegalPage type="terms" />} />
+          <Route path="/delete-account" element={<AccountDeletionPage />} />
+          <Route path="/hospitals/:resourceId" element={<ResourceDetailsPage resourceType="hospitals" />} />
+          <Route path="/clinics/:resourceId" element={<ResourceDetailsPage resourceType="clinics" />} />
+          <Route path="/labs/:resourceId" element={<ResourceDetailsPage resourceType="labs" />} />
           <Route
             path="/patient-dashboard"
             element={

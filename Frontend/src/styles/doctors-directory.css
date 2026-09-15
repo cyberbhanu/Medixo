@@ -38,6 +38,53 @@
   margin-top: -40px;
 }
 
+.package-directory-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  border: 1px solid #cfe2fb;
+  border-left: 4px solid #0d5bdd;
+  border-radius: 10px;
+  background: linear-gradient(110deg, #f0f7ff 0%, #ffffff 100%);
+}
+
+.package-directory-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #0d5bdd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.package-directory-banner h2 {
+  margin: 0;
+  color: #101828;
+  font-size: 22px;
+}
+
+.package-directory-banner p {
+  margin: 5px 0 0;
+  color: #566070;
+  font-size: 14px;
+}
+
+.package-directory-status {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border: 1px solid #b9d6f8;
+  border-radius: 999px;
+  color: #0757b8;
+  background: #e7f1ff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 /* Filters Section */
 .doctors-directory-filters {
   margin-bottom: 40px;
@@ -479,6 +526,17 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .package-directory-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .package-directory-status {
+    white-space: normal;
+  }
+
   .doctors-directory-hero {
     padding: 40px 20px;
   }

@@ -133,7 +133,11 @@ export default function LaboratoryDashboard() {
                     <h3>{test.patientName}</h3>
                     <p>{test.testName || test.reason}</p>
                     <p className="dashboard-muted-note">
-                      {test.referredBy?.name ? `Referred by ${test.referredBy.name}` : "Direct lab booking"}
+                      {test.referredBy?.name
+                        ? `Referred by Dr. ${test.referredBy.name}${test.referredByStaff?.name ? ` via ${test.referredByStaff.name}` : ""}`
+                        : test.referredByStaff?.name
+                          ? `Referred by ${test.referredByStaff.name}`
+                          : "Direct lab booking"}
                     </p>
                   </div>
                   <div className="dashboard-action-row">

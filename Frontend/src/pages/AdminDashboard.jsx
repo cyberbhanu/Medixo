@@ -4,6 +4,7 @@ import {
   getPatientReport,
   getDoctors,
   getClinics,
+  getHospitals,
   createClinic,
   updateClinic,
   deleteClinic,
@@ -38,6 +39,7 @@ const EMPTY_DOCTOR = {
   fees: "",
   profileImage: "",
   clinicId: "",
+  hospitalId: "",
 };
 
 const EMPTY_CLINIC = {
@@ -149,6 +151,7 @@ export default function AdminDashboard() {
 
   const [doctors, setDoctors] = useState([]);
   const [clinics, setClinics] = useState([]);
+  const [hospitals, setHospitals] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [staff, setStaff] = useState([]);
 
@@ -224,10 +227,11 @@ export default function AdminDashboard() {
     setError("");
 
     try {
-      const [doctorResult, clinicResult, appointmentResult, staffResult] =
+      const [doctorResult, clinicResult, hospitalResult, appointmentResult, staffResult] =
         await Promise.allSettled([
           getDoctors(),
           getClinics(),
+          getHospitals(),
           getAppointments(),
           getAdminStaff(),
         ]);
@@ -244,6 +248,12 @@ export default function AdminDashboard() {
         setClinics(Array.isArray(clinicResult.value) ? clinicResult.value : []);
       } else {
         failures.push(errorMessage(clinicResult.reason, "Unable to load clinics"));
+      }
+
+      if (hospitalResult.status === "fulfilled") {
+        setHospitals(Array.isArray(hospitalResult.value) ? hospitalResult.value : []);
+      } else {
+        failures.push(errorMessage(hospitalResult.reason, "Unable to load hospitals"));
       }
 
       if (appointmentResult.status === "fulfilled") {
@@ -601,6 +611,7 @@ export default function AdminDashboard() {
         experience: Number(doctorForm.experience),
         fees: Number(doctorForm.fees),
         clinicId: doctorForm.clinicId || "",
+        hospitalId: doctorForm.hospitalId || "",
       };
 
       if (editingDoctorId) {
@@ -633,6 +644,7 @@ export default function AdminDashboard() {
       fees: String(doctor.fees ?? ""),
       profileImage: doctor.profileImage || "",
       clinicId: getId(doctor.clinic),
+      hospitalId: getId(doctor.hospital),
     });
     setError("");
     setSuccess("");
@@ -1211,6 +1223,21 @@ export default function AdminDashboard() {
                   {clinics.map((clinic) => (
                     <option key={clinic._id} value={clinic._id}>
                       {clinic.name} — {clinic.city}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="dashboard-input-group">
+                <span>Primary hospital</span>
+                <select
+                  value={doctorForm.hospitalId}
+                  onChange={(e) => setDoctorForm({ ...doctorForm, hospitalId: e.target.value })}
+                >
+                  <option value="">Independent / no hospital</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital._id} value={hospital._id}>
+                      {hospital.name} — {hospital.city}
                     </option>
                   ))}
                 </select>

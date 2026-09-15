@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Doctor = require("../models/Doctor");
 const User = require("../models/User");
+const Hospital = require("../models/Hospital");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { getJwtSecret } = require("../utils/jwt");
 const { ROLES, normalizeRole, hasRole } = require("../utils/roles");
@@ -290,6 +291,17 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
     }
 
     await doctor.save();
+    const assignedHospitalIds = doctor.hospitals?.length
+      ? doctor.hospitals
+      : doctor.hospital
+        ? [doctor.hospital]
+        : [];
+    if (assignedHospitalIds.length) {
+      await Hospital.updateMany(
+        { _id: { $in: assignedHospitalIds } },
+        { $addToSet: { doctors: doctor._id } }
+      );
+    }
     console.info("admin_action", {
       action: "create_doctor",
       actorId: req.user.id,
@@ -336,6 +348,7 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
       updatePayload.userId = req.body.userId;
     }
 
+    const previousDoctor = await Doctor.findById(req.params.id).select("hospital hospitals").lean();
     const doctor = await Doctor.findByIdAndUpdate(
       req.params.id,
       updatePayload,
@@ -344,6 +357,27 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
 
     if (!doctor) {
       return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    const previousHospitalIds = [
+      ...(previousDoctor?.hospitals || []),
+      ...(previousDoctor?.hospital ? [previousDoctor.hospital] : []),
+    ];
+    const assignedHospitalIds = [
+      ...(doctor.hospitals || []),
+      ...(doctor.hospital ? [doctor.hospital] : []),
+    ];
+    if (previousHospitalIds.length) {
+      await Hospital.updateMany(
+        { _id: { $in: previousHospitalIds } },
+        { $pull: { doctors: doctor._id } }
+      );
+    }
+    if (assignedHospitalIds.length) {
+      await Hospital.updateMany(
+        { _id: { $in: assignedHospitalIds } },
+        { $addToSet: { doctors: doctor._id } }
+      );
     }
 
     if (req.body.password) {

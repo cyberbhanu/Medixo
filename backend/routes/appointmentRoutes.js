@@ -257,6 +257,7 @@ const buildAppointmentPayload = (body) => ({
   labId: body.labId || null,
   type: body.type || "doctor",
   referredBy: body.referredBy || null,
+  referredByStaff: body.referredByStaff || null,
   patientId: body.patientId || null,
   patientName: body.patientName.trim(),
   patientEmail: body.patientEmail.trim().toLowerCase(),
@@ -853,7 +854,8 @@ router.get("/", async (_req, res) => {
       .populate("clinic", "name city state address phone")
       .populate("hospital", "name city state address phone")
       .populate("department", "name")
-      .populate("referredBy", "name")
+    .populate("referredBy", "name")
+    .populate("referredByStaff", "name staffRole")
       .populate("patientId", "name email role")
       .sort({ createdAt: -1 });
 
@@ -872,18 +874,37 @@ router.post("/", async (req, res) => {
     const isSuperAdmin = hasRole(req.user, ROLES.SUPER_ADMIN);
     const isPatient = hasRole(req.user, ROLES.PATIENT);
     const isDoctor = hasRole(req.user, ROLES.DOCTOR);
+    const isStaff = hasRole(req.user, ROLES.STAFF);
 
-    if (!isPatient && !isSuperAdmin && !isDoctor) {
-      return res.status(403).json({ error: "You are not allowed to create appointments" });
+    if (!isPatient && !isSuperAdmin && !isDoctor && !isStaff) {
+      return res.status(403).json({ error: "You are not allowed to create appointments or lab referrals" });
     }
 
-    if (isDoctor && req.body.type !== "lab") {
-      return res.status(403).json({ error: "Doctors can only create laboratory referrals" });
+    if ((isDoctor || isStaff) && req.body.type !== "lab") {
+      return res.status(403).json({ error: "Only laboratory referrals can be created from this dashboard" });
     }
 
     const referringDoctor = isDoctor ? await getDoctorProfileForUser(req.user) : null;
     if (isDoctor && !referringDoctor) {
       return res.status(403).json({ error: "Doctor profile is required to create lab referrals" });
+    }
+
+    let sourceAppointment = null;
+    let staffReferringDoctor = null;
+    if (isStaff) {
+      if (!req.body.labReferral || !mongoose.isValidObjectId(req.body.labReferral)) {
+        return res.status(400).json({ error: "The source patient appointment is required for a staff referral" });
+      }
+
+      sourceAppointment = await Appointment.findById(req.body.labReferral).lean();
+      if (!sourceAppointment || sourceAppointment.type !== "doctor" || !(await staffCanAccessAppointment(req.user.id, sourceAppointment))) {
+        return res.status(403).json({ error: "You can only refer patients assigned to your doctor or clinic" });
+      }
+
+      staffReferringDoctor = await Doctor.findById(sourceAppointment.doctorId).lean();
+      if (!staffReferringDoctor) {
+        return res.status(400).json({ error: "The source appointment has no active doctor profile" });
+      }
     }
 
     const requestBody =
@@ -895,6 +916,22 @@ router.post("/", async (req, res) => {
             patientEmail: req.user.email,
             status: "Scheduled",
           }
+        : isStaff
+          ? {
+              ...req.body,
+              doctorId: null,
+              referredBy: staffReferringDoctor._id,
+              referredByStaff: req.user.id,
+              patientId: sourceAppointment.patientId,
+              patientName: sourceAppointment.patientName,
+              patientEmail: sourceAppointment.patientEmail,
+              patientPhone: sourceAppointment.patientPhone,
+              patientAge: sourceAppointment.patientAge,
+              patientGender: sourceAppointment.patientGender,
+              patientWeight: sourceAppointment.patientWeight,
+              patientAddress: sourceAppointment.patientAddress,
+              bloodPressure: sourceAppointment.bloodPressure,
+            }
         : {
             ...req.body,
             referredBy: isDoctor ? referringDoctor._id : req.body.referredBy,
@@ -958,6 +995,7 @@ router.post("/", async (req, res) => {
     await appointment.populate("hospital", "name city state address phone");
     await appointment.populate("department", "name");
     await appointment.populate("referredBy", "name");
+    await appointment.populate("referredByStaff", "name staffRole");
     await appointment.populate("patientId", "name email role");
 
     const queueFilter = {

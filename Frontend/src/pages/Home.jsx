@@ -46,16 +46,16 @@ const getSpecialtyIcon = (category) => {
 const pageConfig = {
   healthPackages: {
     cards: [
-      { title: "Annual Wellness", description: "Health screening and consultation bundle." },
-      { title: "Family Care", description: "Shared care for adults and children." },
-      { title: "Chronic Care", description: "Follow-up support for diabetes, heart care, and more." },
+      { title: "Annual Wellness", description: "Health screening and consultation bundle.", detail: "Routine checks, preventive guidance, and a simple path to the right doctor.", icon: "W", slug: "annual-wellness" },
+      { title: "Family Care", description: "Shared care for adults and children.", detail: "Find suitable doctors for everyday family healthcare in one place.", icon: "F", slug: "family-care" },
+      { title: "Chronic Care", description: "Follow-up support for diabetes, heart care, and more.", detail: "Plan consistent follow-ups with doctors who understand long-term care.", icon: "C", slug: "chronic-care" },
     ],
   },
   about: {
     cards: [
-      { title: "For Patients", description: "Search doctors by city, specialty, clinic, fee, and availability." },
-      { title: "For Doctors", description: "Doctors can maintain clinic details and review appointment requests." },
-      { title: "For Admins", description: "Admins list doctors, update profiles, and monitor city-wide bookings." },
+      { index: "01", label: "Patient-first care", title: "For Patients", description: "Search doctors by city, specialty, clinic, fee, and availability.", link: "/doctors" },
+      { index: "02", label: "Provider tools", title: "For Doctors", description: "Maintain clinic details, review appointment requests, and keep availability clear.", link: "/doctor-login" },
+      { index: "03", label: "Connected operations", title: "For Admins", description: "List providers, assign teams, and monitor appointments from one organized workspace.", link: "/login" },
     ],
   },
 };
@@ -503,16 +503,19 @@ function HospitalCard({ item, type, onView, onBook }) {
       </div>
       <div className="resource-body">
         <div className="doctor-card-title-row">
-          <h3>{item.name}</h3>
+          <div>
+            <span className="resource-eyebrow">{type === "hospital" ? "Hospital" : "Clinic"}</span>
+            <h3>{item.name}</h3>
+          </div>
           <span className="rating"><Icon name="star" /> {Number(item.rating || 4.6).toFixed(1)}</span>
         </div>
-        <p>{item.address || "Address will be updated soon"}</p>
+        <p>{item.address || item.city || "Location details will be updated soon"}</p>
         <div className="resource-meta">
-          <span>{item.city || "City pending"}{item.state ? `, ${item.state}` : ""}</span>
-          <span>{item.phone || "Contact pending"}</span>
-          <span>{item.email || "Email pending"}</span>
+          {item.city ? <span>{item.city}{item.state ? `, ${item.state}` : ""}</span> : null}
+          {item.phone ? <span>{item.phone}</span> : null}
+          {item.email ? <span>{item.email}</span> : null}
           <span>{doctorCount} doctors</span>
-          <span>{item.openingHours || "Hours pending"}</span>
+          {item.openingHours ? <span>{item.openingHours}</span> : null}
           {type === "hospital" ? <span>{item.emergencyAvailable ? "Emergency available" : "Emergency not listed"}</span> : null}
         </div>
         {departments.length ? (
@@ -521,8 +524,8 @@ function HospitalCard({ item, type, onView, onBook }) {
           </div>
         ) : null}
         <div className="home-card-actions">
-          <button type="button" onClick={() => onView(item)}>{type === "hospital" ? "View Hospital" : "View Clinic"}</button>
-          <button type="button" className="secondary-card-action" onClick={() => onBook(item)}>Book Appointment</button>
+          <button type="button" onClick={() => onView(item, type)}>{type === "hospital" ? "View Hospital" : "View Clinic"}</button>
+          <button type="button" className="secondary-card-action" onClick={() => onBook(item, type)}>Book Appointment</button>
         </div>
       </div>
     </article>
@@ -539,10 +542,13 @@ function LabCard({ lab, onView, onBook }) {
       </div>
       <div className="resource-body">
         <div className="doctor-card-title-row">
-          <h3>{lab.name}</h3>
+          <div>
+            <span className="resource-eyebrow">Laboratory</span>
+            <h3>{lab.name}</h3>
+          </div>
           <span className="rating"><Icon name="star" /> {Number(lab.rating || 4.7).toFixed(1)}</span>
         </div>
-        <p>{lab.address || lab.location || "Address will be updated soon"}</p>
+        <p>{lab.address || lab.location || "Location details will be updated soon"}</p>
         <div className="doctor-badge-row">
           <span className="availability-badge">{lab.homeSampleCollection ? "Home collection" : "Center visit"}</span>
           {(tests.length ? tests : ["Tests updating soon"]).slice(0, 4).map((test) => (
@@ -550,8 +556,8 @@ function LabCard({ lab, onView, onBook }) {
           ))}
         </div>
         <div className="home-card-actions">
-          <button type="button" onClick={() => onView(lab)}>View Details</button>
-          <button type="button" className="secondary-card-action" onClick={() => onBook(lab)}>Book Test</button>
+          <button type="button" onClick={() => onView(lab, "lab")}>View Details</button>
+          <button type="button" className="secondary-card-action" onClick={() => onBook(lab, "lab")}>Book Test</button>
         </div>
       </div>
     </article>
@@ -560,11 +566,16 @@ function LabCard({ lab, onView, onBook }) {
 
 function InfoCard({ card }) {
   return (
-    <article className="info-card">
-      <h3>{card.title}</h3>
-      <p>{card.description}</p>
-      <Link className="home-card-link" to={card.linkTo || "/doctors"}>
-        Learn More
+    <article className={`info-card ${card.slug ? "health-package-card" : ""}`}>
+      {card.slug ? <span className="info-card-status">Coming soon</span> : null}
+      {card.icon ? <span className="info-card-icon" aria-hidden="true">{card.icon}</span> : null}
+      <div>
+        <h3>{card.title}</h3>
+        <p>{card.description}</p>
+        {card.detail ? <small>{card.detail}</small> : null}
+      </div>
+      <Link className="home-card-link" to={card.slug ? `/doctors?package=${card.slug}` : card.linkTo || "/doctors"}>
+        Browse doctors
       </Link>
     </article>
   );
@@ -765,13 +776,23 @@ export default function Home() {
     }
   };
 
-  const handleViewResource = (item) => {
+  const handleViewResource = (item, type) => {
+    if (item?._id && type) {
+      navigate(`/${type === "lab" ? "labs" : `${type}s`}/${item._id}`);
+      return;
+    }
+
     if (item?.name) {
       navigate(`/doctors?search=${encodeURIComponent(item.name)}`);
     }
   };
 
-  const handleBookResource = (item) => {
+  const handleBookResource = (item, type) => {
+    if (item?._id && type === "lab") {
+      navigate(`/labs/${item._id}`);
+      return;
+    }
+
     if (item?.name) {
       navigate(`/doctors?search=${encodeURIComponent(item.name)}`);
     } else {
@@ -981,15 +1002,28 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="content-section shell" id="about">
-        <SectionHeader title="About Medixo" linkTo="/doctors">
-          <p className="section-kicker">
-            Medixo helps patients discover doctors across a city and book appointments with confidence.
-          </p>
-        </SectionHeader>
-        <div className="specialty-grid">
+      <section className="content-section shell about-section" id="about">
+        <div className="about-intro">
+          <div>
+            <span className="about-eyebrow">About Medixo</span>
+            <h2>One clear place for everyday healthcare decisions.</h2>
+            <p>
+              Medixo brings patients, doctors, staff, and administrators into one dependable care journey, from finding the right provider to managing the appointment queue.
+            </p>
+          </div>
+          <Link className="about-directory-link" to="/doctors">Explore the doctor directory</Link>
+        </div>
+        <div className="about-card-grid">
           {pageConfig.about.cards.map((card) => (
-            <InfoCard key={card.title} card={card} />
+            <article className="about-card" key={card.title}>
+              <span className="about-card-index">{card.index}</span>
+              <div className="about-card-copy">
+                <span>{card.label}</span>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </div>
+              <Link to={card.link}>Open {card.title.replace("For ", "")} view</Link>
+            </article>
           ))}
         </div>
       </section>

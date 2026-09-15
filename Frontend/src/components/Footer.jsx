@@ -41,6 +41,7 @@ export default function Footer() {
             <div className="site-footer-stack">
               <Link to="/">Home</Link>
               <Link to="/doctors">Doctors</Link>
+              <Link to="/lab-login">Laboratory Login</Link>
               <Link to="/#specializations">Specializations</Link>
               <Link to="/#hospitals">Hospitals</Link>
               <Link to="/#lab-tests">Lab Tests</Link>
@@ -53,6 +54,7 @@ export default function Footer() {
               <Link to="/#about">About Us</Link>
               <Link to="/privacy-policy">Privacy Policy</Link>
               <Link to="/terms-conditions">Terms & Conditions</Link>
+              <Link to="/delete-account">Delete Account</Link>
               <a href="/#contact">Contact</a>
             </div>
           </div>

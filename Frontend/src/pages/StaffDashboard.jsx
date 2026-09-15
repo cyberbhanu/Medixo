@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getAppointments, updateAppointment } from "../api";
+import { createAppointment, getAppointments, getLabs, updateAppointment } from "../api";
 import DashboardLayout, { DashboardIcon, DashboardSection } from "../components/DashboardLayout";
 import { getStoredUser } from "../utils/auth";
 import ManageAppointmentModal from "../components/ManageAppointmentModal";
@@ -40,6 +40,7 @@ export default function StaffDashboard() {
   const user = getStoredUser();
   const firstName = user?.name?.split(" ")[0] || "Staff";
   const [appointments, setAppointments] = useState([]);
+  const [labs, setLabs] = useState([]);
   const [dateScope, setDateScope] = useState("today");
   const [statusScope, setStatusScope] = useState("active");
   const [search, setSearch] = useState("");
@@ -52,8 +53,9 @@ export default function StaffDashboard() {
     if (!silent) setLoading(true);
     if (!silent) setError("");
     try {
-      const appointmentData = await getAppointments();
+      const [appointmentData, labData] = await Promise.all([getAppointments(), getLabs()]);
       setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
+      setLabs(Array.isArray(labData) ? labData : []);
     } catch (requestError) {
       if (!silent) setError(requestError.response?.data?.error || "Failed to load staff data");
     } finally {
@@ -82,6 +84,28 @@ export default function StaffDashboard() {
       return true;
     } catch (requestError) {
       setError(requestError.response?.data?.error || "Unable to save appointment");
+      setSuccess("");
+      return false;
+    }
+  };
+
+  const handleReferPatient = async (patientAppointment, referralDetails) => {
+    try {
+      await createAppointment({
+        type: "lab",
+        labId: referralDetails.labId,
+        labReferral: patientAppointment._id,
+        appointmentDate: referralDetails.appointmentDate,
+        appointmentTime: referralDetails.appointmentTime,
+        reason: referralDetails.reason,
+        testName: referralDetails.reason,
+        notes: `Referred by staff for: ${referralDetails.reason}`,
+      });
+      setSuccess("Patient successfully referred to the laboratory.");
+      setError("");
+      return true;
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "Unable to refer patient to the laboratory");
       setSuccess("");
       return false;
     }
@@ -189,7 +213,7 @@ export default function StaffDashboard() {
         )}
       </DashboardSection>
 
-      {managingAppointment && <ManageAppointmentModal appointment={managingAppointment} labs={[]} onClose={() => setManagingAppointment(null)} onSaveAppointment={handleSaveAppointment} showReferTab={false} />}
+      {managingAppointment && <ManageAppointmentModal appointment={managingAppointment} labs={labs} onClose={() => setManagingAppointment(null)} onSaveAppointment={handleSaveAppointment} onReferPatient={handleReferPatient} />}
     </DashboardLayout>
   );
 }

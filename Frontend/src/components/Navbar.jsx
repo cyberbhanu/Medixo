@@ -241,6 +241,9 @@ export default function Navbar() {
                     <Link to="/staff-login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
                       Staff Login
                     </Link>
+                    <Link to="/lab-login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
+                      Laboratory Login
+                    </Link>
                     <Link to="/signup" className="primary-button auth-dropdown-item auth-dropdown-action" role="menuitem" onClick={() => setShowAuthMenu(false)}>
                       Sign Up
                     </Link>
@@ -332,6 +335,12 @@ export default function Navbar() {
                           handleMobileNav("/staff-login");
                         }}>
                           Staff Login
+                        </Link>
+                        <Link to="/lab-login" className="mobile-menu-link" onClick={(event) => {
+                          event.preventDefault();
+                          handleMobileNav("/lab-login");
+                        }}>
+                          Laboratory Login
                         </Link>
                         <Link to="/signup" className="mobile-menu-action" onClick={(event) => {
                           event.preventDefault();

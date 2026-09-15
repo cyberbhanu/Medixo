@@ -103,6 +103,16 @@ export const adminCreateUser = async (userData) => {
   return response.data;
 };
 
+export const requestAccountDeletion = async (email, reason) => {
+  const response = await API.post("/auth/account-deletion-request", { email, reason });
+  return response.data;
+};
+
+export const deleteAccount = async (password) => {
+  const response = await API.delete("/auth/account", { data: { password } });
+  return response.data;
+};
+
 // =====================================================
 // DOCTORS
 // =====================================================

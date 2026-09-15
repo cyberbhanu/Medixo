@@ -29,6 +29,7 @@ router.get("/tests", authenticateUser, authorizeRoles(ROLES.LABORATORY), async (
     const tests = await Appointment.find({ type: "lab", labId: labProfile._id })
       .populate("labId", "name location email")
       .populate("referredBy", "name specialization")
+      .populate("referredByStaff", "name staffRole")
       .populate("patientId", "name email role")
       .sort({ createdAt: -1 });
 

@@ -8,6 +8,10 @@ const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const Lab = require("../models/Lab");
 const Clinic = require("../models/Clinic");
+const Hospital = require("../models/Hospital");
+const Notification = require("../models/Notification");
+const PushSubscription = require("../models/PushSubscription");
+const AccountDeletionRequest = require("../models/AccountDeletionRequest");
 
 const {
   authenticateUser,
@@ -23,6 +27,9 @@ const VALID_ROLES = Object.values(ROLES);
 
 // Fixed email regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const anonymizedPatientEmail = (userId) =>
+  `deleted-${String(userId)}@deleted.medixo.invalid`;
 
 const generatePatientId = () =>
   `PAT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
@@ -423,6 +430,8 @@ router.post(
         // IMPORTANT
         clinicId,
         clinics,
+        hospitalId,
+        hospitals,
         department,
       } = req.body;
 
@@ -521,6 +530,21 @@ router.post(
               clinicValidation.error,
           });
         }
+
+        const hospitalIds = Array.isArray(hospitals)
+          ? hospitals.filter(Boolean)
+          : hospitalId
+            ? [hospitalId]
+            : [];
+        if (hospitalIds.length) {
+          const hospitalCount = await Hospital.countDocuments({
+            _id: { $in: hospitalIds },
+            isActive: { $ne: false },
+          });
+          if (hospitalCount !== hospitalIds.length) {
+            return res.status(400).json({ error: "Selected hospital was not found" });
+          }
+        }
       }
 
       // -------------------------------------------------
@@ -553,6 +577,12 @@ router.post(
           doctorClinics =
             clinics.filter(Boolean);
         }
+
+        const doctorHospitals = Array.isArray(hospitals)
+          ? hospitals.filter(Boolean)
+          : hospitalId
+            ? [hospitalId]
+            : [];
 
         // Add selected primary clinic
         if (
@@ -603,6 +633,9 @@ router.post(
             clinics:
               doctorClinics,
 
+            hospital: hospitalId || null,
+            hospitals: doctorHospitals,
+
             // =========================================
             // DEPARTMENT
             // =========================================
@@ -612,6 +645,13 @@ router.post(
           });
 
         await doctorProfile.save();
+
+        if (doctorHospitals.length) {
+          await Hospital.updateMany(
+            { _id: { $in: doctorHospitals } },
+            { $addToSet: { doctors: doctorProfile._id } }
+          );
+        }
 
         createdDoctor =
           doctorProfile;
@@ -746,5 +786,86 @@ router.post(
     }
   }
 );
+
+// =====================================================
+// ACCOUNT DELETION
+// =====================================================
+
+router.post("/account-deletion-request", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const reason = String(req.body?.reason || "").trim().slice(0, 1000);
+
+    if (!EMAIL_REGEX.test(email)) {
+      return res.status(400).json({ error: "Please provide a valid email address" });
+    }
+
+    const existingRequest = await AccountDeletionRequest.findOne({
+      email,
+      status: "pending",
+    }).lean();
+
+    if (!existingRequest) {
+      await AccountDeletionRequest.create({ email, reason });
+    }
+
+    return res.json({
+      message: "Your deletion request has been received. We will contact you if verification is required.",
+    });
+  } catch (error) {
+    console.error("Account deletion request error:", error);
+    return res.status(500).json({ error: "Unable to submit the deletion request" });
+  }
+});
+
+router.delete("/account", authenticateUser, authorizeRoles(ROLES.PATIENT), async (req, res) => {
+  try {
+    const password = String(req.body?.password || "");
+    if (!password) {
+      return res.status(400).json({ error: "Password is required to delete your account" });
+    }
+
+    const user = await User.findById(req.user.id).select("+password");
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ error: "The password is incorrect" });
+    }
+
+    const deletedEmail = anonymizedPatientEmail(user._id);
+    await Appointment.updateMany(
+      { $or: [{ patientId: user._id }, { patientEmail: user.email }] },
+      {
+        $set: {
+          patientId: null,
+          patientName: "Deleted patient",
+          patientEmail: deletedEmail,
+          patientPhone: "",
+          patientAge: 0,
+          patientGender: "Other",
+          patientWeight: "",
+          patientAddress: "",
+          bloodPressure: "",
+          reason: "Patient record deleted",
+          disease: "",
+          treatmentPlan: "",
+          prescription: "",
+          prescriptionUrl: "",
+          notes: "",
+          bookingReference: null,
+          bookingPasswordHash: null,
+        },
+      }
+    );
+    await Promise.all([
+      Notification.deleteMany({ userId: user._id }),
+      PushSubscription.deleteMany({ userId: user._id }),
+      User.findByIdAndDelete(user._id),
+    ]);
+
+    return res.json({ message: "Your account and account-linked personal data have been deleted" });
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    return res.status(500).json({ error: "Unable to delete the account" });
+  }
+});
 
 module.exports = router;
