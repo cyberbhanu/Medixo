@@ -691,6 +691,22 @@
   gap: 14px;
 }
 
+.dashboard-list-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px 0;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-list-pager .dashboard-secondary-action {
+  flex: 0 0 auto;
+  min-height: 38px;
+}
+
 .dashboard-admin-record {
   display: grid;
   gap: 14px;
@@ -2193,6 +2209,40 @@
   overflow: visible;
 }
 
+/* Give the dashboard hero a visual anchor while keeping controls easy to scan. */
+.dashboard-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(48%, 720px);
+  pointer-events: none;
+  background-image:
+    linear-gradient(90deg, rgba(9, 83, 191, 0.98) 0%, rgba(9, 83, 191, 0.78) 24%, rgba(9, 83, 191, 0.2) 76%, rgba(9, 83, 191, 0.08) 100%),
+    url("../assets/medixo-hero-doctor.png");
+  background-position: center, center 22%;
+  background-size: cover, cover;
+  background-repeat: no-repeat;
+  opacity: 0.78;
+}
+
+.dashboard-stat-grid {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 767px) {
+  .dashboard-hero::after {
+    width: 72%;
+    opacity: 0.28;
+    background-image:
+      linear-gradient(90deg, rgba(9, 83, 191, 0.98) 0%, rgba(9, 83, 191, 0.78) 42%, rgba(9, 83, 191, 0.18) 100%),
+      url("../assets/medixo-hero-doctor.png");
+  }
+}
+
 .dashboard-admin-grid,
 .dashboard-admin-list,
 .dashboard-admin-record,
@@ -2276,6 +2326,15 @@
 
   .dashboard-admin-list {
     gap: 8px;
+  }
+
+  .dashboard-list-pager {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-list-pager .dashboard-secondary-action {
+    width: 100%;
   }
 
   .dashboard-admin-record {

@@ -84,6 +84,8 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
       email: normalizedEmail,
       name: name.trim(),
       location: location?.trim() || "",
+      address: req.body.address?.trim() || "",
+      phone: req.body.phone?.trim() || "",
       availableTests,
     });
 
@@ -114,7 +116,7 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.LAB
     }
 
     const updatePayload = {};
-    ["name", "email", "location"].forEach((field) => {
+    ["name", "email", "location", "address", "phone"].forEach((field) => {
       if (req.body[field] !== undefined) {
         updatePayload[field] = String(req.body[field]).trim();
       }
@@ -133,6 +135,16 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.LAB
       new: true,
       runValidators: true,
     });
+
+    if (hasRole(req.user, ROLES.SUPER_ADMIN) && (req.body.password || updatePayload.email || updatePayload.name)) {
+      const labUser = lab.userId ? await User.findById(lab.userId) : null;
+      if (labUser) {
+        if (req.body.password) labUser.password = req.body.password;
+        if (updatePayload.email) labUser.email = updatePayload.email;
+        if (updatePayload.name) labUser.name = updatePayload.name;
+        await labUser.save();
+      }
+    }
 
     if (hasRole(req.user, ROLES.SUPER_ADMIN)) {
       console.info("admin_action", {

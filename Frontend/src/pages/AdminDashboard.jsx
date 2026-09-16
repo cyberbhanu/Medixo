@@ -5,6 +5,13 @@ import {
   getDoctors,
   getClinics,
   getHospitals,
+  createHospital,
+  updateHospital,
+  deleteHospital,
+  getLabs,
+  createLab,
+  updateLab,
+  deleteLab,
   createClinic,
   updateClinic,
   deleteClinic,
@@ -58,6 +65,31 @@ const EMPTY_CLINIC = {
   isVerified: false,
 };
 
+const EMPTY_HOSPITAL = {
+  name: "",
+  city: "",
+  state: "Bihar",
+  address: "",
+  phone: "",
+  email: "",
+  openingHours: "",
+  emergencyAvailable: false,
+  facilities: "",
+  about: "",
+  mapUrl: "",
+  image: "",
+};
+
+const EMPTY_LAB = {
+  name: "",
+  email: "",
+  password: "",
+  location: "",
+  address: "",
+  phone: "",
+  availableTests: "",
+};
+
 const EMPTY_STAFF = {
   name: "",
   email: "",
@@ -79,6 +111,8 @@ const STATUS_OPTIONS = [
   "Cancelled",
   "Rescheduled",
 ];
+
+const ADMIN_LIST_PAGE_SIZE = 6;
 
 const STAFF_ROLES = [
   "Receptionist",
@@ -138,6 +172,25 @@ const formatDate = (value) => {
       });
 };
 
+const parseListField = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const parseLabTests = (value) =>
+  String(value || "")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((name) => ({ name }));
+
+const formatLabTests = (tests) =>
+  (Array.isArray(tests) ? tests : [])
+    .map((test) => (typeof test === "string" ? test : test?.name))
+    .filter(Boolean)
+    .join("\n");
+
 export default function AdminDashboard() {
   const location = useLocation();
   const user = getStoredUser();
@@ -145,6 +198,8 @@ export default function AdminDashboard() {
 
   const doctorFormRef = useRef(null);
   const clinicFormRef = useRef(null);
+  const hospitalFormRef = useRef(null);
+  const labFormRef = useRef(null);
   const staffFormRef = useRef(null);
   const patientSectionRef = useRef(null);
   const appointmentSectionRef = useRef(null);
@@ -152,15 +207,20 @@ export default function AdminDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [clinics, setClinics] = useState([]);
   const [hospitals, setHospitals] = useState([]);
+  const [labs, setLabs] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [staff, setStaff] = useState([]);
 
   const [doctorForm, setDoctorForm] = useState(EMPTY_DOCTOR);
   const [clinicForm, setClinicForm] = useState(EMPTY_CLINIC);
+  const [hospitalForm, setHospitalForm] = useState(EMPTY_HOSPITAL);
+  const [labForm, setLabForm] = useState(EMPTY_LAB);
   const [staffForm, setStaffForm] = useState(EMPTY_STAFF);
 
   const [editingDoctorId, setEditingDoctorId] = useState("");
   const [editingClinicId, setEditingClinicId] = useState("");
+  const [editingHospitalId, setEditingHospitalId] = useState("");
+  const [editingLabId, setEditingLabId] = useState("");
   const [editingStaffId, setEditingStaffId] = useState("");
 
   const [selectedPatientKey, setSelectedPatientKey] = useState("");
@@ -186,13 +246,18 @@ export default function AdminDashboard() {
   const [patientSearch, setPatientSearch] = useState("");
   const [doctorSearch, setDoctorSearch] = useState("");
   const [clinicSearch, setClinicSearch] = useState("");
+  const [hospitalSearch, setHospitalSearch] = useState("");
+  const [labSearch, setLabSearch] = useState("");
   const [staffSearch, setStaffSearch] = useState("");
   const [customerPasswordDrafts, setCustomerPasswordDrafts] = useState({});
+  const [visibleListCounts, setVisibleListCounts] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [refreshingData, setRefreshingData] = useState(false);
   const [savingDoctor, setSavingDoctor] = useState(false);
   const [savingClinic, setSavingClinic] = useState(false);
+  const [savingHospital, setSavingHospital] = useState(false);
+  const [savingLab, setSavingLab] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
   const [savingCustomerPasswordKey, setSavingCustomerPasswordKey] = useState("");
   const [uploadingDoctorImage, setUploadingDoctorImage] = useState(false);
@@ -227,11 +292,12 @@ export default function AdminDashboard() {
     setError("");
 
     try {
-      const [doctorResult, clinicResult, hospitalResult, appointmentResult, staffResult] =
+      const [doctorResult, clinicResult, hospitalResult, labResult, appointmentResult, staffResult] =
         await Promise.allSettled([
           getDoctors(),
           getClinics(),
           getHospitals(),
+          getLabs(),
           getAppointments(),
           getAdminStaff(),
         ]);
@@ -254,6 +320,12 @@ export default function AdminDashboard() {
         setHospitals(Array.isArray(hospitalResult.value) ? hospitalResult.value : []);
       } else {
         failures.push(errorMessage(hospitalResult.reason, "Unable to load hospitals"));
+      }
+
+      if (labResult.status === "fulfilled") {
+        setLabs(Array.isArray(labResult.value) ? labResult.value : []);
+      } else {
+        failures.push(errorMessage(labResult.reason, "Unable to load laboratories"));
       }
 
       if (appointmentResult.status === "fulfilled") {
@@ -376,6 +448,22 @@ export default function AdminDashboard() {
     );
   }, [patients, patientSearch]);
 
+  const patientListResults = useMemo(() => {
+    return patientSearchResults.filter((patient) => {
+      if (selectedDoctorId) {
+        return patient.appointments.some(
+          (appointment) => getId(appointment.doctorId) === selectedDoctorId
+        );
+      }
+      if (selectedClinicId) {
+        return patient.appointments.some(
+          (appointment) => getAppointmentClinicId(appointment) === selectedClinicId
+        );
+      }
+      return true;
+    });
+  }, [patientSearchResults, selectedDoctorId, selectedClinicId]);
+
   const doctorSearchResults = useMemo(() => {
     const query = doctorSearch.trim().toLowerCase();
     if (!query) return doctors;
@@ -399,6 +487,57 @@ export default function AdminDashboard() {
         .includes(query)
     );
   }, [clinics, clinicSearch]);
+
+  const hospitalSearchResults = useMemo(() => {
+    const query = hospitalSearch.trim().toLowerCase();
+    if (!query) return hospitals;
+
+    return hospitals.filter((hospital) =>
+      [hospital.name, hospital.city, hospital.state, hospital.address, hospital.phone]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [hospitals, hospitalSearch]);
+
+  const labSearchResults = useMemo(() => {
+    const query = labSearch.trim().toLowerCase();
+    if (!query) return labs;
+
+    return labs.filter((lab) =>
+      [lab.name, lab.email, lab.location, lab.address, lab.phone]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [labs, labSearch]);
+
+  const visibleListItems = (key, items) =>
+    items.slice(0, visibleListCounts[key] || ADMIN_LIST_PAGE_SIZE);
+
+  const renderListPager = (key, items, label) => {
+    const visibleCount = visibleListCounts[key] || ADMIN_LIST_PAGE_SIZE;
+    if (items.length <= ADMIN_LIST_PAGE_SIZE) return null;
+
+    const showingAll = visibleCount >= items.length;
+    return (
+      <div className="dashboard-list-pager">
+        <span>Showing {Math.min(visibleCount, items.length)} of {items.length} {label}</span>
+        <button
+          type="button"
+          className="dashboard-secondary-action"
+          onClick={() =>
+            setVisibleListCounts((current) => ({
+              ...current,
+              [key]: showingAll ? ADMIN_LIST_PAGE_SIZE : Math.min(visibleCount + ADMIN_LIST_PAGE_SIZE, items.length),
+            }))
+          }
+        >
+          {showingAll ? "Show less" : "See more"}
+        </button>
+      </div>
+    );
+  };
 
   const staffSearchResults = useMemo(() => {
     const query = staffSearch.trim().toLowerCase();
@@ -547,6 +686,18 @@ export default function AdminDashboard() {
       note: "Participating clinics",
     },
     {
+      icon: "hospital",
+      value: String(hospitals.length),
+      label: "Hospitals",
+      note: "Hospital profiles managed by admin",
+    },
+    {
+      icon: "file",
+      value: String(labs.length),
+      label: "Laboratories",
+      note: "Labs available for referrals",
+    },
+    {
       icon: "users",
       value: String(patients.length),
       label: "Booked Patients",
@@ -592,6 +743,16 @@ export default function AdminDashboard() {
   const resetClinicForm = () => {
     setClinicForm(EMPTY_CLINIC);
     setEditingClinicId("");
+  };
+
+  const resetHospitalForm = () => {
+    setHospitalForm(EMPTY_HOSPITAL);
+    setEditingHospitalId("");
+  };
+
+  const resetLabForm = () => {
+    setLabForm(EMPTY_LAB);
+    setEditingLabId("");
   };
 
   const resetStaffForm = () => {
@@ -756,6 +917,136 @@ export default function AdminDashboard() {
       await loadDashboardData();
     } catch (requestError) {
       setError(errorMessage(requestError, "Failed to delete clinic."));
+    }
+  };
+
+  const handleHospitalSubmit = async (event) => {
+    event.preventDefault();
+    setSavingHospital(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const payload = {
+        ...hospitalForm,
+        facilities: parseListField(hospitalForm.facilities),
+        emergencyAvailable: Boolean(hospitalForm.emergencyAvailable),
+      };
+
+      if (editingHospitalId) {
+        await updateHospital(editingHospitalId, payload);
+        setSuccess("Hospital details updated successfully.");
+      } else {
+        await createHospital(payload);
+        setSuccess("Hospital added to the Medixo network.");
+      }
+
+      resetHospitalForm();
+      await loadDashboardData();
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Unable to save hospital."));
+    } finally {
+      setSavingHospital(false);
+    }
+  };
+
+  const startHospitalEdit = (hospital) => {
+    setEditingHospitalId(hospital._id);
+    setHospitalForm({
+      name: hospital.name || "",
+      city: hospital.city || "",
+      state: hospital.state || "Bihar",
+      address: hospital.address || "",
+      phone: hospital.phone || "",
+      email: hospital.email || "",
+      openingHours: hospital.openingHours || "",
+      emergencyAvailable: Boolean(hospital.emergencyAvailable),
+      facilities: Array.isArray(hospital.facilities) ? hospital.facilities.join(", ") : "",
+      about: hospital.about || "",
+      mapUrl: hospital.mapUrl || "",
+      image: hospital.image || "",
+    });
+    setError("");
+    setSuccess("");
+    scrollTo(hospitalFormRef);
+  };
+
+  const handleDeleteHospital = async (hospitalId) => {
+    if (!window.confirm("Delete this hospital? Existing appointment history will remain.")) return;
+
+    try {
+      setError("");
+      setSuccess("");
+      await deleteHospital(hospitalId);
+      setSuccess("Hospital deleted successfully.");
+      await loadDashboardData();
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Failed to delete hospital."));
+    }
+  };
+
+  const handleLabSubmit = async (event) => {
+    event.preventDefault();
+    setSavingLab(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const payload = {
+        name: labForm.name.trim(),
+        email: labForm.email.trim(),
+        location: labForm.location.trim(),
+        availableTests: parseLabTests(labForm.availableTests),
+      };
+
+      if (labForm.address.trim()) payload.address = labForm.address.trim();
+      if (labForm.phone.trim()) payload.phone = labForm.phone.trim();
+      if (labForm.password.trim()) payload.password = labForm.password;
+
+      if (editingLabId) {
+        await updateLab(editingLabId, payload);
+        setSuccess("Laboratory details updated successfully.");
+      } else {
+        await createLab({ ...payload, password: labForm.password });
+        setSuccess("Laboratory account and profile created successfully.");
+      }
+
+      resetLabForm();
+      await loadDashboardData();
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Unable to save laboratory."));
+    } finally {
+      setSavingLab(false);
+    }
+  };
+
+  const startLabEdit = (lab) => {
+    setEditingLabId(lab._id);
+    setLabForm({
+      name: lab.name || "",
+      email: lab.email || "",
+      password: "",
+      location: lab.location || "",
+      address: lab.address || "",
+      phone: lab.phone || "",
+      availableTests: formatLabTests(lab.availableTests),
+    });
+    setError("");
+    setSuccess("");
+    scrollTo(labFormRef);
+  };
+
+  const handleDeleteLab = async (labId) => {
+    if (!window.confirm("Delete this laboratory and its login access?")) return;
+
+    try {
+      setError("");
+      setSuccess("");
+      await deleteLab(labId);
+      setSuccess("Laboratory deleted successfully.");
+      await loadDashboardData();
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Failed to delete laboratory."));
     }
   };
 
@@ -1005,10 +1296,12 @@ export default function AdminDashboard() {
     <DashboardLayout
       role="Admin Dashboard"
       title={`Control center for ${firstName}`}
-      subtitle="Manage doctors, clinics, patients, staff, and every appointment from one central Medixo control center."
+      subtitle="Manage doctors, clinics, hospitals, laboratories, patients, staff, and every appointment from one central Medixo control center."
       chips={[
         "Doctor management",
         "Clinic management",
+        "Hospital management",
+        "Laboratory management",
         "Patient tracking",
         "Staff accounts",
         "Appointment control",
@@ -1030,6 +1323,22 @@ export default function AdminDashboard() {
           onClick: () => {
             resetStaffForm();
             scrollTo(staffFormRef);
+          },
+        },
+        {
+          icon: "plus",
+          label: "Add Hospital",
+          onClick: () => {
+            resetHospitalForm();
+            scrollTo(hospitalFormRef);
+          },
+        },
+        {
+          icon: "plus",
+          label: "Add Laboratory",
+          onClick: () => {
+            resetLabForm();
+            scrollTo(labFormRef);
           },
         },
         {
@@ -1295,7 +1604,7 @@ export default function AdminDashboard() {
             {loading ? (
               <p className="dashboard-empty-state">Loading doctors...</p>
             ) : doctorSearchResults.length ? (
-              doctorSearchResults.map((doctor) => {
+              visibleListItems("doctors", doctorSearchResults).map((doctor) => {
                 const stat = doctorStats.get(String(doctor._id)) || {
                   appointments: 0,
                   patients: new Set(),
@@ -1384,6 +1693,7 @@ export default function AdminDashboard() {
             ) : (
               <p className="dashboard-empty-state">No doctors found.</p>
             )}
+            {renderListPager("doctors", doctorSearchResults, "doctors")}
           </div>
         </div>
       </DashboardSection>
@@ -1498,7 +1808,7 @@ export default function AdminDashboard() {
             </label>
 
             {clinicSearchResults.length ? (
-              clinicSearchResults.map((clinic) => {
+              visibleListItems("clinics", clinicSearchResults).map((clinic) => {
                 const stat = clinicStats.get(String(clinic._id)) || {
                   doctors: clinic.doctors?.length || 0,
                   appointments: 0,
@@ -1574,6 +1884,194 @@ export default function AdminDashboard() {
             ) : (
               <p className="dashboard-empty-state">No clinics found.</p>
             )}
+            {renderListPager("clinics", clinicSearchResults, "clinics")}
+          </div>
+        </div>
+      </DashboardSection>
+
+      <DashboardSection
+        title="Hospital Management"
+        action={editingHospitalId ? "Editing Hospital" : "Add Hospital"}
+        onActionClick={() => {
+          resetHospitalForm();
+          scrollTo(hospitalFormRef);
+        }}
+      >
+        <div className="dashboard-admin-grid">
+          <form ref={hospitalFormRef} className="dashboard-form-card" onSubmit={handleHospitalSubmit}>
+            <div className="dashboard-form-heading">
+              <span>Hospital profile</span>
+              <h3>{editingHospitalId ? "Update hospital details" : "Add a hospital"}</h3>
+              <p>Publish hospital information and make its doctors easy to discover for patients.</p>
+            </div>
+            <div className="dashboard-form-grid">
+              {[
+                ["name", "Hospital name *", "Medixo Multispeciality Hospital"],
+                ["city", "City", "Muzaffarpur"],
+                ["state", "State", "Bihar"],
+                ["address", "Full address", "Main Road, Muzaffarpur"],
+                ["phone", "Phone", "9876543210"],
+                ["email", "Email", "hospital@medixo.com"],
+                ["openingHours", "Opening hours", "Open 24 hours"],
+                ["mapUrl", "Map link", "https://maps.google.com/..."],
+                ["image", "Hospital image URL", "https://example.com/hospital.jpg"],
+              ].map(([key, label, placeholder]) => (
+                <label className="dashboard-input-group" key={key}>
+                  <span>{label}</span>
+                  <input
+                    type={key === "email" ? "email" : key === "mapUrl" || key === "image" ? "url" : "text"}
+                    value={hospitalForm[key]}
+                    onChange={(e) => setHospitalForm({ ...hospitalForm, [key]: e.target.value })}
+                    placeholder={placeholder}
+                    required={label.includes("*")}
+                  />
+                </label>
+              ))}
+              <label className="dashboard-input-group">
+                <span>Facilities</span>
+                <input
+                  value={hospitalForm.facilities}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, facilities: e.target.value })}
+                  placeholder="Emergency, ICU, Pharmacy"
+                />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Emergency services</span>
+                <select
+                  value={hospitalForm.emergencyAvailable ? "yes" : "no"}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, emergencyAvailable: e.target.value === "yes" })}
+                >
+                  <option value="yes">Available</option>
+                  <option value="no">Not available</option>
+                </select>
+              </label>
+              <label className="dashboard-input-group full-width">
+                <span>About the hospital</span>
+                <textarea
+                  value={hospitalForm.about}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, about: e.target.value })}
+                  placeholder="Short description shown on the hospital page"
+                />
+              </label>
+            </div>
+            <div className="dashboard-form-actions">
+              <button className="dashboard-primary-action" type="submit" disabled={savingHospital}>
+                {savingHospital ? "Saving..." : editingHospitalId ? "Update Hospital" : "Add Hospital"}
+              </button>
+              <button className="dashboard-secondary-action" type="button" onClick={resetHospitalForm}>Clear Form</button>
+            </div>
+          </form>
+
+          <div className="dashboard-admin-list">
+            <label className="dashboard-input-group">
+              <span>Search hospitals</span>
+              <input value={hospitalSearch} onChange={(e) => setHospitalSearch(e.target.value)} placeholder="Name, city, phone or address" />
+            </label>
+            {hospitalSearchResults.length ? visibleListItems("hospitals", hospitalSearchResults).map((hospital) => (
+              <article key={hospital._id} className="dashboard-admin-record">
+                <div className="dashboard-record-header">
+                  <div>
+                    <h3>{hospital.name}</h3>
+                    <p>{hospital.address || `${hospital.city || ""}, ${hospital.state || ""}`}</p>
+                  </div>
+                  <span className="dashboard-inline-badge">{hospital.emergencyAvailable ? "Emergency" : "Standard care"}</span>
+                </div>
+                <div className="dashboard-record-meta">
+                  <span>{hospital.city || "No city"}</span>
+                  <span>{hospital.phone || "No phone"}</span>
+                  <span>{hospital.doctors?.length || 0} doctors</span>
+                  <span>{hospital.laboratories?.length || 0} labs</span>
+                </div>
+                <div className="dashboard-action-row">
+                  <button type="button" className="dashboard-secondary-action" onClick={() => startHospitalEdit(hospital)}>Edit</button>
+                  <button type="button" className="dashboard-secondary-action danger" onClick={() => handleDeleteHospital(hospital._id)}>Delete</button>
+                </div>
+              </article>
+            )) : <p className="dashboard-empty-state">{loading ? "Loading hospitals..." : "No hospitals found."}</p>}
+            {renderListPager("hospitals", hospitalSearchResults, "hospitals")}
+          </div>
+        </div>
+      </DashboardSection>
+
+      <DashboardSection
+        title="Laboratory Management"
+        action={editingLabId ? "Editing Laboratory" : "Add Laboratory"}
+        onActionClick={() => {
+          resetLabForm();
+          scrollTo(labFormRef);
+        }}
+      >
+        <div className="dashboard-admin-grid">
+          <form ref={labFormRef} className="dashboard-form-card" onSubmit={handleLabSubmit}>
+            <div className="dashboard-form-heading">
+              <span>Laboratory access</span>
+              <h3>{editingLabId ? "Update laboratory details" : "Create a laboratory account"}</h3>
+              <p>Give a laboratory its login and publish the tests that staff and doctors can refer to.</p>
+            </div>
+            <div className="dashboard-form-grid">
+              <label className="dashboard-input-group">
+                <span>Laboratory name *</span>
+                <input value={labForm.name} onChange={(e) => setLabForm({ ...labForm, name: e.target.value })} placeholder="Medixo Diagnostics" required />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Email login *</span>
+                <input type="email" value={labForm.email} onChange={(e) => setLabForm({ ...labForm, email: e.target.value })} placeholder="lab@medixo.com" required disabled={Boolean(editingLabId)} />
+              </label>
+              <label className="dashboard-input-group">
+                <span>{editingLabId ? "New password (optional)" : "Password *"}</span>
+                <input type="password" minLength="6" value={labForm.password} onChange={(e) => setLabForm({ ...labForm, password: e.target.value })} placeholder={editingLabId ? "Leave blank to keep current password" : "Minimum 6 characters"} autoComplete="new-password" required={!editingLabId} />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Location</span>
+                <input value={labForm.location} onChange={(e) => setLabForm({ ...labForm, location: e.target.value })} placeholder="Muzaffarpur" />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Address</span>
+                <input value={labForm.address} onChange={(e) => setLabForm({ ...labForm, address: e.target.value })} placeholder="Lab address" />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Phone</span>
+                <input value={labForm.phone} onChange={(e) => setLabForm({ ...labForm, phone: e.target.value })} placeholder="9876543210" />
+              </label>
+              <label className="dashboard-input-group full-width">
+                <span>Available tests</span>
+                <textarea value={labForm.availableTests} onChange={(e) => setLabForm({ ...labForm, availableTests: e.target.value })} placeholder={'CBC\nBlood Sugar\nThyroid Profile'} />
+                <small className="dashboard-field-hint">Enter one test per line. These tests appear in referral options.</small>
+              </label>
+            </div>
+            <div className="dashboard-form-actions">
+              <button className="dashboard-primary-action" type="submit" disabled={savingLab}>{savingLab ? "Saving..." : editingLabId ? "Update Laboratory" : "Create Laboratory"}</button>
+              <button className="dashboard-secondary-action" type="button" onClick={resetLabForm}>Clear Form</button>
+            </div>
+          </form>
+
+          <div className="dashboard-admin-list">
+            <label className="dashboard-input-group">
+              <span>Search laboratories</span>
+              <input value={labSearch} onChange={(e) => setLabSearch(e.target.value)} placeholder="Name, email, location or phone" />
+            </label>
+            {labSearchResults.length ? visibleListItems("labs", labSearchResults).map((lab) => (
+              <article key={lab._id} className="dashboard-admin-record">
+                <div className="dashboard-record-header">
+                  <div>
+                    <h3>{lab.name}</h3>
+                    <p>{lab.email || "No login email"}</p>
+                  </div>
+                  <span className="dashboard-inline-badge">{lab.isActive === false ? "Disabled" : "Active"}</span>
+                </div>
+                <div className="dashboard-record-meta">
+                  <span>{lab.location || "No location"}</span>
+                  <span>{lab.phone || "No phone"}</span>
+                  <span>{lab.availableTests?.length || 0} tests</span>
+                  <span>{lab.hospitals?.length || 0} hospitals</span>
+                </div>
+                <div className="dashboard-action-row">
+                  <button type="button" className="dashboard-secondary-action" onClick={() => startLabEdit(lab)}>Edit</button>
+                  <button type="button" className="dashboard-secondary-action danger" onClick={() => handleDeleteLab(lab._id)}>Delete</button>
+                </div>
+              </article>
+            )) : <p className="dashboard-empty-state">{loading ? "Loading laboratories..." : "No laboratories found."}</p>}
+            {renderListPager("labs", labSearchResults, "laboratories")}
           </div>
         </div>
       </DashboardSection>
@@ -1626,22 +2124,8 @@ export default function AdminDashboard() {
             </div>
           ) : null}
 
-          {patientSearchResults.length ? (
-            patientSearchResults
-              .filter((patient) => {
-                if (selectedDoctorId) {
-                  return patient.appointments.some(
-                    (appointment) => getId(appointment.doctorId) === selectedDoctorId
-                  );
-                }
-                if (selectedClinicId) {
-                  return patient.appointments.some(
-                    (appointment) => getAppointmentClinicId(appointment) === selectedClinicId
-                  );
-                }
-                return true;
-              })
-              .map((patient) => (
+          {patientListResults.length ? (
+            visibleListItems("patients", patientListResults).map((patient) => (
                 <article key={patient.key} className="dashboard-admin-record dashboard-patient-row">
                   <div className="dashboard-patient-row-header">
                     <div className="dashboard-record-identity">
@@ -1772,6 +2256,7 @@ export default function AdminDashboard() {
           ) : (
             <p className="dashboard-empty-state">No booked patients found.</p>
           )}
+          {renderListPager("patients", patientListResults, "patients")}
         </div>
       </DashboardSection>
 
@@ -1992,7 +2477,7 @@ export default function AdminDashboard() {
             </label>
 
             {staffSearchResults.length ? (
-              staffSearchResults.map((member) => (
+              visibleListItems("staff", staffSearchResults).map((member) => (
                 <article key={getId(member)} className="dashboard-admin-record">
                   <div className="dashboard-record-header">
                     <div className="dashboard-record-identity">
@@ -2058,11 +2543,18 @@ export default function AdminDashboard() {
                 {loading ? "Loading staff..." : "No staff accounts found."}
               </p>
             )}
+            {renderListPager("staff", staffSearchResults, "staff accounts")}
           </div>
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Appointment Management" action="Export CSV" onActionClick={exportAppointments}>
+      <DashboardSection
+        title="Appointment Management"
+        action="Export CSV"
+        onActionClick={exportAppointments}
+        collapsible
+        defaultOpen={false}
+      >
         <div ref={appointmentSectionRef} className="dashboard-admin-list">
           <div className="dashboard-form-card">
             <div className="dashboard-form-grid">
@@ -2161,7 +2653,7 @@ export default function AdminDashboard() {
           </div>
 
           {filteredAppointments.length ? (
-            filteredAppointments.map((appointment) => (
+            visibleListItems("appointments", filteredAppointments).map((appointment) => (
               <article key={appointment._id} className="dashboard-admin-record">
                 <div className="dashboard-record-header">
                   <div>
@@ -2231,6 +2723,7 @@ export default function AdminDashboard() {
           ) : (
             <p className="dashboard-empty-state">No appointments match the selected filters.</p>
           )}
+          {renderListPager("appointments", filteredAppointments, "appointments")}
         </div>
       </DashboardSection>
 

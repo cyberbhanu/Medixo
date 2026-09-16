@@ -249,6 +249,21 @@ export const getLabById = async (labId) => {
   return response.data;
 };
 
+export const createLab = async (labData) => {
+  const response = await API.post("/labs", labData);
+  return response.data;
+};
+
+export const updateLab = async (labId, labData) => {
+  const response = await API.put(`/labs/${labId}`, labData);
+  return response.data;
+};
+
+export const deleteLab = async (labId) => {
+  const response = await API.delete(`/labs/${labId}`);
+  return response.data;
+};
+
 export const getLabTests = async () => {
   const response = await API.get(
     "/labs/tests"
@@ -276,6 +291,21 @@ export const getHospitalById = async (
     `/hospitals/${hospitalId}`
   );
 
+  return response.data;
+};
+
+export const createHospital = async (hospitalData) => {
+  const response = await API.post("/hospitals", hospitalData);
+  return response.data;
+};
+
+export const updateHospital = async (hospitalId, hospitalData) => {
+  const response = await API.put(`/hospitals/${hospitalId}`, hospitalData);
+  return response.data;
+};
+
+export const deleteHospital = async (hospitalId) => {
+  const response = await API.delete(`/hospitals/${hospitalId}`);
   return response.data;
 };
 
