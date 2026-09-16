@@ -850,8 +850,10 @@ router.delete("/account", authenticateUser, authorizeRoles(ROLES.PATIENT), async
           prescription: "",
           prescriptionUrl: "",
           notes: "",
-          bookingReference: null,
-          bookingPasswordHash: null,
+        },
+        $unset: {
+          bookingReference: "",
+          bookingPasswordHash: "",
         },
       }
     );
