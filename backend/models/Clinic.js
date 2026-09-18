@@ -38,6 +38,11 @@ const ClinicSchema = new mongoose.Schema(
       lowercase: true,
       default: "",
     },
+    mapUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     about: {
       type: String,
       trim: true,

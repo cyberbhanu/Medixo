@@ -6,6 +6,7 @@ import doctorArjun from "../assets/doctor-arjun.png";
 import doctorPriya from "../assets/doctor-priya.png";
 import doctorRohan from "../assets/doctor-rohan.png";
 import "../styles/home.css";
+import "../styles/resource-card-overrides.css";
 import doctorNeha from "../assets/doctor-neha.png";
 import { getHomepageData } from "../api";
 
@@ -255,6 +256,29 @@ function DoctorLocation({ doctor }) {
     </a>
   ) : (
     <span>{content}</span>
+  );
+}
+
+const getResourceLocationUrl = (item) => item.mapUrl || item.locationUrl || "";
+
+function ResourceLocation({ item }) {
+  const label = getResourceCity(item) || item.address || "Location pending";
+  const locationUrl = getResourceLocationUrl(item);
+  const content = <><Icon name="pin" /> {label}</>;
+
+  return locationUrl ? (
+    <a
+      className="resource-location-link"
+      href={locationUrl}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`Open ${label} in maps`}
+    >
+      {content}
+      <span>Open map</span>
+    </a>
+  ) : (
+    <span className="resource-location-pending">{content}</span>
   );
 }
 
@@ -510,6 +534,7 @@ function HospitalCard({ item, type, onView, onBook }) {
           <span className="rating"><Icon name="star" /> {Number(item.rating || 4.6).toFixed(1)}</span>
         </div>
         <p>{item.address || item.city || "Location details will be updated soon"}</p>
+        <div className="resource-location-row"><ResourceLocation item={item} /></div>
         <div className="resource-meta">
           {item.city ? <span>{item.city}{item.state ? `, ${item.state}` : ""}</span> : null}
           {item.phone ? <span>{item.phone}</span> : null}
@@ -549,6 +574,7 @@ function LabCard({ lab, onView, onBook }) {
           <span className="rating"><Icon name="star" /> {Number(lab.rating || 4.7).toFixed(1)}</span>
         </div>
         <p>{lab.address || lab.location || "Location details will be updated soon"}</p>
+        <div className="resource-location-row"><ResourceLocation item={lab} /></div>
         <div className="doctor-badge-row">
           <span className="availability-badge">{lab.homeSampleCollection ? "Home collection" : "Center visit"}</span>
           {(tests.length ? tests : ["Tests updating soon"]).slice(0, 4).map((test) => (

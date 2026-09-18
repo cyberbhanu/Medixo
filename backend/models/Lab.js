@@ -35,6 +35,11 @@ const LabSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    mapUrl: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     rating: {
       type: Number,
       min: 0,

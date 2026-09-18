@@ -1,0 +1,117 @@
+/* Public facility cards: keep the media, details, and actions readable at every width. */
+.home-page .resource-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.home-page .resource-card {
+  min-height: 100%;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 18px;
+}
+
+.home-page .resource-media {
+  grid-column: 1;
+  grid-row: 1;
+  width: 104px;
+  height: 104px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #e9f6ff, #d9f4f0);
+}
+
+.home-page .resource-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-page .resource-body {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+.home-page .resource-body .doctor-card-title-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.home-page .resource-body h3 {
+  font-size: 18px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-location-row {
+  min-height: 22px;
+  margin-top: 6px;
+}
+
+.home-page .resource-location-link,
+.home-page .resource-location-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: #4b6475;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-location-link {
+  color: #087f8c;
+  text-decoration: none;
+}
+
+.home-page .resource-location-link:hover {
+  text-decoration: underline;
+}
+
+.home-page .resource-location-link span {
+  color: #0a6f78;
+  font-weight: 700;
+}
+
+.home-page .resource-body .doctor-badge-row {
+  margin-top: 12px;
+}
+
+.home-page .resource-body .home-card-actions {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+@media (max-width: 1180px) {
+  .home-page .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-page .resource-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .home-page .resource-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 13px;
+    padding: 14px;
+  }
+
+  .home-page .resource-media {
+    width: 76px;
+    height: 76px;
+    border-radius: 10px;
+  }
+
+  .home-page .resource-body h3 {
+    font-size: 16px;
+  }
+}

@@ -1261,6 +1261,165 @@
   }
 }
 
+/* Resource cards stay balanced across desktop and tablet widths. */
+.home-page .resource-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.home-page .resource-card {
+  min-height: 100%;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 18px;
+}
+
+.home-page .resource-media {
+  width: 104px;
+  height: 104px;
+  grid-column: 1;
+  grid-row: 1;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #eaf4ff 0%, #d8edff 100%);
+}
+
+.home-page .resource-media img {
+  object-fit: cover;
+}
+
+.home-page .resource-body {
+  display: flex;
+  min-height: 100%;
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: column;
+}
+
+.home-page .resource-body .doctor-card-title-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.home-page .resource-body .doctor-card-title-row > div {
+  min-width: 0;
+}
+
+.home-page .resource-body .doctor-card-title-row h3 {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.home-page .resource-location-row {
+  min-width: 0;
+  margin-top: 10px;
+}
+
+.home-page .resource-location-link,
+.home-page .resource-location-pending {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 100%;
+  color: #506176;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-location-link {
+  color: #0d5bdd;
+  text-decoration: none;
+}
+
+.home-page .resource-location-link > span {
+  color: #167c80;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.home-page .resource-location-link:hover {
+  color: #06439f;
+}
+
+.home-page .resource-body .doctor-badge-row {
+  margin-top: 12px;
+}
+
+.home-page .resource-body .home-card-actions {
+  grid-template-columns: 1fr;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+@media (max-width: 1180px) {
+  .home-page .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-page .resource-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .home-page .resource-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 13px;
+    padding: 14px;
+  }
+
+  .home-page .resource-media {
+    width: 76px;
+    height: 76px;
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 10px;
+  }
+
+  .home-page .resource-body {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .home-page .resource-body .doctor-card-title-row h3 {
+    font-size: 16px;
+  }
+}
+
+/* Ensure the final card composition wins over legacy card positioning rules. */
+.home-page .resource-media {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.home-page .resource-body {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.home-page .resource-body .home-card-actions {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 767px) {
+  .home-page .resource-media {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-page .resource-body {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .home-page .search-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2691,5 +2850,125 @@
   .home-page .feature-item strong {
     max-width: 62px;
     font-size: 8px;
+  }
+}
+
+/* Final responsive treatment for the public facility cards. */
+.home-page .resource-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.home-page .resource-card {
+  min-height: 100%;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 18px;
+}
+
+.home-page .resource-media {
+  width: 104px;
+  height: 104px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #eaf4ff 0%, #d8edff 100%);
+}
+
+.home-page .resource-media img {
+  object-fit: cover;
+}
+
+.home-page .resource-body {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+.home-page .resource-body .doctor-card-title-row {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.home-page .resource-body .doctor-card-title-row > div {
+  min-width: 0;
+}
+
+.home-page .resource-body .doctor-card-title-row h3 {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.home-page .resource-location-row {
+  min-width: 0;
+  margin-top: 10px;
+}
+
+.home-page .resource-location-link,
+.home-page .resource-location-pending {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 100%;
+  color: #506176;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-location-link {
+  color: #0d5bdd;
+  text-decoration: none;
+}
+
+.home-page .resource-location-link > span {
+  color: #167c80;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.home-page .resource-location-link:hover {
+  color: #06439f;
+}
+
+.home-page .resource-body .doctor-badge-row {
+  margin-top: 12px;
+}
+
+.home-page .resource-body .home-card-actions {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+@media (max-width: 1180px) {
+  .home-page .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-page .resource-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .home-page .resource-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 13px;
+    padding: 14px;
+  }
+
+  .home-page .resource-media {
+    width: 76px;
+    height: 76px;
+    border-radius: 10px;
+  }
+
+  .home-page .resource-body .doctor-card-title-row h3 {
+    font-size: 16px;
   }
 }

@@ -86,6 +86,7 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
       location: location?.trim() || "",
       address: req.body.address?.trim() || "",
       phone: req.body.phone?.trim() || "",
+      mapUrl: req.body.mapUrl?.trim() || "",
       availableTests,
     });
 
@@ -116,7 +117,7 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.LAB
     }
 
     const updatePayload = {};
-    ["name", "email", "location", "address", "phone"].forEach((field) => {
+    ["name", "email", "location", "address", "phone", "mapUrl"].forEach((field) => {
       if (req.body[field] !== undefined) {
         updatePayload[field] = String(req.body[field]).trim();
       }

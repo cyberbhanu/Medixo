@@ -61,6 +61,7 @@ const EMPTY_CLINIC = {
   bookingMode: "both",
   specialties: "",
   openingHours: "",
+  mapUrl: "",
   about: "",
   isVerified: false,
 };
@@ -87,6 +88,7 @@ const EMPTY_LAB = {
   location: "",
   address: "",
   phone: "",
+  mapUrl: "",
   availableTests: "",
 };
 
@@ -898,6 +900,7 @@ export default function AdminDashboard() {
         ? clinic.specialties.join(", ")
         : "",
       openingHours: clinic.openingHours || "",
+      mapUrl: clinic.mapUrl || "",
       about: clinic.about || "",
       isVerified: Boolean(clinic.isVerified),
     });
@@ -1001,6 +1004,7 @@ export default function AdminDashboard() {
 
       if (labForm.address.trim()) payload.address = labForm.address.trim();
       if (labForm.phone.trim()) payload.phone = labForm.phone.trim();
+      if (labForm.mapUrl.trim()) payload.mapUrl = labForm.mapUrl.trim();
       if (labForm.password.trim()) payload.password = labForm.password;
 
       if (editingLabId) {
@@ -1029,6 +1033,7 @@ export default function AdminDashboard() {
       location: lab.location || "",
       address: lab.address || "",
       phone: lab.phone || "",
+      mapUrl: lab.mapUrl || "",
       availableTests: formatLabTests(lab.availableTests),
     });
     setError("");
@@ -1723,6 +1728,7 @@ export default function AdminDashboard() {
                 ["email", "Email", "clinic@medixo.com"],
                 ["consultationFee", "Default consultation fee", "500"],
                 ["openingHours", "Opening hours", "9:00 AM - 8:00 PM"],
+                ["mapUrl", "Google Maps link", "https://maps.google.com/..."],
                 ["specialties", "Specialties", "General Medicine, Pediatrics"],
               ].map(([key, label, placeholder]) => (
                 <label className="dashboard-input-group" key={key}>
@@ -2032,6 +2038,10 @@ export default function AdminDashboard() {
               <label className="dashboard-input-group">
                 <span>Phone</span>
                 <input value={labForm.phone} onChange={(e) => setLabForm({ ...labForm, phone: e.target.value })} placeholder="9876543210" />
+              </label>
+              <label className="dashboard-input-group full-width">
+                <span>Google Maps link</span>
+                <input type="url" value={labForm.mapUrl} onChange={(e) => setLabForm({ ...labForm, mapUrl: e.target.value })} placeholder="https://maps.google.com/..." />
               </label>
               <label className="dashboard-input-group full-width">
                 <span>Available tests</span>
