@@ -23,6 +23,7 @@ const StaffDashboard = lazy(() => import("./pages/StaffDashboard"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const AccountDeletionPage = lazy(() => import("./pages/AccountDeletionPage"));
 const ResourceDetailsPage = lazy(() => import("./pages/ResourceDetailsPage"));
+const LabBookingPage = lazy(() => import("./pages/LabBookingPage"));
 
 function LoadingFallback() {
   return (
@@ -165,6 +166,7 @@ function App() {
           <Route path="/hospitals/:resourceId" element={<ResourceDetailsPage resourceType="hospitals" />} />
           <Route path="/clinics/:resourceId" element={<ResourceDetailsPage resourceType="clinics" />} />
           <Route path="/labs/:resourceId" element={<ResourceDetailsPage resourceType="labs" />} />
+          <Route path="/labs/:resourceId/book" element={<LabBookingPage />} />
           <Route
             path="/patient-dashboard"
             element={

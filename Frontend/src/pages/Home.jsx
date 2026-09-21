@@ -6,9 +6,11 @@ import doctorArjun from "../assets/doctor-arjun.png";
 import doctorPriya from "../assets/doctor-priya.png";
 import doctorRohan from "../assets/doctor-rohan.png";
 import "../styles/home.css";
+import "../styles/dashboard.css";
 import "../styles/resource-card-overrides.css";
 import doctorNeha from "../assets/doctor-neha.png";
-import { getHomepageData } from "../api";
+import { createAppointment, createGuestAppointment, getHomepageData } from "../api";
+import { getStoredUser } from "../utils/auth";
 
 const doctorAvatarImages = [doctorArjun, doctorPriya, doctorRohan, doctorNeha];
 
@@ -354,8 +356,11 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
   );
 }
 
-function SearchResultsModal({ doctors, filters, loading, error, onClose, onBook, onView }) {
-  const searchLabel = filters.specialty || filters.query || filters.city || "available doctors";
+function SearchResultsModal({ doctors, labs, resultType, filters, loading, error, onClose, onBook, onView }) {
+  const isLabSearch = resultType === "lab";
+  const searchLabel = filters.specialty || filters.query || filters.city || (isLabSearch ? "available labs" : "available doctors");
+  const results = isLabSearch ? labs : doctors;
+  const resultLabel = isLabSearch ? "lab" : "doctor";
 
   return (
     <div className="home-search-overlay" role="presentation" onMouseDown={onClose}>
@@ -369,8 +374,8 @@ function SearchResultsModal({ doctors, filters, loading, error, onClose, onBook,
         <header className="home-search-modal-header">
           <div>
             <span>Search results</span>
-            <h2 id="home-search-results-title">Doctors for {searchLabel}</h2>
-            <p>{loading ? "Finding doctors..." : `${doctors.length} doctor${doctors.length === 1 ? "" : "s"} available`}</p>
+            <h2 id="home-search-results-title">{isLabSearch ? "Labs" : "Doctors"} for {searchLabel}</h2>
+            <p>{loading ? `Finding ${resultLabel}s...` : `${results.length} ${resultLabel}${results.length === 1 ? "" : "s"} available`}</p>
           </div>
           <button type="button" className="home-search-close" aria-label="Close search results" onClick={onClose}>
             x
@@ -381,8 +386,17 @@ function SearchResultsModal({ doctors, filters, loading, error, onClose, onBook,
           {error ? <p className="home-search-empty">{error}</p> : null}
           {!error && loading ? (
             <HomeSkeletonGrid />
-          ) : !error && doctors.length ? (
-            doctors.map((doctor) => (
+          ) : !error && results.length ? (
+            isLabSearch ? (
+              results.map((lab) => (
+                <LabCard
+                  key={lab._id}
+                  lab={lab}
+                  onView={(item) => onView(item, "lab")}
+                  onBook={(item) => onBook(item, "lab")}
+                />
+              ))
+            ) : doctors.map((doctor) => (
               <article className="home-search-result-card" key={doctor._id}>
                 {doctor.profileImage || doctor.image ? (
                   <img src={doctor.profileImage || doctor.image} alt={doctor.name} loading="lazy" />
@@ -418,8 +432,8 @@ function SearchResultsModal({ doctors, filters, loading, error, onClose, onBook,
             ))
           ) : (
             <div className="home-search-empty">
-              <h3>No doctors found</h3>
-              <p>Try another specialization, city, or search term.</p>
+              <h3>No {resultLabel}s found</h3>
+              <p>Try another city or search term.</p>
             </div>
           )}
         </div>
@@ -590,6 +604,81 @@ function LabCard({ lab, onView, onBook }) {
   );
 }
 
+const emptyLabBookingForm = (user, testName = "") => ({
+  patientName: user?.name || "",
+  patientEmail: user?.email || "",
+  patientPhone: "",
+  patientAge: "",
+  patientGender: "Other",
+  appointmentDate: "",
+  appointmentTime: "",
+  testName,
+  notes: "",
+});
+
+function LabBookingModal({ lab, onClose }) {
+  const user = getStoredUser();
+  const tests = lab.availableTests?.filter((test) => test?.name) || [];
+  const [form, setForm] = useState(() => emptyLabBookingForm(user, tests[0]?.name || ""));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [booking, setBooking] = useState(null);
+
+  const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const payload = {
+        type: "lab",
+        labId: lab._id,
+        ...form,
+        reason: form.testName || "Laboratory test",
+        patientAge: Number(form.patientAge),
+      };
+      const result = user ? await createAppointment(payload) : await createGuestAppointment(payload);
+      setBooking(user ? { appointment: result } : result);
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "Unable to book this laboratory test");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="home-search-overlay" role="presentation" onMouseDown={onClose}>
+      <section className="home-search-modal lab-booking-modal" role="dialog" aria-modal="true" aria-labelledby="lab-booking-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="home-search-modal-header">
+          <div><span>Laboratory booking</span><h2 id="lab-booking-title">Book a test at {lab.name}</h2><p>Only this laboratory will receive the booking.</p></div>
+          <button type="button" className="home-search-close" aria-label="Close laboratory booking" onClick={onClose}>x</button>
+        </header>
+        {booking ? (
+          <div className="guest-booking-confirmation">
+            <h3>Test booking created</h3>
+            {booking.bookingReference ? <><p>Save these details for Patient Login and My Booking.</p><div className="guest-booking-credentials"><div><span>Booking ID</span><strong>{booking.bookingReference}</strong></div><div><span>Password</span><strong>{booking.bookingPassword}</strong></div><div><span>Queue</span><strong>#{booking.appointment?.queueNumber || "-"}</strong></div></div><div className="guest-booking-credentials"><div><span>Patient Login ID</span><strong>{booking.patientLoginId}</strong></div><div><span>Patient Login Password</span><strong>{booking.patientLoginPassword || "Use your existing password"}</strong></div></div></> : <p>Your laboratory booking has been sent successfully. Check your patient dashboard for updates.</p>}
+            <button type="button" className="dashboard-primary-action" onClick={onClose}>Done</button>
+          </div>
+        ) : (
+          <form className="dashboard-form-grid lab-booking-inline-form" onSubmit={handleSubmit}>
+            {error ? <div className="dashboard-banner error full-width">{error}</div> : null}
+            <label className="dashboard-input-group full-width"><span>Test</span>{tests.length ? <select required value={form.testName} onChange={(event) => updateField("testName", event.target.value)}><option value="">Choose a test</option>{tests.map((test) => <option key={test.name} value={test.name}>{test.name}{test.price ? ` - Rs. ${test.price}` : ""}</option>)}</select> : <input required value={form.testName} onChange={(event) => updateField("testName", event.target.value)} placeholder="Enter the test name" />}</label>
+            <label className="dashboard-input-group"><span>Name</span><input required value={form.patientName} readOnly={Boolean(user)} onChange={(event) => updateField("patientName", event.target.value)} placeholder="Full name" /></label>
+            {!user ? <label className="dashboard-input-group"><span>Email</span><input required type="email" value={form.patientEmail} onChange={(event) => updateField("patientEmail", event.target.value)} placeholder="you@example.com" /></label> : null}
+            <label className="dashboard-input-group"><span>Phone</span><input required value={form.patientPhone} onChange={(event) => updateField("patientPhone", event.target.value)} placeholder="9876543210" /></label>
+            <label className="dashboard-input-group"><span>Age</span><input required type="number" min="1" max="120" value={form.patientAge} onChange={(event) => updateField("patientAge", event.target.value)} placeholder="28" /></label>
+            <label className="dashboard-input-group"><span>Date</span><input required type="date" min={new Date().toISOString().slice(0, 10)} value={form.appointmentDate} onChange={(event) => updateField("appointmentDate", event.target.value)} /></label>
+            <label className="dashboard-input-group"><span>Time</span><input required type="time" value={form.appointmentTime} onChange={(event) => updateField("appointmentTime", event.target.value)} /></label>
+            <label className="dashboard-input-group full-width"><span>Notes</span><textarea rows="3" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} placeholder="Collection or preparation details" /></label>
+            <div className="dashboard-form-actions full-width"><button type="submit" className="dashboard-primary-action" disabled={saving}>{saving ? "Booking..." : "Book Test"}</button></div>
+          </form>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function InfoCard({ card }) {
   return (
     <article className={`info-card ${card.slug ? "health-package-card" : ""}`}>
@@ -640,6 +729,7 @@ export default function Home() {
   const [showAllDoctors, setShowAllDoctors] = useState(false);
   const [showAllFacilities, setShowAllFacilities] = useState(false);
   const [showAllLabs, setShowAllLabs] = useState(false);
+  const [bookingLab, setBookingLab] = useState(null);
 
   useEffect(() => {
     const loadHomepageData = async () => {
@@ -753,6 +843,11 @@ export default function Home() {
     [doctors, filters]
   );
 
+  const searchModalLabs = useMemo(
+    () => labs.filter((lab) => labMatchesFilters(lab, filters)).slice(0, 12),
+    [filters, labs]
+  );
+
   const stats = useMemo(
     () => [
       { label: "Active Doctors", mobileLabel: "Doctors", value: doctors.length, icon: "doctor" },
@@ -815,7 +910,7 @@ export default function Home() {
 
   const handleBookResource = (item, type) => {
     if (item?._id && type === "lab") {
-      navigate(`/labs/${item._id}`);
+      setBookingLab(item);
       return;
     }
 
@@ -971,7 +1066,7 @@ export default function Home() {
         <SectionHeader title="Hospitals & Clinics" linkTo="/doctors">
           <p className="section-kicker">Discover clinics, chambers, and hospital-based providers.</p>
         </SectionHeader>
-        <div className="resource-grid">
+        <div className="resource-grid resource-slider">
           {loading ? (
             <HomeSkeletonGrid />
           ) : visibleFacilities.length ? (
@@ -999,7 +1094,7 @@ export default function Home() {
         <SectionHeader title="Lab Tests" linkTo="/doctors">
           <p className="section-kicker">Schedule diagnostics, pathology tests, and wellness screenings.</p>
         </SectionHeader>
-        <div className="resource-grid">
+        <div className="resource-grid resource-slider">
           {loading ? (
             <HomeSkeletonGrid />
           ) : visibleLabs.length ? (
@@ -1109,6 +1204,8 @@ export default function Home() {
       {isSearchModalOpen ? (
         <SearchResultsModal
           doctors={searchModalDoctors}
+          labs={searchModalLabs}
+          resultType={filters.type === "lab" ? "lab" : "doctor"}
           filters={filters}
           loading={loading}
           error={error}
@@ -1117,6 +1214,7 @@ export default function Home() {
           onView={handleViewDoctor}
         />
       ) : null}
+      {bookingLab ? <LabBookingModal lab={bookingLab} onClose={() => setBookingLab(null)} /> : null}
     </main>
   );
 }

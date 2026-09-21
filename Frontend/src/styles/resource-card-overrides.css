@@ -115,3 +115,117 @@
     font-size: 16px;
   }
 }
+
+/* Match the doctor section's touch-friendly card browsing on phones. */
+@media (max-width: 767px) {
+  .home-page .resource-slider {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    gap: 12px;
+    padding: 2px 2px 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .home-page .resource-slider::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-page .resource-slider .resource-card {
+    flex: 0 0 min(84vw, 340px);
+    min-height: 0;
+    scroll-snap-align: start;
+  }
+}
+
+/* Keep the inline laboratory form usable on narrow phone screens. */
+.home-page .lab-booking-modal {
+  width: min(100%, 720px);
+  max-height: min(760px, calc(100vh - 32px));
+}
+
+.home-page .lab-booking-inline-form {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 26px 26px;
+}
+
+.home-page .lab-booking-inline-form .dashboard-input-group,
+.home-page .lab-booking-inline-form .dashboard-input-group input,
+.home-page .lab-booking-inline-form .dashboard-input-group select,
+.home-page .lab-booking-inline-form .dashboard-input-group textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-page .lab-booking-inline-form .dashboard-form-actions,
+.home-page .lab-booking-inline-form .dashboard-primary-action {
+  width: 100%;
+}
+
+.home-page .lab-booking-modal .guest-booking-confirmation {
+  min-width: 0;
+  overflow-y: auto;
+  padding: 22px 26px 26px;
+}
+
+@media (max-width: 767px) {
+  .home-page {
+    overflow-x: hidden;
+  }
+
+  .home-page .lab-booking-modal {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px;
+  }
+
+  .home-page .lab-booking-modal .home-search-modal-header {
+    gap: 10px;
+    padding: 16px 16px 14px;
+  }
+
+  .home-page .lab-booking-modal .home-search-modal-header h2 {
+    max-width: 235px;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .home-page .lab-booking-modal .home-search-modal-header p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .home-page .lab-booking-inline-form,
+  .home-page .lab-booking-modal .guest-booking-confirmation {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .home-page .lab-booking-inline-form .dashboard-input-group.full-width {
+    grid-column: auto;
+  }
+
+  .home-page .lab-booking-inline-form .dashboard-input-group span {
+    font-size: 12px;
+  }
+
+  .home-page .lab-booking-inline-form .dashboard-input-group input,
+  .home-page .lab-booking-inline-form .dashboard-input-group select,
+  .home-page .lab-booking-inline-form .dashboard-input-group textarea {
+    font-size: 16px;
+  }
+
+  .home-page .lab-booking-inline-form .dashboard-input-group textarea {
+    min-height: 92px;
+  }
+
+  .home-page .lab-booking-modal .guest-booking-credentials {
+    grid-template-columns: 1fr;
+  }
+}

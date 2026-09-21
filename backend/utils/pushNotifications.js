@@ -3,6 +3,7 @@ const Notification = require("../models/Notification");
 const PushSubscription = require("../models/PushSubscription");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
+const Lab = require("../models/Lab");
 const { ROLES } = require("./roles");
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY?.trim() || "";
@@ -61,6 +62,7 @@ const createNotifications = async ({ userIds, title, message, type = "appointmen
 const getAppointmentRecipientIds = async (appointment) => {
   const ids = [];
   const appointmentDoctorId = appointment.doctorId?._id || appointment.doctorId || null;
+  const appointmentLabId = appointment.labId?._id || appointment.labId || null;
 
   if (appointment.patientId) ids.push(appointment.patientId._id || appointment.patientId);
 
@@ -69,15 +71,22 @@ const getAppointmentRecipientIds = async (appointment) => {
     if (doctor?.userId) ids.push(doctor.userId);
   }
 
-  // Staff notifications must follow the doctor's assignment made by admin.
-  // Never broadcast a doctor's booking to staff assigned to other doctors.
-  const staffFilter = {
-    role: ROLES.STAFF,
-    isActive: { $ne: false },
-    doctorId: appointmentDoctorId,
-  };
-  const staff = await User.find(staffFilter).select("_id").lean();
-  ids.push(...staff.map((item) => item._id));
+  if (appointmentLabId) {
+    const lab = await Lab.findById(appointmentLabId).select("userId").lean();
+    if (lab?.userId) ids.push(lab.userId);
+  }
+
+  // Doctor bookings notify only staff assigned to that doctor. Lab bookings
+  // notify the selected laboratory account and never broadcast to staff.
+  if (appointmentDoctorId) {
+    const staffFilter = {
+      role: ROLES.STAFF,
+      isActive: { $ne: false },
+      doctorId: appointmentDoctorId,
+    };
+    const staff = await User.find(staffFilter).select("_id").lean();
+    ids.push(...staff.map((item) => item._id));
+  }
   return ids;
 };
 

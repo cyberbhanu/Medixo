@@ -380,15 +380,19 @@ router.post("/guest", async (req, res) => {
   try {
     const requestBody = {
       ...req.body,
-      type: "doctor",
+      type: req.body.type === "lab" ? "lab" : "doctor",
       status: "Scheduled",
       patientId: null,
     };
     const validationError = validateAppointmentPayload(requestBody);
     if (validationError) return res.status(400).json({ error: validationError });
 
-    const doctor = await Doctor.findById(requestBody.doctorId);
-    if (!doctor || doctor.isActive === false) {
+    const doctor = requestBody.type === "doctor" ? await Doctor.findById(requestBody.doctorId) : null;
+    const lab = requestBody.type === "lab" ? await Lab.findById(requestBody.labId) : null;
+    if (requestBody.type === "lab" && (!lab || lab.isActive === false)) {
+      return res.status(404).json({ error: "Selected laboratory was not found" });
+    }
+    if (requestBody.type === "doctor" && (!doctor || doctor.isActive === false)) {
       return res.status(404).json({ error: "Selected doctor was not found" });
     }
 
@@ -429,9 +433,16 @@ router.post("/guest", async (req, res) => {
     });
     await appointment.save();
 
-    await Doctor.findByIdAndUpdate(appointment.doctorId, {
-      $addToSet: { appointmentIds: appointment._id },
-    }).catch(() => null);
+    if (appointment.doctorId) {
+      await Doctor.findByIdAndUpdate(appointment.doctorId, {
+        $addToSet: { appointmentIds: appointment._id },
+      }).catch(() => null);
+    }
+    if (appointment.labId) {
+      await Lab.findByIdAndUpdate(appointment.labId, {
+        $addToSet: { bookings: appointment._id, appointments: appointment._id },
+      }).catch(() => null);
+    }
 
     const populatedAppointment = await populateAppointment(
       Appointment.findById(appointment._id)
@@ -441,6 +452,7 @@ router.post("/guest", async (req, res) => {
     notifyAppointmentCreated({
       ...appointment.toObject(),
       doctorId: doctor,
+      labId: lab,
       queueNumber: queueDetails?.queueNumber || null,
     }).catch((error) => console.error("Appointment notification failed:", error.message));
 
