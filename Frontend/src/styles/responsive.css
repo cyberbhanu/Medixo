@@ -1,0 +1,359 @@
+/* Shared responsive guardrails for every route. Page-specific styles can still
+   refine these rules, but no core workflow should require desktop width. */
+.home-page .resource-card {
+  position: relative;
+  z-index: 0;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.home-page .resource-card:hover,
+.home-page .resource-card:focus-within {
+  z-index: 2;
+  transform: translateY(-3px);
+}
+
+.home-page .resource-body {
+  min-height: 0;
+}
+
+.home-page .resource-body > p {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow-wrap: anywhere;
+}
+
+.home-page .resource-body .doctor-badge-row {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .shell {
+    width: min(calc(100% - 24px), 640px);
+  }
+
+  .dashboard-hero {
+    padding: 18px 0 18px;
+  }
+
+  .dashboard-hero-inner {
+    min-height: 0;
+    display: block;
+    padding: 54px 0 4px;
+  }
+
+  .dashboard-hero-copy {
+    min-width: 0;
+  }
+
+  .dashboard-hero h1 {
+    max-width: 100%;
+    font-size: clamp(26px, 8vw, 34px);
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-hero p {
+    max-width: 100%;
+    font-size: 14px;
+  }
+
+  .dashboard-quick-actions {
+    width: 100%;
+    justify-items: stretch;
+    margin-top: 18px;
+  }
+
+  .dashboard-quick-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-stat-card {
+    min-width: 0;
+    padding: 14px;
+  }
+
+  .dashboard-stat-card strong,
+  .dashboard-stat-card p,
+  .dashboard-stat-card small {
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-content-grid,
+  .dashboard-admin-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .dashboard-main-column,
+  .dashboard-side-column,
+  .dashboard-panel,
+  .dashboard-form-card,
+  .dashboard-admin-list,
+  .dashboard-admin-record {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .dashboard-panel-header,
+  .dashboard-form-heading,
+  .dashboard-record-header,
+  .dashboard-patient-row-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .dashboard-panel-header > button,
+  .dashboard-form-heading > button {
+    width: 100%;
+  }
+
+  .dashboard-form-grid,
+  .dashboard-form-grid-2-col,
+  .dashboard-report-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-form-grid .full-width,
+  .dashboard-report-toolbar .full-width {
+    grid-column: auto;
+  }
+
+  .dashboard-form-actions,
+  .dashboard-action-row,
+  .dashboard-appointment-actions,
+  .dashboard-appointment-action-row {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-form-actions > *,
+  .dashboard-action-row > *,
+  .dashboard-appointment-actions > *,
+  .dashboard-appointment-action-row > * {
+    width: 100%;
+    max-width: none;
+  }
+
+  .dashboard-record-grid,
+  .dashboard-card-list,
+  .dashboard-report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-record-meta,
+  .dashboard-inline-badge,
+  .dashboard-badge {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .dashboard-table-wrap,
+  .dashboard-report-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dashboard-table,
+  .dashboard-report-table {
+    min-width: 680px;
+  }
+
+  .home-search-overlay {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .home-search-modal,
+  .home-page .lab-booking-modal {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .home-search-modal-header {
+    padding: 16px;
+  }
+
+  .home-search-modal-header h2 {
+    max-width: calc(100vw - 96px);
+    font-size: 19px;
+    overflow-wrap: anywhere;
+  }
+
+  .home-search-results {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .home-page .resource-card {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .home-page .resource-media {
+    width: 64px;
+    height: 64px;
+  }
+
+  .home-page .resource-body .home-card-actions,
+  .resource-details-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .resource-body .home-card-actions > *,
+  .resource-details-actions > * {
+    width: 100%;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .modal-content,
+  .modal-content.large {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 20px);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-header,
+  .modal-form {
+    padding: 16px;
+  }
+
+  .modal-title {
+    max-width: calc(100% - 48px);
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .modal-buttons {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal-buttons > * {
+    width: 100%;
+  }
+
+  .auth-container {
+    min-height: calc(100dvh - 68px);
+    padding: 18px 12px 32px;
+  }
+
+  .auth-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .auth-header,
+  .auth-form,
+  .auth-divider,
+  .auth-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .doctor-profile-page {
+    width: 100%;
+    padding: 22px 12px 48px;
+  }
+
+  .doctor-profile-hero-card,
+  .doctor-profile-details-card,
+  .doctor-profile-booking-card {
+    padding: 16px;
+  }
+
+  .doctor-profile-identity,
+  .doctor-profile-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .resource-details-page {
+    padding: 22px 12px 48px;
+  }
+
+  .resource-details-header,
+  .resource-details-panel {
+    padding: 16px;
+  }
+
+  .legal-shell {
+    width: min(calc(100% - 24px), 720px);
+  }
+
+  .legal-section {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .shell {
+    width: calc(100% - 20px);
+  }
+
+  .dashboard-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-hero-inner {
+    padding-top: 50px;
+  }
+
+  .dashboard-chip-row {
+    gap: 7px;
+  }
+
+  .dashboard-chip {
+    min-height: 32px;
+    padding-inline: 10px;
+    font-size: 11px;
+  }
+
+  .home-page .resource-card {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page .resource-media {
+    width: 100%;
+    height: 120px;
+  }
+
+  .home-page .resource-body {
+    grid-column: 1;
+  }
+}

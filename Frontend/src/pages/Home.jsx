@@ -139,14 +139,21 @@ const DEFAULT_FILTERS = {
 const includesText = (value, query) =>
   String(value || "").toLowerCase().includes(String(query || "").toLowerCase());
 
+const normalizeFilterValue = (value) => String(value || "").trim().toLowerCase();
+
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
 const isValidRecord = (item) => item && typeof item === "object" && item._id && item.isActive !== false;
 
-const uniqueSorted = (items) =>
-  [...new Set(items.map((item) => String(item || "").trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
+const uniqueSorted = (items) => {
+  const values = new Map();
+  items.forEach((item) => {
+    const label = String(item || "").trim();
+    const key = normalizeFilterValue(label);
+    if (key && !values.has(key)) values.set(key, label);
+  });
+  return [...values.values()].sort((a, b) => a.localeCompare(b));
+};
 
 const getResourceCity = (item) => item.city || item.location || "";
 
@@ -181,7 +188,7 @@ const doctorMatchesFilters = (doctor, filters) => {
   return (
     (!query || includesText(searchText, query)) &&
     (!filters.specialty || doctor.specialization === filters.specialty) &&
-    (!filters.city || getDoctorCity(doctor) === filters.city) &&
+    (!filters.city || normalizeFilterValue(getDoctorCity(doctor)) === normalizeFilterValue(filters.city)) &&
     (!filters.availability || isAvailableToday(doctor))
   );
 };
@@ -201,7 +208,7 @@ const facilityMatchesFilters = (item, filters) => {
 
   return (
     (!query || includesText(searchText, query)) &&
-    (!filters.city || getResourceCity(item) === filters.city)
+    (!filters.city || normalizeFilterValue(getResourceCity(item)) === normalizeFilterValue(filters.city))
   );
 };
 
@@ -211,7 +218,7 @@ const labMatchesFilters = (lab, filters) => {
 
   return (
     (!query || includesText(searchText, query)) &&
-    (!filters.city || getResourceCity(lab) === filters.city)
+    (!filters.city || normalizeFilterValue(getResourceCity(lab)) === normalizeFilterValue(filters.city))
   );
 };
 
@@ -309,6 +316,16 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
     onSearchSubmit();
   };
 
+  const handleTypeChange = (event) => {
+    const type = event.target.value;
+    onFiltersChange({
+      ...filters,
+      type,
+      specialty: type === "doctor" || type === "all" ? filters.specialty : "",
+      availability: type === "doctor" || type === "all" ? filters.availability : "",
+    });
+  };
+
   return (
     <form className="search-panel" aria-label="Find doctors" onSubmit={handleSubmit}>
       <label>
@@ -321,7 +338,7 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
         />
       </label>
       <label>
-        <select value={filters.type} onChange={(event) => onFiltersChange({ ...filters, type: event.target.value })}>
+        <select value={filters.type} onChange={handleTypeChange}>
           <option value="all">All</option>
           <option value="doctor">Doctors</option>
           <option value="hospital">Hospitals</option>
@@ -358,7 +375,9 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
 
 function SearchResultsModal({ doctors, labs, resultType, filters, loading, error, onClose, onBook, onView }) {
   const isLabSearch = resultType === "lab";
-  const searchLabel = filters.specialty || filters.query || filters.city || (isLabSearch ? "available labs" : "available doctors");
+  const searchLabel = filters.query || (isLabSearch
+    ? filters.city || "available labs"
+    : filters.specialty || filters.city || "available doctors");
   const results = isLabSearch ? labs : doctors;
   const resultLabel = isLabSearch ? "lab" : "doctor";
 
@@ -927,6 +946,24 @@ export default function Home() {
     }
   };
 
+  const handleSearchView = (item, type) => {
+    setIsSearchModalOpen(false);
+    if (type === "lab") {
+      handleViewResource(item, type);
+      return;
+    }
+    handleViewDoctor(item);
+  };
+
+  const handleSearchBook = (item, type) => {
+    setIsSearchModalOpen(false);
+    if (type === "lab") {
+      handleBookResource(item, type);
+      return;
+    }
+    handleBookDoctor(item);
+  };
+
   return (
     <main className="home-page">
       <Navbar />
@@ -1216,8 +1253,8 @@ export default function Home() {
           loading={loading}
           error={error}
           onClose={() => setIsSearchModalOpen(false)}
-          onBook={handleBookDoctor}
-          onView={handleViewDoctor}
+          onBook={handleSearchBook}
+          onView={handleSearchView}
         />
       ) : null}
       {bookingLab ? <LabBookingModal lab={bookingLab} onClose={() => setBookingLab(null)} /> : null}

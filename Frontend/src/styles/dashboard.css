@@ -2219,6 +2219,26 @@
   }
 }
 
+/* Keep the notification control independent from the hero grid so its panel
+   can always layer above the dashboard content and stat cards. */
+.dashboard-hero-inner {
+  z-index: 3;
+}
+
+.dashboard-hero-inner > .notification-center {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2400;
+}
+
+@media (max-width: 767px) {
+  .dashboard-hero-inner > .notification-center {
+    top: 4px;
+    right: 12px;
+  }
+}
+
 /* Keep admin records readable when contact details or notes are long. */
 .dashboard-hero {
   overflow: visible;
