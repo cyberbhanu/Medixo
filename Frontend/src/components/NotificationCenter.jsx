@@ -117,7 +117,10 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
         <div className="notification-popover">
           <div className="notification-popover-header">
             <div><strong>Notifications</strong><small>Appointment updates · {updatedLabel}</small></div>
-            <button type="button" onClick={() => loadNotifications()} disabled={refreshing} title="Refresh notifications">{refreshing ? "Refreshing" : "Refresh"}</button>
+            <div className="notification-popover-actions">
+              <button type="button" onClick={() => loadNotifications()} disabled={refreshing} title="Refresh notifications">{refreshing ? "Refreshing" : "Refresh"}</button>
+              <button type="button" className="notification-close" onClick={() => setOpen(false)} aria-label="Close notifications" title="Close notifications">x</button>
+            </div>
           </div>
           <div className="notification-status-row"><span className="notification-live-dot" /> Live updates every {Math.round(refreshInterval / 1000)}s <span className="notification-unread-label">{unreadCount} unread</span></div>
           {pushAvailable && !pushEnabled ? (

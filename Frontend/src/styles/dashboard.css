@@ -2183,8 +2183,11 @@
 .notification-popover-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px; border-bottom: 1px solid #e8edf4; }
 .notification-popover-header strong, .notification-popover-header small { display: block; }
 .notification-popover-header small { margin-top: 3px; color: #64748b; font-size: 12px; }
+.notification-popover-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .notification-popover-header button { border: 0; background: transparent; color: #167c80; cursor: pointer; font-size: 12px; font-weight: 700; }
 .notification-popover-header button:disabled { color: #94a3b8; cursor: wait; }
+.notification-popover-header .notification-close { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #d9e3ef; border-radius: 7px; background: #f8fafc; color: #475569; font-size: 16px; line-height: 1; }
+.notification-popover-header .notification-close:hover { background: #eef4fa; color: #172033; }
 .notification-status-row { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: #f8fafc; color: #64748b; font-size: 11px; }
 .notification-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
 .notification-unread-label { margin-left: auto; color: #167c80; font-weight: 800; }

@@ -255,13 +255,29 @@
   min-height: 0;
 }
 
+.home-page .home-search-modal .home-search-results .resource-card {
+  width: 100%;
+  min-width: 0;
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: start;
+  overflow: visible;
+}
+
+.home-page .home-search-modal .home-search-results .resource-body {
+  min-height: 0 !important;
+}
+
+.home-page .home-search-modal .home-search-results .home-card-actions {
+  margin-top: 16px;
+}
+
 @media (max-width: 767px) {
   .home-page .home-search-modal .home-search-results .resource-card {
     display: flex;
     flex-direction: column;
     gap: 12px;
     height: max-content !important;
-    min-height: 0 !important;
     align-self: start;
     align-items: start;
   }
