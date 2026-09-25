@@ -78,7 +78,6 @@ export default function StaffDashboard() {
     try {
       const updated = await updateAppointment(appointmentId, draft);
       setAppointments((current) => current.map((item) => (item._id === updated._id ? updated : item)));
-      setManagingAppointment(updated);
       setSuccess("Patient record and queue status updated.");
       setError("");
       return true;

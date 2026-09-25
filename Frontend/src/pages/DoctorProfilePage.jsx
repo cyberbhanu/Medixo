@@ -16,6 +16,7 @@ export default function DoctorProfilePage() {
   const [success, setSuccess] = useState("");
   const [slotConflict, setSlotConflict] = useState(false);
   const [guestBooking, setGuestBooking] = useState(null);
+  const [bookingComplete, setBookingComplete] = useState(false);
   const [form, setForm] = useState({
     patientName: user?.name || "",
     patientEmail: user?.email || "",
@@ -78,6 +79,7 @@ export default function DoctorProfilePage() {
         : await createGuestAppointment(appointmentData);
       setSuccess("Appointment booked successfully");
       setGuestBooking(user ? null : bookingResponse);
+      setBookingComplete(Boolean(user));
       setForm({
         patientName: user?.name || "",
         patientEmail: user?.email || "",
@@ -240,6 +242,12 @@ export default function DoctorProfilePage() {
                   </div>
                   <p>{guestBooking.patientAccountExists ? "This email already has a patient account, so use its existing password to sign in." : "Use the Patient Login section with the Patient Login ID and password above."}</p>
                   <button type="button" className="dashboard-primary-action" onClick={() => navigate("/my-booking")}>Open My Booking</button>
+                </div>
+              ) : bookingComplete ? (
+                <div className="guest-booking-confirmation">
+                  <h3>Appointment booked successfully</h3>
+                  <p>Your appointment request has been sent to the doctor. You can follow its status from your Patient Dashboard.</p>
+                  <button type="button" className="dashboard-primary-action" onClick={() => { setBookingComplete(false); setSuccess(""); }}>Book another appointment</button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="dashboard-form-grid">

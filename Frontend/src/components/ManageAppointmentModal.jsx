@@ -33,8 +33,12 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
   const handleSaveNotes = async (e) => {
     e.preventDefault();
     setSavingAppointmentUpdate(true);
-    await onSaveAppointment(appointment._id, appointmentDraft);
-    setSavingAppointmentUpdate(false);
+    try {
+      const success = await onSaveAppointment(appointment._id, appointmentDraft);
+      if (success !== false) onClose();
+    } finally {
+      setSavingAppointmentUpdate(false);
+    }
   };
 
   const handleReferral = async (e) => {
@@ -42,8 +46,7 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
     setSavingReferral(true);
     const success = await onReferPatient(appointment, referForm);
     if (success) {
-      setReferForm({ labId: "", appointmentDate: "", appointmentTime: "", reason: "" });
-      setActiveTab("notes");
+      onClose();
     }
     setSavingReferral(false);
   };

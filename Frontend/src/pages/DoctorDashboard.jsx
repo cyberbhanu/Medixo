@@ -78,15 +78,15 @@ export default function DoctorDashboard() {
       });
 
       setAppointments((current) => current.map((item) => (item._id === updated._id ? updated : item)));
-      setManagingAppointment(updated); // Keep modal open with updated data
       alert("Patient record updated successfully!");
-      setManagingAppointment(updated);
       setSuccess("Patient record updated successfully!");
       setError("");
+      return true;
     } catch (err) {
       alert(err.response?.data?.error || "Failed to update patient details");
       setError(err.response?.data?.error || "Failed to update patient details");
       setSuccess("");
+      return false;
     }
   };
 

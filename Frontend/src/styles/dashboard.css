@@ -2161,7 +2161,7 @@
 .notification-center {
   position: relative;
   align-self: flex-start;
-  z-index: 5;
+  z-index: 2200;
 }
 
 .notification-trigger {
@@ -2179,7 +2179,7 @@
 
 .notification-trigger svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.5; }
 .notification-count { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 800; }
-.notification-popover { position: absolute; top: 54px; right: 0; width: min(360px, calc(100vw - 32px)); overflow: hidden; border: 1px solid #d9e3ef; border-radius: 12px; background: #fff; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22); color: #172033; }
+.notification-popover { position: absolute; z-index: 2300; top: 54px; right: 0; width: min(360px, calc(100vw - 32px)); max-height: min(560px, calc(100dvh - 88px)); overflow: hidden; border: 1px solid #d9e3ef; border-radius: 12px; background: #fff; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22); color: #172033; }
 .notification-popover-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px; border-bottom: 1px solid #e8edf4; }
 .notification-popover-header strong, .notification-popover-header small { display: block; }
 .notification-popover-header small { margin-top: 3px; color: #64748b; font-size: 12px; }
@@ -2203,6 +2203,21 @@
 .notification-item small { margin-top: 6px; color: #94a3b8; font-size: 10px; }
 .notification-empty { padding: 22px 16px; color: #64748b; font-size: 13px; }
 .notification-mark-all { width: calc(100% - 24px); margin: 0 12px 12px; padding: 9px; border: 1px solid #d9e3ef; border-radius: 8px; background: #fff; color: #167c80; cursor: pointer; font-size: 12px; font-weight: 800; }
+
+@media (max-width: 767px) {
+  .notification-center {
+    position: static;
+  }
+
+  .notification-popover {
+    position: fixed;
+    top: 68px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - 84px);
+  }
+}
 
 /* Keep admin records readable when contact details or notes are long. */
 .dashboard-hero {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import heroDoctor from "../assets/medixo-hero-doctor.png";
@@ -623,6 +623,11 @@ function LabBookingModal({ lab, onClose }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [booking, setBooking] = useState(null);
+  const closeTimerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+  }, []);
 
   const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
 
@@ -640,6 +645,7 @@ function LabBookingModal({ lab, onClose }) {
       };
       const result = user ? await createAppointment(payload) : await createGuestAppointment(payload);
       setBooking(user ? { appointment: result } : result);
+      closeTimerRef.current = window.setTimeout(onClose, 1400);
     } catch (requestError) {
       setError(requestError.response?.data?.error || "Unable to book this laboratory test");
     } finally {
