@@ -290,6 +290,51 @@
   margin-top: 16px;
 }
 
+/* Search-result cards use a dedicated desktop composition so long laboratory
+   details never compete with the homepage card's compact layout. */
+.home-page .home-search-modal .home-search-results .home-search-lab-card {
+  grid-template-columns: 132px minmax(0, 1fr) !important;
+  gap: 20px;
+  padding: 20px;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .resource-media {
+  width: 132px;
+  height: 132px;
+  border-radius: 12px;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .resource-body {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .doctor-card-title-row {
+  min-width: 0;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .doctor-card-title-row > div {
+  min-width: 0;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .doctor-badge-row {
+  min-width: 0;
+  overflow: visible;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .home-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.home-page .home-search-modal .home-search-results .home-search-lab-card .home-card-actions > * {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+
 @media (max-width: 767px) {
   .home-page .home-search-modal .home-search-results .resource-card {
     display: flex;
@@ -300,6 +345,12 @@
     align-items: start;
   }
 
+  .home-page .home-search-modal .home-search-results .home-search-lab-card {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    padding: 14px;
+  }
+
   .home-page .home-search-modal .home-search-results .resource-media {
     grid-column: 1;
     grid-row: auto;
@@ -308,6 +359,11 @@
     justify-self: stretch;
     flex: 0 0 auto;
     border-radius: 10px;
+  }
+
+  .home-page .home-search-modal .home-search-results .home-search-lab-card .resource-media {
+    width: 100%;
+    height: 86px;
   }
 
   .home-page .home-search-modal .home-search-results .resource-body {

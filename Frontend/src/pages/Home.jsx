@@ -411,6 +411,7 @@ function SearchResultsModal({ doctors, labs, resultType, filters, loading, error
                 <LabCard
                   key={lab._id}
                   lab={lab}
+                  searchResult
                   onView={(item) => onView(item, "lab")}
                   onBook={(item) => onBook(item, "lab")}
                 />
@@ -590,11 +591,11 @@ function HospitalCard({ item, type, onView, onBook }) {
   );
 }
 
-function LabCard({ lab, onView, onBook }) {
+function LabCard({ lab, onView, onBook, searchResult = false }) {
   const tests = lab.availableTests?.map((test) => test.name || test).filter(Boolean) || [];
 
   return (
-    <article className="resource-card">
+    <article className={`resource-card ${searchResult ? "home-search-lab-card" : ""}`}>
       <div className="resource-media">
         {lab.logo ? <img src={lab.logo} alt={lab.name} loading="lazy" /> : <span><Icon name="pulse" /></span>}
       </div>
@@ -1106,7 +1107,7 @@ export default function Home() {
       </section>
 
       <section className="content-section shell" id="hospitals">
-        <SectionHeader title="Hospitals & Clinics" linkTo="/doctors">
+        <SectionHeader title="Hospitals & Clinics" linkTo="/hospitals">
           <p className="section-kicker">Discover clinics, chambers, and hospital-based providers.</p>
         </SectionHeader>
         <div className="resource-grid resource-slider">
@@ -1134,7 +1135,7 @@ export default function Home() {
       </section>
 
       <section className="content-section shell" id="lab-tests">
-        <SectionHeader title="Lab Tests" linkTo="/doctors">
+        <SectionHeader title="Lab Tests" linkTo="/labs">
           <p className="section-kicker">Schedule diagnostics, pathology tests, and wellness screenings.</p>
         </SectionHeader>
         <div className="resource-grid resource-slider">

@@ -24,6 +24,7 @@ const LegalPage = lazy(() => import("./pages/LegalPage"));
 const AccountDeletionPage = lazy(() => import("./pages/AccountDeletionPage"));
 const ResourceDetailsPage = lazy(() => import("./pages/ResourceDetailsPage"));
 const LabBookingPage = lazy(() => import("./pages/LabBookingPage"));
+const ResourcesDirectory = lazy(() => import("./pages/ResourcesDirectory"));
 
 function LoadingFallback() {
   return (
@@ -158,6 +159,8 @@ function App() {
           <Route path="/lab-login" element={<LaboratoryLogin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/doctors" element={<DoctorsDirectory />} />
+          <Route path="/hospitals" element={<ResourcesDirectory resourceType="facilities" />} />
+          <Route path="/labs" element={<ResourcesDirectory resourceType="labs" />} />
           <Route path="/doctors/:doctorId" element={<DoctorProfilePage />} />
           <Route path="/my-booking" element={<GuestBookingPage />} />
           <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
