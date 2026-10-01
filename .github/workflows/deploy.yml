@@ -1,0 +1,44 @@
+name: Deploy Medixo to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: medixo-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          script_stop: true
+          script: |
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            cd "$HOME/htdocs/api.medixohealthcare.com/medixo"
+            git fetch origin main
+            git reset --hard origin/main
+
+            cd backend
+            npm ci --omit=dev
+            pm2 restart medixo-api --update-env
+
+            cd ../Frontend
+            npm ci
+            npm run build
+
+            sudo /usr/local/bin/medixo-deploy-frontend
