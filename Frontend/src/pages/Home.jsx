@@ -11,6 +11,7 @@ import "../styles/resource-card-overrides.css";
 import doctorNeha from "../assets/doctor-neha.png";
 import { createAppointment, createGuestAppointment, getHomepageData } from "../api";
 import { getStoredUser } from "../utils/auth";
+import { getCurrentCity, matchCityOption } from "../utils/location";
 
 const doctorAvatarImages = [doctorArjun, doctorPriya, doctorRohan, doctorNeha];
 
@@ -309,7 +310,16 @@ const getDoctorDescription = (doctor) =>
 
 const fallbackPopularSpecialties = ["Dental", "Cardiology", "Orthopedics", "Pediatrics", "Neurology"];
 
-function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, onSearchSubmit }) {
+function SearchPanel({
+  filters,
+  onFiltersChange,
+  specialtyOptions,
+  cityOptions,
+  onSearchSubmit,
+  onUseLocation,
+  locationStatus,
+  locationMessage,
+}) {
   const handleSubmit = (event) => {
     event.preventDefault();
     onFiltersChange({ ...filters, query: filters.query.trim() });
@@ -327,7 +337,8 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
   };
 
   return (
-    <form className="search-panel" aria-label="Find doctors" onSubmit={handleSubmit}>
+    <>
+      <form className="search-panel" aria-label="Find doctors" onSubmit={handleSubmit}>
       <label>
         <Icon name="search" />
         <input
@@ -352,13 +363,25 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
           {specialtyOptions.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
       </label>
-      <label>
-        <Icon name="pin" />
-        <select value={filters.city} onChange={(event) => onFiltersChange({ ...filters, city: event.target.value })}>
-          <option value="">City</option>
-          {cityOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-        </select>
-      </label>
+      <div className="search-city-field">
+        <label>
+          <Icon name="pin" />
+          <select value={filters.city} onChange={(event) => onFiltersChange({ ...filters, city: event.target.value })}>
+            <option value="">City</option>
+            {cityOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </label>
+        <button
+          type="button"
+          className="location-detect-button"
+          onClick={onUseLocation}
+          disabled={locationStatus === "loading"}
+          title="Use your current location"
+        >
+          <Icon name="pin" />
+          <span>{locationStatus === "loading" ? "Locating..." : "Use my location"}</span>
+        </button>
+      </div>
       <button type="submit">Search</button>
       <div className="home-filter-row" aria-label="Homepage filters">
         <select value={filters.availability} onChange={(event) => onFiltersChange({ ...filters, availability: event.target.value })}>
@@ -369,7 +392,9 @@ function SearchPanel({ filters, onFiltersChange, specialtyOptions, cityOptions, 
           Clear
         </button>
       </div>
-    </form>
+      </form>
+      {locationMessage ? <p className={`location-status ${locationStatus === "error" ? "error" : ""}`} role="status">{locationMessage}</p> : null}
+    </>
   );
 }
 
@@ -756,6 +781,9 @@ export default function Home() {
   const [showAllFacilities, setShowAllFacilities] = useState(false);
   const [showAllLabs, setShowAllLabs] = useState(false);
   const [bookingLab, setBookingLab] = useState(null);
+  const [locationStatus, setLocationStatus] = useState("idle");
+  const [locationMessage, setLocationMessage] = useState("");
+  const locationAutoRequested = useRef(false);
 
   useEffect(() => {
     const loadHomepageData = async () => {
@@ -884,6 +912,37 @@ export default function Home() {
     [clinics.length, doctors.length, hospitals.length, labs.length]
   );
 
+  const handleUseLocation = async ({ automatic = false } = {}) => {
+    setLocationStatus("loading");
+    setLocationMessage(automatic ? "Checking your location..." : "Checking your location...");
+
+    try {
+      const location = await getCurrentCity();
+      const selectedCity = matchCityOption(location.city, cityOptions);
+
+      if (selectedCity) {
+        setFilters((current) => ({ ...current, city: selectedCity }));
+        setLocationStatus("success");
+        setLocationMessage(`Showing providers in ${selectedCity}.`);
+      } else {
+        setLocationStatus("error");
+        setLocationMessage(`We detected ${location.city}, but no providers are listed there yet.`);
+      }
+    } catch (locationError) {
+      setLocationStatus("error");
+      setLocationMessage(automatic ? "Location was not selected. You can choose a city manually." : locationError.message);
+    }
+  };
+
+  useEffect(() => {
+    if (loading || !cityOptions.length || locationAutoRequested.current) return;
+
+    locationAutoRequested.current = true;
+    if (sessionStorage.getItem("medixo-location-requested") === "1") return;
+    sessionStorage.setItem("medixo-location-requested", "1");
+    handleUseLocation({ automatic: true });
+  }, [loading, cityOptions]);
+
   useEffect(() => {
     if (activeSpecialty !== "All Doctors" && !specialtyGroups.some((item) => item.name === activeSpecialty)) {
       setActiveSpecialty("All Doctors");
@@ -994,6 +1053,9 @@ export default function Home() {
               specialtyOptions={specialtyOptions}
               cityOptions={cityOptions}
               onSearchSubmit={() => setIsSearchModalOpen(true)}
+              onUseLocation={() => handleUseLocation()}
+              locationStatus={locationStatus}
+              locationMessage={locationMessage}
             />
 
             <div className="popular-searches">
@@ -1040,6 +1102,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       <section className="content-section shell" id="specializations">
         <SectionHeader title="Top Specializations" linkTo="/#specializations" />
         <div className="specialty-grid">

@@ -5,6 +5,25 @@
     linear-gradient(180deg, #f7fbff 0%, #f8fafd 34%, #f2f6fb 100%);
 }
 
+.location-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.location-input-row .location-autofill-action {
+  min-height: 44px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .location-input-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .dashboard-hero {
   position: relative;
   overflow: hidden;

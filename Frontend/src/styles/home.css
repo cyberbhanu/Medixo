@@ -1,5 +1,113 @@
 .home-page {
-  background: #f7f9fc;
+  background: #f5f8fc;
+}
+
+/* Patient-facing visual system: calm surfaces, crisp hierarchy, and focused actions. */
+.home-page .hero-section {
+  background: #eaf4ff;
+}
+
+.home-page .hero-section::after {
+  display: none;
+}
+
+.home-page .hero-copy h1 {
+  max-width: 660px;
+  color: #102a43;
+  font-size: clamp(38px, 3.5vw, 54px);
+  letter-spacing: -0.02em;
+}
+
+.home-page .hero-copy h1 span {
+  color: #0d5bdd;
+}
+
+.home-page .hero-copy > p {
+  max-width: 590px;
+  color: #49627d;
+}
+
+.home-page .search-panel {
+  grid-template-columns: minmax(190px, 1.3fr) minmax(100px, 0.65fr) minmax(145px, 0.9fr) minmax(180px, 1.1fr) 100px;
+  border-radius: 14px;
+  box-shadow: 0 18px 34px rgba(36, 76, 119, 0.1);
+}
+
+.home-page .search-panel button {
+  background: #0d5bdd;
+  border-radius: 9px;
+}
+
+.home-page .stats-card {
+  border-radius: 14px;
+  box-shadow: 0 15px 30px rgba(31, 50, 81, 0.08);
+}
+
+.home-page .content-section {
+  padding-top: 42px;
+}
+
+.home-page .section-header {
+  margin-bottom: 20px;
+}
+
+.home-page .section-header h2 {
+  color: #102a43;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+.home-page .section-kicker {
+  color: #6b7f95;
+}
+
+.home-page .specialty-card,
+.home-page .doctor-card,
+.home-page .resource-card,
+.home-page .info-card,
+.home-page .testimonial-card {
+  border-color: #dce7f3;
+  border-radius: 12px;
+  box-shadow: 0 10px 22px rgba(31, 50, 81, 0.06);
+}
+
+.home-page .specialty-card:hover,
+.home-page .doctor-card:hover,
+.home-page .resource-card:hover,
+.home-page .info-card:hover,
+.home-page .testimonial-card:hover {
+  transform: translateY(-4px);
+  border-color: #b8d5f4;
+  box-shadow: 0 18px 32px rgba(31, 78, 126, 0.11);
+}
+
+.home-page .home-see-more {
+  border-radius: 8px;
+}
+
+@media (min-width: 1200px) {
+  .home-page .resource-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .home-page .hero-copy h1 {
+    font-size: clamp(34px, 10vw, 44px);
+    letter-spacing: -0.015em;
+  }
+
+  .home-page .content-section {
+    padding-top: 30px;
+  }
+
+  .home-page .section-header h2 {
+    font-size: 22px;
+  }
+
+  .home-page .stats-card {
+    border-radius: 12px;
+  }
 }
 
 .hero-copy {
@@ -1391,6 +1499,119 @@
   .home-page .resource-body .doctor-card-title-row h3 {
     font-size: 16px;
   }
+}
+
+.search-city-field {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+}
+
+.search-city-field > label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-city-field > label svg {
+  position: absolute;
+  left: 14px;
+  z-index: 1;
+  pointer-events: none;
+  color: #64748b;
+}
+
+.search-city-field > label select {
+  min-width: 0;
+  padding-left: 40px;
+  padding-right: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.location-detect-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 40px;
+  flex: 0 0 40px;
+  height: 48px;
+  padding: 0 9px;
+  color: #0d5bdd;
+  background: #eef6ff;
+  border: 1px solid #d8e8ff;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.location-detect-button:hover:not(:disabled) {
+  background: #dcecff;
+  border-color: #a8c9f1;
+}
+
+.location-detect-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.location-detect-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.location-detect-button span {
+  display: none;
+}
+
+.location-status {
+  margin: 9px 0 0;
+  color: #087443;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.location-status.error {
+  color: #a33a32;
+}
+
+@media (max-width: 767px) {
+  .home-page .search-panel {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .home-page .search-panel input,
+  .home-page .search-panel select,
+  .home-page .search-panel button,
+  .home-page .home-clear-filter {
+    min-height: 42px;
+    height: 42px;
+    border-radius: 10px;
+  }
+
+  .search-city-field {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .search-city-field > label select {
+    padding-left: 40px;
+  }
+
+  .location-detect-button {
+    width: 42px !important;
+    min-width: 42px;
+    flex-basis: 42px;
+    padding: 0 10px;
+  }
+
 }
 
 /* Ensure the final card composition wins over legacy card positioning rules. */

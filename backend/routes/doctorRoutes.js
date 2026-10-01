@@ -17,6 +17,8 @@ cloudinary.config({
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const optionalAuthenticateUser = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || "";
@@ -118,7 +120,7 @@ router.get("/", optionalAuthenticateUser, async (req, res) => {
         andConditions.push({ specialization: specialty });
       }
       if (city && city !== "all") {
-        andConditions.push({ location: city });
+        andConditions.push({ location: new RegExp(`^${escapeRegex(city.trim())}$`, "i") });
       }
       if (department && department !== "all") {
         andConditions.push({ department });

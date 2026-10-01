@@ -149,6 +149,14 @@ export const getCities = async () => {
   return response.data;
 };
 
+export const reverseGeocode = async ({ latitude, longitude }) => {
+  const response = await API.get("/location/reverse", {
+    params: { lat: latitude, lon: longitude },
+  });
+
+  return response.data;
+};
+
 export const createDoctor = async (doctorData) => {
   const response = await API.post(
     "/doctors",

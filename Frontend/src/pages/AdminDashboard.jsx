@@ -32,6 +32,7 @@ import DashboardLayout, {
   DashboardSection,
 } from "../components/DashboardLayout";
 import { getStoredUser } from "../utils/auth";
+import { getCurrentCity } from "../utils/location";
 import { useLocation } from "react-router-dom";
 import PrescriptionPrintButton from "../components/PrescriptionPrintButton";
 
@@ -266,9 +267,24 @@ export default function AdminDashboard() {
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [locatingField, setLocatingField] = useState("");
 
   const scrollTo = (ref) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleAutofillCity = async (field, setForm) => {
+    setLocatingField(field);
+    setError("");
+    try {
+      const location = await getCurrentCity();
+      setForm((current) => ({ ...current, [field]: location.city }));
+      setSuccess(`Location filled as ${location.city}.`);
+    } catch (locationError) {
+      setError(locationError.message);
+    } finally {
+      setLocatingField("");
+    }
   };
 
   useEffect(() => {
@@ -1320,6 +1336,7 @@ export default function AdminDashboard() {
           onClick: () => {
             resetDoctorForm();
             scrollTo(doctorFormRef);
+            handleAutofillCity("location", setDoctorForm);
           },
         },
         {
@@ -1507,15 +1524,26 @@ export default function AdminDashboard() {
                 />
               </label>
 
-              <label className="dashboard-input-group">
+              <div className="dashboard-input-group">
                 <span>City / location *</span>
-                <input
-                  value={doctorForm.location}
-                  onChange={(e) => setDoctorForm({ ...doctorForm, location: e.target.value })}
-                  placeholder="Muzaffarpur"
-                  required
-                />
-              </label>
+                <div className="location-input-row">
+                  <input
+                    value={doctorForm.location}
+                    onChange={(e) => setDoctorForm({ ...doctorForm, location: e.target.value })}
+                    placeholder="Muzaffarpur"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="dashboard-secondary-action location-autofill-action"
+                    onClick={() => handleAutofillCity("location", setDoctorForm)}
+                    disabled={locatingField === "location"}
+                    title="Use the current device location"
+                  >
+                    {locatingField === "location" ? "Locating..." : "Use current location"}
+                  </button>
+                </div>
+              </div>
 
               <label className="dashboard-input-group">
                 <span>Map link (optional)</span>

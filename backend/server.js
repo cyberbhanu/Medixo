@@ -19,6 +19,7 @@ const clinicRoutes = require("./routes/clinicRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
 const homeRoutes = require("./routes/homeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const locationRoutes = require("./routes/locationRoutes");
 
 // ==========================================
 // UTILITIES
@@ -228,6 +229,8 @@ app.get("/api/health", (_req, res) => {
       ][mongoState] || "unknown",
   });
 });
+
+app.use("/api/location", locationRoutes);
 
 // ==========================================
 // API ROUTES
