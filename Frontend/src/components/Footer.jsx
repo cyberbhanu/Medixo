@@ -51,11 +51,11 @@ export default function Footer() {
           <div>
             <h3>Company</h3>
             <div className="site-footer-stack">
-              <Link to="/#about">About Us</Link>
+              <Link to="/about">About Us</Link>
               <Link to="/privacy-policy">Privacy Policy</Link>
               <Link to="/terms-conditions">Terms & Conditions</Link>
               <Link to="/delete-account">Delete Account</Link>
-              <a href="/#contact">Contact</a>
+              <Link to="/contact">Contact</Link>
             </div>
           </div>
         </div>

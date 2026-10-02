@@ -140,6 +140,18 @@
 .account-delete-panel h3 { margin: 0; font-size: 18px; }
 .account-delete-panel > p { margin: 0; color: #566070; }
 
+.seo-page-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 16px;
+}
+
+.seo-page-links a {
+  color: #0d5bdd;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .legal-shell {
     width: min(calc(100% - 28px), 960px);

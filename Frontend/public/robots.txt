@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /doctor-login
+Disallow: /staff-login
+Disallow: /lab-login
+Disallow: /signup
+Disallow: /admin-dashboard
+Disallow: /doctor-dashboard
+Disallow: /patient-dashboard
+Disallow: /laboratory-dashboard
+Disallow: /staff-dashboard
+
+Sitemap: https://medixohealthcare.com/sitemap.xml

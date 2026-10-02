@@ -22,6 +22,7 @@ const LaboratoryDashboard = lazy(() => import("./pages/LaboratoryDashboard"));
 const StaffDashboard = lazy(() => import("./pages/StaffDashboard"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const AccountDeletionPage = lazy(() => import("./pages/AccountDeletionPage"));
+const SeoPage = lazy(() => import("./pages/SeoPage"));
 const ResourceDetailsPage = lazy(() => import("./pages/ResourceDetailsPage"));
 const LabBookingPage = lazy(() => import("./pages/LabBookingPage"));
 const ResourcesDirectory = lazy(() => import("./pages/ResourcesDirectory"));
@@ -166,6 +167,8 @@ function App() {
           <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
           <Route path="/terms-conditions" element={<LegalPage type="terms" />} />
           <Route path="/delete-account" element={<AccountDeletionPage />} />
+          <Route path="/about" element={<SeoPage type="about" />} />
+          <Route path="/contact" element={<SeoPage type="contact" />} />
           <Route path="/hospitals/:resourceId" element={<ResourceDetailsPage resourceType="hospitals" />} />
           <Route path="/clinics/:resourceId" element={<ResourceDetailsPage resourceType="clinics" />} />
           <Route path="/labs/:resourceId" element={<ResourceDetailsPage resourceType="labs" />} />
