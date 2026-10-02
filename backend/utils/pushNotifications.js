@@ -16,16 +16,33 @@ if (pushConfigured) {
 
 const getVapidPublicKey = () => vapidPublicKey;
 
-const sendPush = async (notification, userIds) => {
-  if (!pushConfigured || !userIds.length) return;
+const getNotificationUrl = (role) => {
+  switch (role) {
+    case ROLES.DOCTOR:
+      return "/doctor-dashboard";
+    case ROLES.STAFF:
+      return "/staff-dashboard";
+    case ROLES.LABORATORY:
+      return "/laboratory-dashboard";
+    case ROLES.SUPER_ADMIN:
+      return "/admin-dashboard";
+    default:
+      return "/patient-dashboard";
+  }
+};
 
-  const subscriptions = await PushSubscription.find({ userId: { $in: userIds } }).lean();
+const sendPush = async (notification) => {
+  if (!pushConfigured || !notification?.userId) return;
+
+  const user = await User.findById(notification.userId).select("role").lean();
+  const subscriptions = await PushSubscription.find({ userId: notification.userId }).lean();
+  const url = notification.data?.url || getNotificationUrl(user?.role);
   const payload = JSON.stringify({
     title: notification.title,
     body: notification.message,
     notificationId: String(notification._id),
     appointmentId: notification.appointmentId ? String(notification.appointmentId) : "",
-    url: "/patient-dashboard",
+    url,
   });
 
   await Promise.allSettled(
@@ -52,10 +69,22 @@ const createNotifications = async ({ userIds, title, message, type = "appointmen
   const uniqueUserIds = [...new Set(userIds.filter(Boolean).map(String))];
   if (!uniqueUserIds.length) return [];
 
-  const notifications = await Notification.insertMany(
-    uniqueUserIds.map((userId) => ({ userId, title, message, type, appointmentId, data }))
-  );
-  await sendPush(notifications[0], uniqueUserIds);
+  const users = await User.find({ _id: { $in: uniqueUserIds } }).select("_id role").lean();
+  const userById = new Map(users.map((user) => [String(user._id), user]));
+  const notifications = await Notification.insertMany(uniqueUserIds.map((userId) => {
+    const user = userById.get(String(userId));
+    return {
+      userId,
+      title: user?.role === ROLES.PATIENT ? "Appointment confirmed" : title,
+      message: user?.role === ROLES.PATIENT
+        ? `Your appointment is confirmed. ${message}`
+        : message,
+      type,
+      appointmentId,
+      data: { ...data, url: getNotificationUrl(user?.role) },
+    };
+  }));
+  await Promise.all(notifications.map((notification) => sendPush(notification)));
   return notifications;
 };
 

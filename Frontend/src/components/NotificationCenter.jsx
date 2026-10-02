@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getNotificationPublicKey,
   getNotifications,
@@ -7,6 +8,7 @@ import {
   subscribeToNotifications,
 } from "../api";
 import { DashboardIcon } from "./DashboardLayout";
+import { getDashboardPath, getStoredUser } from "../utils/auth";
 
 const decodeBase64Key = (value) => {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
@@ -15,6 +17,7 @@ const decodeBase64Key = (value) => {
 };
 
 export default function NotificationCenter({ refreshInterval = 30000 }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -88,6 +91,13 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
     setUnreadCount((current) => Math.max(0, current - 1));
   };
 
+  const openNotification = async (item) => {
+    await markRead(item);
+    const user = getStoredUser();
+    navigate(item.data?.url || getDashboardPath(user?.role));
+    setOpen(false);
+  };
+
   const markAllRead = async () => {
     await markAllNotificationsRead();
     setNotifications((current) => current.map((item) => ({ ...item, readAt: item.readAt || new Date().toISOString() })));
@@ -101,7 +111,7 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
     : "Checking for updates...";
 
   const renderNotification = (item) => (
-    <button type="button" key={item._id} className={`notification-item ${item.readAt ? "read" : "unread"}`} onClick={() => markRead(item)}>
+    <button type="button" key={item._id} className={`notification-item ${item.readAt ? "read" : "unread"}`} onClick={() => openNotification(item)}>
       <span className="notification-item-marker" aria-hidden="true" />
       <span className="notification-item-content"><strong>{item.title}</strong><span>{item.message}</span><small>{new Date(item.createdAt).toLocaleString()}</small></span>
     </button>
