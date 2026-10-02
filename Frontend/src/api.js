@@ -2,7 +2,7 @@ import axios from "axios";
 import { Capacitor } from "@capacitor/core";
 
 const PRODUCTION_API_URL =
-  "https://medixo-yj2x.onrender.com/api";
+  "https://api.medixohealthcare.com/api";
 
 const resolveApiBaseUrl = () => {
   const configuredUrl = import.meta.env.VITE_API_URL?.trim();
