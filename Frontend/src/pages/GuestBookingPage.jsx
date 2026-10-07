@@ -88,7 +88,7 @@ export default function GuestBookingPage() {
                 <div><span>Queue</span><strong>#{appointment.queueNumber || "-"} of {appointment.dailyQueueSize || 0}</strong></div>
                 <div><span>Patients ahead</span><strong>{appointment.patientsAhead || "Next in queue"}</strong></div>
                 <div><span>Date</span><strong>{appointment.appointmentDate}</strong></div>
-                <div><span>Time</span><strong>{appointment.appointmentTime}</strong></div>
+                <div><span>Expected visit</span><strong>{appointment.appointmentTime}</strong></div>
               </div>
 
               {appointment.status !== "Cancelled" && appointment.status !== "Completed" ? (
@@ -99,10 +99,17 @@ export default function GuestBookingPage() {
                       <span>New date</span>
                       <input type="date" value={reschedule.appointmentDate} onChange={(event) => setReschedule({ ...reschedule, appointmentDate: event.target.value })} />
                     </label>
-                    <label className="dashboard-input-group">
-                      <span>New time</span>
-                      <input type="time" value={reschedule.appointmentTime} onChange={(event) => setReschedule({ ...reschedule, appointmentTime: event.target.value })} />
-                    </label>
+                    {appointment.type === "lab" ? (
+                      <label className="dashboard-input-group">
+                        <span>New time</span>
+                        <input type="time" value={reschedule.appointmentTime} onChange={(event) => setReschedule({ ...reschedule, appointmentTime: event.target.value })} />
+                      </label>
+                    ) : (
+                      <div className="dashboard-input-group queue-time-note">
+                        <span>Visit time</span>
+                        <p>Your new queue position and expected visit time will be assigned from the doctor’s clinic schedule.</p>
+                      </div>
+                    )}
                     <div className="dashboard-form-actions full-width">
                       <button type="button" className="dashboard-primary-action" disabled={loading} onClick={() => updateBooking(reschedule, "Booking rescheduled successfully")}>Reschedule</button>
                       <button type="button" className="dashboard-secondary-action" disabled={loading} onClick={() => updateBooking({ status: "Cancelled" }, "Booking cancelled")}>Cancel Booking</button>

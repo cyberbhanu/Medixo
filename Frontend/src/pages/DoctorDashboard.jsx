@@ -316,7 +316,7 @@ export default function DoctorDashboard() {
                     </div>
                     <div className="dashboard-record-meta">
                       <span><DashboardIcon name="calendar" /> {item.appointmentDate}</span>
-                      <span><DashboardIcon name="clock" /> {item.appointmentTime || "Not scheduled"}</span>
+                      <span><DashboardIcon name="clock" /> Expected around {item.appointmentTime || "Not scheduled"}</span>
                       <span><DashboardIcon name="users" /> {item.patientsAhead ? `${item.patientsAhead} ahead` : "Next in queue"}</span>
                       <span><DashboardIcon name="message" /> {item.patientPhone || "No phone"}</span>
                     </div>

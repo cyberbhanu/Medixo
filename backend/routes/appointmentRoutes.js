@@ -42,6 +42,7 @@ const EDITABLE_FIELDS = [
 const PATIENT_EDITABLE_FIELDS = ["appointmentDate", "appointmentTime", "status", "notes"];
 const LAB_EDITABLE_FIELDS = ["status", "reportUrl", "notes"];
 const ACTIVE_SLOT_STATUSES = ["Scheduled", "Approved", "Rescheduled"];
+const DOCTOR_QUEUE_INTERVAL_MINUTES = 10;
 const SLOT_ALREADY_BOOKED_MESSAGE =
   "This appointment slot is already booked. Please choose another time.";
 
@@ -119,6 +120,35 @@ const isValidTimeString = (time) => /^\d{2}:\d{2}$/.test(String(time || ""));
 const getAppointmentDateTime = (appointmentDate, appointmentTime) =>
   new Date(`${appointmentDate}T${appointmentTime}:00`);
 
+const timeToMinutes = (time) => {
+  const [hours, minutes] = String(time || "").split(":").map(Number);
+  return (Number.isFinite(hours) ? hours : 0) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+};
+
+const minutesToTime = (minutes) => {
+  const normalizedMinutes = Math.max(0, Math.floor(minutes));
+  const hours = Math.floor(normalizedMinutes / 60) % 24;
+  const remainder = normalizedMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+};
+
+const getWeekdayForDate = (appointmentDate) =>
+  new Date(`${appointmentDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "long" });
+
+const getDoctorDailyStartTime = async (doctorId, appointmentDate) => {
+  const doctor = await Doctor.findById(doctorId).select("availability").lean();
+  const availability = Array.isArray(doctor?.availability) ? doctor.availability : [];
+  const dayAvailability = availability.find(
+    (item) => item.day === getWeekdayForDate(appointmentDate) && item.isAvailable !== false
+  );
+
+  if (availability.length && !dayAvailability) {
+    throw new Error("This doctor is not available on the selected date");
+  }
+
+  return dayAvailability?.startTime || availability.find((item) => item.isAvailable !== false)?.startTime || "09:00";
+};
+
 const isPastAppointment = (appointmentDate, appointmentTime) => {
   const appointmentDateTime = getAppointmentDateTime(appointmentDate, appointmentTime);
 
@@ -146,6 +176,66 @@ const getSlotConflictFilter = ({ doctorId, labId, type, appointmentDate, appoint
   return filter;
 };
 
+const getNextDoctorQueueTime = async ({ doctorId, appointmentDate, requestedTime, excludeId }) => {
+  const existingAppointments = await Appointment.find({
+    type: "doctor",
+    doctorId,
+    appointmentDate,
+    status: { $in: ACTIVE_SLOT_STATUSES },
+    ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+  })
+    .select("appointmentTime createdAt")
+    .sort({ createdAt: 1, _id: 1 })
+    .lean();
+
+  const scheduleStartTime = await getDoctorDailyStartTime(doctorId, appointmentDate);
+  if (!existingAppointments.length) return scheduleStartTime;
+
+  const anchorTime = existingAppointments[0].appointmentTime || scheduleStartTime;
+  return minutesToTime(
+    timeToMinutes(anchorTime) + existingAppointments.length * DOCTOR_QUEUE_INTERVAL_MINUTES
+  );
+};
+
+const assignDoctorQueueTime = async (payload, excludeId = null) => {
+  if (payload.type !== "lab" && payload.doctorId && ACTIVE_SLOT_STATUSES.includes(payload.status || "Scheduled")) {
+    return {
+      ...payload,
+      appointmentTime: await getNextDoctorQueueTime({
+        doctorId: payload.doctorId,
+        appointmentDate: payload.appointmentDate,
+        requestedTime: payload.appointmentTime,
+        excludeId,
+      }),
+    };
+  }
+
+  return payload;
+};
+
+const saveAppointmentWithQueueRetry = async (appointment) => {
+  try {
+    return await appointment.save();
+  } catch (error) {
+    if (
+      !isDuplicateSlotError(error) ||
+      appointment.type === "lab" ||
+      !appointment.doctorId ||
+      !ACTIVE_SLOT_STATUSES.includes(appointment.status)
+    ) {
+      throw error;
+    }
+
+    appointment.appointmentTime = await getNextDoctorQueueTime({
+      doctorId: appointment.doctorId,
+      appointmentDate: appointment.appointmentDate,
+      requestedTime: appointment.appointmentTime,
+      excludeId: appointment._id,
+    });
+    return appointment.save();
+  }
+};
+
 const validateAppointmentPayload = ({
   doctorId,
   labId,
@@ -170,10 +260,12 @@ const validateAppointmentPayload = ({
     !patientPhone ||
     patientAge === undefined ||
     !appointmentDate ||
-    !appointmentTime ||
+    (isLab && !appointmentTime) ||
     !reason
   ) {
-    return "Target (Doctor/Lab), patient, phone, age, date, time, and reason are required";
+    return isLab
+      ? "Laboratory, patient, phone, age, date, time, and reason are required"
+      : "Doctor, patient, phone, age, date, and reason are required";
   }
 
   if (!isLab && !mongoose.Types.ObjectId.isValid(doctorId)) {
@@ -200,11 +292,11 @@ const validateAppointmentPayload = ({
     return "Please provide a valid appointment date";
   }
 
-  if (!isValidTimeString(appointmentTime)) {
+  if (appointmentTime && !isValidTimeString(appointmentTime)) {
     return "Please provide a valid appointment time";
   }
 
-  if (status !== "Cancelled" && isPastAppointment(appointmentDate, appointmentTime)) {
+  if (appointmentTime && status !== "Cancelled" && isPastAppointment(appointmentDate, appointmentTime)) {
     return "Appointment date and time must be in the future";
   }
 
@@ -268,7 +360,7 @@ const buildAppointmentPayload = (body) => ({
   patientAddress: body.patientAddress?.trim() || "",
   bloodPressure: body.bloodPressure?.trim() || "",
   appointmentDate: body.appointmentDate.trim(),
-  appointmentTime: body.appointmentTime.trim(),
+  appointmentTime: body.appointmentTime?.trim() || "",
   status: body.status || "Scheduled",
   reason: body.reason.trim(),
   disease: body.disease?.trim() || "",
@@ -396,7 +488,8 @@ router.post("/guest", async (req, res) => {
       return res.status(404).json({ error: "Selected doctor was not found" });
     }
 
-    const slotError = await ensureSlotIsAvailable(requestBody);
+    const scheduledRequest = await assignDoctorQueueTime(requestBody);
+    const slotError = await ensureSlotIsAvailable(scheduledRequest);
     if (slotError) return res.status(409).json({ error: slotError });
 
     const bookingReference = generateBookingReference();
@@ -426,12 +519,12 @@ router.post("/guest", async (req, res) => {
     }
 
     const appointment = new Appointment({
-      ...buildAppointmentPayload(requestBody),
+      ...buildAppointmentPayload(scheduledRequest),
       patientId: patientUser._id,
       bookingReference,
       bookingPasswordHash: await bcrypt.hash(bookingPassword, 10),
     });
-    await appointment.save();
+    await saveAppointmentWithQueueRetry(appointment);
 
     if (appointment.doctorId) {
       await Doctor.findByIdAndUpdate(appointment.doctorId, {
@@ -600,14 +693,23 @@ router.put("/guest/:id", authenticateGuestBooking, async (req, res) => {
     });
     if (validationError) return res.status(400).json({ error: validationError });
 
-    const slotError = await ensureSlotIsAvailable(
-      { ...req.guestAppointment.toObject(), ...sanitizedPayload, status: sanitizedPayload.status || req.guestAppointment.status },
+    const nextAppointmentPayload = await assignDoctorQueueTime(
+      {
+        ...req.guestAppointment.toObject(),
+        ...sanitizedPayload,
+        status: sanitizedPayload.status || req.guestAppointment.status,
+      },
       req.guestAppointment._id
     );
+    const slotError = await ensureSlotIsAvailable(nextAppointmentPayload, req.guestAppointment._id);
     if (slotError) return res.status(409).json({ error: slotError });
 
     const updatedAppointment = await populateAppointment(
-      Appointment.findByIdAndUpdate(req.guestAppointment._id, sanitizedPayload, { new: true, runValidators: true })
+      Appointment.findByIdAndUpdate(
+        req.guestAppointment._id,
+        { ...sanitizedPayload, appointmentTime: nextAppointmentPayload.appointmentTime },
+        { new: true, runValidators: true }
+      )
     );
     const queueDetails = await getQueueDetailsForAppointment(updatedAppointment);
     return res.json({
@@ -626,7 +728,7 @@ router.put("/guest/:id", authenticateGuestBooking, async (req, res) => {
 
 const getStaffAccess = async (userId) => {
   const staffUser = await User.findById(userId)
-    .select("clinicId doctorId isActive role")
+    .select("hospitalId clinicId doctorId isActive role")
     .lean();
 
   if (!staffUser || staffUser.isActive === false || staffUser.role !== ROLES.STAFF) {
@@ -654,6 +756,23 @@ const getStaffAccess = async (userId) => {
     return {
       staffUser,
       doctorIds: clinicDoctors.map((doctor) => doctor._id),
+    };
+  }
+
+  if (staffUser.hospitalId) {
+    const hospitalDoctors = await Doctor.find({
+      $or: [
+        { hospital: staffUser.hospitalId },
+        { hospitals: staffUser.hospitalId },
+      ],
+      isActive: { $ne: false },
+    })
+      .select("_id")
+      .lean();
+
+    return {
+      staffUser,
+      doctorIds: hospitalDoctors.map((doctor) => doctor._id),
     };
   }
 
@@ -966,7 +1085,8 @@ router.post("/", async (req, res) => {
       }
     }
 
-    const slotError = await ensureSlotIsAvailable(requestBody);
+    const scheduledRequest = await assignDoctorQueueTime(requestBody);
+    const slotError = await ensureSlotIsAvailable(scheduledRequest);
     if (slotError) {
       return res.status(409).json({ error: slotError });
     }
@@ -977,12 +1097,12 @@ router.post("/", async (req, res) => {
 
     const appointment = new Appointment(
       buildAppointmentPayload({
-        ...requestBody,
+        ...scheduledRequest,
         patientId:
           isPatient ? req.user.id : matchingPatient?._id || null,
       })
     );
-    await appointment.save();
+    await saveAppointmentWithQueueRetry(appointment);
     if (appointment.doctorId) {
       await Doctor.findByIdAndUpdate(appointment.doctorId, {
         $addToSet: {
@@ -1201,14 +1321,27 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
 
-    const slotError = await ensureSlotIsAvailable(
-      {
-        ...appointment.toObject(),
-        ...sanitizedPayload,
-        status: sanitizedPayload.status || appointment.status,
-      },
-      appointment._id
-    );
+    const queueScheduleChanged =
+      appointment.type === "doctor" &&
+      (sanitizedPayload.appointmentDate !== undefined ||
+        sanitizedPayload.appointmentTime !== undefined ||
+        sanitizedPayload.status === "Rescheduled");
+    const nextAppointmentPayload = queueScheduleChanged
+      ? await assignDoctorQueueTime(
+          {
+            ...appointment.toObject(),
+            ...sanitizedPayload,
+            status: sanitizedPayload.status || appointment.status,
+          },
+          appointment._id
+        )
+      : {
+          ...appointment.toObject(),
+          ...sanitizedPayload,
+          status: sanitizedPayload.status || appointment.status,
+        };
+
+    const slotError = await ensureSlotIsAvailable(nextAppointmentPayload, appointment._id);
 
     if (slotError) {
       return res.status(409).json({ error: slotError });
@@ -1222,6 +1355,7 @@ router.put("/:id", async (req, res) => {
       req.params.id,
       {
         ...sanitizedPayload,
+        appointmentTime: nextAppointmentPayload.appointmentTime,
         patientId: matchingPatient?._id || appointment.patientId || null,
       },
       { new: true, runValidators: true }

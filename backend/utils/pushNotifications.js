@@ -125,7 +125,7 @@ const notifyAppointmentCreated = async (appointment) => {
   return createNotifications({
     userIds: recipientIds,
     title: "New appointment booked",
-    message: `${appointment.patientName} booked ${target} for ${appointment.appointmentDate} at ${appointment.appointmentTime}. Queue #${appointment.queueNumber || "-"}.`,
+    message: `${appointment.patientName} booked ${target} for ${appointment.appointmentDate}. Queue #${appointment.queueNumber || "-"}; expected visit around ${appointment.appointmentTime}.`,
     appointmentId: appointment._id,
     data: { event: "created" },
   });
@@ -139,7 +139,7 @@ const notifyAppointmentUpdated = async (previous, updated) => {
   const recipientIds = await getAppointmentRecipientIds(updated);
   const details = changedStatus
     ? `Your appointment status is now ${updated.status}.`
-    : `Your appointment is scheduled for ${updated.appointmentDate} at ${updated.appointmentTime}.`;
+    : `Your appointment is scheduled for ${updated.appointmentDate}; expected visit around ${updated.appointmentTime}.`;
 
   return createNotifications({
     userIds: recipientIds,

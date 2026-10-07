@@ -608,6 +608,22 @@
   font-weight: 800;
 }
 
+.queue-time-note {
+  align-content: center;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid #d9e4f2;
+  border-radius: 8px;
+  background: #f7fbff;
+}
+
+.queue-time-note p {
+  margin: 0;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .dashboard-input-group input,
 .dashboard-input-group select,
 .dashboard-input-group textarea {

@@ -3,6 +3,7 @@ const router = express.Router();
 
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
+const Hospital = require("../models/Hospital");
 
 const {
   authenticateUser,
@@ -31,6 +32,7 @@ router.get("/staff", async (req, res) => {
     })
       .select("-password")
       .populate("clinicId", "name city state")
+      .populate("hospitalId", "name city state")
       .populate("doctorId", "name specialization email clinic clinics");
 
     res.json(staff);
@@ -47,7 +49,12 @@ router.get("/staff", async (req, res) => {
 // VALIDATE STAFF ASSIGNMENT
 // =====================================================
 
-const validateAssignment = async (clinicId, doctorId) => {
+const validateAssignment = async (hospitalId, clinicId, doctorId) => {
+  if (hospitalId) {
+    const hospital = await Hospital.findOne({ _id: hospitalId, isActive: { $ne: false } });
+    if (!hospital) return "Selected hospital was not found";
+  }
+
   if (!doctorId) {
     return null;
   }
@@ -90,6 +97,7 @@ router.post("/staff", async (req, res) => {
       phone,
       gender,
       address,
+      hospitalId,
       clinicId,
       doctorId,
       staffRole,
@@ -113,6 +121,7 @@ router.post("/staff", async (req, res) => {
     }
 
     const assignmentError = await validateAssignment(
+      hospitalId || null,
       clinicId || null,
       doctorId || null
     );
@@ -133,6 +142,7 @@ router.post("/staff", async (req, res) => {
       gender: gender || "",
       address: address || "",
 
+      hospitalId: hospitalId || null,
       clinicId: clinicId || null,
       doctorId: doctorId || null,
 
@@ -148,6 +158,7 @@ router.post("/staff", async (req, res) => {
     const safeStaff = await User.findById(staff._id)
       .select("-password")
       .populate("clinicId", "name city state")
+      .populate("hospitalId", "name city state")
       .populate("doctorId", "name specialization email clinic clinics");
 
     res.status(201).json(safeStaff);
@@ -174,6 +185,7 @@ router.put("/staff/:id", async (req, res) => {
       phone,
       gender,
       address,
+      hospitalId,
       clinicId,
       doctorId,
       staffRole,
@@ -198,6 +210,7 @@ router.put("/staff/:id", async (req, res) => {
     }
 
     const assignmentError = await validateAssignment(
+      hospitalId || null,
       clinicId || null,
       doctorId || null
     );
@@ -218,6 +231,7 @@ router.put("/staff/:id", async (req, res) => {
     staff.gender = gender ?? staff.gender;
     staff.address = address ?? staff.address;
 
+    staff.hospitalId = hospitalId || null;
     staff.clinicId = clinicId || null;
     staff.doctorId = doctorId || null;
 
@@ -236,6 +250,7 @@ router.put("/staff/:id", async (req, res) => {
     const updatedStaff = await User.findById(staff._id)
       .select("-password")
       .populate("clinicId", "name city state")
+      .populate("hospitalId", "name city state")
       .populate("doctorId", "name specialization email clinic clinics");
 
     res.json(updatedStaff);

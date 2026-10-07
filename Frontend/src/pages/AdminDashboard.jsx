@@ -104,6 +104,7 @@ const EMPTY_STAFF = {
   phone: "",
   gender: "Other",
   staffRole: "Receptionist",
+  hospitalId: "",
   clinicId: "",
   doctorId: "",
   joiningDate: "",
@@ -176,6 +177,20 @@ const formatDate = (value) => {
         day: "2-digit",
         month: "short",
         year: "numeric",
+      });
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
 };
 
@@ -1124,6 +1139,7 @@ export default function AdminDashboard() {
     try {
       const payload = {
         ...staffForm,
+        hospitalId: staffForm.hospitalId || null,
         clinicId: staffForm.clinicId || null,
         doctorId: staffForm.doctorId || null,
       };
@@ -1183,6 +1199,7 @@ export default function AdminDashboard() {
       phone: member.phone || "",
       gender: member.gender || "Other",
       staffRole: member.staffRole || "Receptionist",
+      hospitalId: getId(member.hospitalId || member.hospital),
       clinicId: getId(member.clinicId || member.clinic),
       doctorId: getId(member.doctorId || member.doctor),
       joiningDate: member.joiningDate
@@ -1727,7 +1744,6 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="dashboard-action-row">
-                      <button type="button" className="dashboard-primary-action" onClick={() => startDoctorForResource("clinic", clinic._id)}>Add Doctor Here</button>
                       <button
                         type="button"
                         className="dashboard-secondary-action"
@@ -1930,6 +1946,13 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="dashboard-action-row">
+                      <button
+                        type="button"
+                        className="dashboard-primary-action"
+                        onClick={() => startDoctorForResource("clinic", clinic._id)}
+                      >
+                        Add Doctor Here
+                      </button>
                       <button
                         type="button"
                         className="dashboard-secondary-action"
@@ -2522,6 +2545,20 @@ export default function AdminDashboard() {
               </label>
 
               <label className="dashboard-input-group">
+                <span>Assign hospital</span>
+                <select
+                  value={staffForm.hospitalId}
+                  onChange={(e) => setStaffForm({ ...staffForm, hospitalId: e.target.value })}
+                >
+                  <option value="">No hospital assigned</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
+                  ))}
+                </select>
+                <small className="dashboard-field-hint">Multiple staff members can share the same hospital assignment.</small>
+              </label>
+
+              <label className="dashboard-input-group">
                 <span>Assign clinic</span>
                 <select
                   value={staffForm.clinicId}
@@ -2618,10 +2655,14 @@ export default function AdminDashboard() {
                     <span>Email: {member.email}</span>
                     <span>Phone: {member.phone || "—"}</span>
                     <span>
+                      Hospital: {member.hospitalId?.name || member.hospital?.name || "Unassigned"}
+                    </span>
+                    <span>
                       Clinic: {member.clinicId?.name || member.clinic?.name || "Unassigned"}
                     </span>
                     <span>Doctor: {member.doctorId?.name || member.doctor?.name || "Unassigned"}</span>
                     <span>Joined: {formatDate(member.joiningDate)}</span>
+                    <span>Added: {formatDateTime(member.createdAt)}</span>
                   </div>
 
                   <div className="dashboard-action-row">

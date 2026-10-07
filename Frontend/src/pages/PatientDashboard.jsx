@@ -168,9 +168,9 @@ const validateAppointmentForm = (form) => {
     errors.appointmentDate = "Appointment date cannot be in the past.";
   }
 
-  if (!form.appointmentTime) {
+  if (form.type === "lab" && !form.appointmentTime) {
     errors.appointmentTime = "Select an appointment time.";
-  } else if (form.appointmentDate && !isFutureAppointment(form.appointmentDate, form.appointmentTime)) {
+  } else if (form.type === "lab" && form.appointmentDate && !isFutureAppointment(form.appointmentDate, form.appointmentTime)) {
     errors.appointmentTime = "Choose a future appointment time.";
   }
 
@@ -299,7 +299,7 @@ export default function PatientDashboard() {
       const bookedAppointment = await createAppointment(appointmentForm);
       setSuccess(
         bookedAppointment?.queueNumber
-          ? `Appointment booked successfully. Your queue number is #${bookedAppointment.queueNumber} of ${bookedAppointment.dailyQueueSize}.`
+          ? `Appointment booked successfully. Your queue number is #${bookedAppointment.queueNumber} of ${bookedAppointment.dailyQueueSize}. Expected visit around ${bookedAppointment.appointmentTime}.`
           : "Appointment booked successfully"
       );
       setAppointmentForm({
@@ -651,19 +651,26 @@ export default function PatientDashboard() {
               {appointmentFormErrors.appointmentDate ? <small className="dashboard-field-error">{appointmentFormErrors.appointmentDate}</small> : null}
             </label>
 
-            <label className="dashboard-input-group">
-              <span>Appointment time</span>
-              <input
-                type="time"
-                value={appointmentForm.appointmentTime}
-                onChange={(event) =>
-                  setAppointmentForm({ ...appointmentForm, appointmentTime: event.target.value })
-                }
-                aria-invalid={Boolean(appointmentFormErrors.appointmentTime)}
-                required
-              />
-              {appointmentFormErrors.appointmentTime ? <small className="dashboard-field-error">{appointmentFormErrors.appointmentTime}</small> : null}
-            </label>
+            {appointmentForm.type === "lab" ? (
+              <label className="dashboard-input-group">
+                <span>Appointment time</span>
+                <input
+                  type="time"
+                  value={appointmentForm.appointmentTime}
+                  onChange={(event) =>
+                    setAppointmentForm({ ...appointmentForm, appointmentTime: event.target.value })
+                  }
+                  aria-invalid={Boolean(appointmentFormErrors.appointmentTime)}
+                  required
+                />
+                {appointmentFormErrors.appointmentTime ? <small className="dashboard-field-error">{appointmentFormErrors.appointmentTime}</small> : null}
+              </label>
+            ) : (
+              <div className="dashboard-input-group queue-time-note">
+                <span>Visit time</span>
+                <p>The doctor’s clinic schedule will assign your queue number and expected visit time automatically.</p>
+              </div>
+            )}
 
             <label className="dashboard-input-group full-width">
               <span>Reason for appointment</span>
@@ -744,7 +751,7 @@ export default function PatientDashboard() {
                     <DashboardIcon name="calendar" /> {item.appointmentDate}
                   </span>
                   <span>
-                    <DashboardIcon name="clock" /> {item.appointmentTime}
+                    <DashboardIcon name="clock" /> Expected visit around {item.appointmentTime}
                   </span>
                   <span>
                     <DashboardIcon name="message" /> {item.patientPhone}
@@ -850,7 +857,7 @@ export default function PatientDashboard() {
                     <DashboardIcon name="calendar" /> {item.appointmentDate}
                   </span>
                   <span>
-                    <DashboardIcon name="clock" /> {item.appointmentTime}
+                    <DashboardIcon name="clock" /> Expected visit around {item.appointmentTime}
                   </span>
                   <span>
                     <DashboardIcon name="message" /> {item.patientPhone}

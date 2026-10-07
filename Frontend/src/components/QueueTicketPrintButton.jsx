@@ -82,7 +82,7 @@ const printQueueTicket = (appointment) => {
             <div class="clinic">${escapeHtml(clinicName)}<small>Dr. ${escapeHtml(display(doctor.name, "Assigned doctor"))}</small></div>
           </header>
           <section class="heading"><h2>Patient Queue / Visit Slip</h2><p>Keep this sheet ready for front-desk and doctor coordination.</p></section>
-          <section class="queue-box"><div class="queue-number"><div><small>Queue number</small><strong>${escapeHtml(queueNumber)}</strong></div></div><div class="patient"><h3>${escapeHtml(patientName)}</h3><p>${escapeHtml(display(appointment?.reason, "Consultation appointment"))}</p><p>${escapeHtml(formatDate(appointment?.appointmentDate))} at ${escapeHtml(display(appointment?.appointmentTime))}</p></div></section>
+          <section class="queue-box"><div class="queue-number"><div><small>Queue number</small><strong>${escapeHtml(queueNumber)}</strong></div></div><div class="patient"><h3>${escapeHtml(patientName)}</h3><p>${escapeHtml(display(appointment?.reason, "Consultation appointment"))}</p><p>${escapeHtml(formatDate(appointment?.appointmentDate))} | Expected visit around ${escapeHtml(display(appointment?.appointmentTime))}</p></div></section>
           <section class="details">
             <div class="detail"><span>Age / gender</span><strong>${escapeHtml(display(appointment?.patientAge))} / ${escapeHtml(display(appointment?.patientGender))}</strong></div>
             <div class="detail"><span>Phone</span><strong>${escapeHtml(display(appointment?.patientPhone))}</strong></div>
