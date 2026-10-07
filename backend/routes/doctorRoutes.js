@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Doctor = require("../models/Doctor");
 const User = require("../models/User");
 const Hospital = require("../models/Hospital");
+const Clinic = require("../models/Clinic");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { getJwtSecret } = require("../utils/jwt");
 const { ROLES, normalizeRole, hasRole } = require("../utils/roles");
@@ -304,6 +305,17 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
         { $addToSet: { doctors: doctor._id } }
       );
     }
+    const assignedClinicIds = doctor.clinics?.length
+      ? doctor.clinics
+      : doctor.clinic
+        ? [doctor.clinic]
+        : [];
+    if (assignedClinicIds.length) {
+      await Clinic.updateMany(
+        { _id: { $in: assignedClinicIds } },
+        { $addToSet: { doctors: doctor._id } }
+      );
+    }
     console.info("admin_action", {
       action: "create_doctor",
       actorId: req.user.id,
@@ -350,7 +362,7 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
       updatePayload.userId = req.body.userId;
     }
 
-    const previousDoctor = await Doctor.findById(req.params.id).select("hospital hospitals").lean();
+    const previousDoctor = await Doctor.findById(req.params.id).select("hospital hospitals clinic clinics").lean();
     const doctor = await Doctor.findByIdAndUpdate(
       req.params.id,
       updatePayload,
@@ -378,6 +390,26 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
     if (assignedHospitalIds.length) {
       await Hospital.updateMany(
         { _id: { $in: assignedHospitalIds } },
+        { $addToSet: { doctors: doctor._id } }
+      );
+    }
+    const previousClinicIds = [
+      ...(previousDoctor?.clinics || []),
+      ...(previousDoctor?.clinic ? [previousDoctor.clinic] : []),
+    ];
+    const assignedClinicIds = [
+      ...(doctor.clinics || []),
+      ...(doctor.clinic ? [doctor.clinic] : []),
+    ];
+    if (previousClinicIds.length) {
+      await Clinic.updateMany(
+        { _id: { $in: previousClinicIds } },
+        { $pull: { doctors: doctor._id } }
+      );
+    }
+    if (assignedClinicIds.length) {
+      await Clinic.updateMany(
+        { _id: { $in: assignedClinicIds } },
         { $addToSet: { doctors: doctor._id } }
       );
     }

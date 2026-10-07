@@ -999,8 +999,13 @@ export default function Home() {
       return;
     }
 
+    if (item?.doctors?.[0]?._id) {
+      handleBookDoctor(item.doctors[0]);
+      return;
+    }
+
     if (item?.name) {
-      navigate(`/doctors?search=${encodeURIComponent(item.name)}`);
+      navigate(`/${type === "clinic" ? "clinics" : "hospitals"}/${item._id}`);
     } else {
       navigate("/doctors");
     }

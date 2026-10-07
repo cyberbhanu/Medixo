@@ -91,8 +91,8 @@ export default function ResourceDetailsPage({ resourceType }) {
                 </section>
               </div>
               <div className="resource-details-actions">
-                {resourceType === "labs" ? <Link to={`/labs/${resource._id}/book`} className="resource-primary-action">Book a test</Link> : <Link to={`/doctors?search=${encodeURIComponent(resource.name)}`} className="resource-primary-action">Find doctors here</Link>}
-                {resourceType === "labs" ? <Link to="/lab-login" className="resource-secondary-action">Laboratory login</Link> : <Link to="/doctors" className="resource-secondary-action">Browse all doctors</Link>}
+                {resourceType === "labs" ? <Link to={`/labs/${resource._id}/book`} className="resource-primary-action">Book a test</Link> : resource.doctors?.[0]?._id ? <Link to={`/doctors/${resource.doctors[0]._id}`} className="resource-primary-action">Book appointment</Link> : <Link to="/doctors" className="resource-primary-action">Find doctors here</Link>}
+                {resourceType === "labs" ? <Link to="/lab-login" className="resource-secondary-action">Laboratory login</Link> : <Link to="/hospital-login" className="resource-secondary-action">Hospital login</Link>}
               </div>
             </>
           ) : null}

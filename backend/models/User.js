@@ -39,6 +39,7 @@ const UserSchema = new mongoose.Schema(
         "patient",
         "laboratory",
         "staff",
+        "hospital",
       ],
       default: "patient",
     },
@@ -79,6 +80,12 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
+    hospitalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hospital",
+      default: null,
+    },
+
     staffRole: {
       type: String,
       default: "Receptionist",
@@ -93,6 +100,18 @@ const UserSchema = new mongoose.Schema(
     profileImage: {
       type: String,
       default: "",
+    },
+
+    passwordResetTokenHash: {
+      type: String,
+      select: false,
+      default: "",
+    },
+
+    passwordResetExpiresAt: {
+      type: Date,
+      select: false,
+      default: null,
     },
   },
   {

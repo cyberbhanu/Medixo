@@ -244,6 +244,9 @@ export default function Navbar() {
                     <Link to="/lab-login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
                       Laboratory Login
                     </Link>
+                    <Link to="/hospital-login" className="auth-dropdown-item" role="menuitem" onClick={() => setShowAuthMenu(false)}>
+                      Hospital Login
+                    </Link>
                     <Link to="/signup" className="primary-button auth-dropdown-item auth-dropdown-action" role="menuitem" onClick={() => setShowAuthMenu(false)}>
                       Sign Up
                     </Link>

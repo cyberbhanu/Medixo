@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const Hospital = require("../models/Hospital");
+const User = require("../models/User");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { ROLES } = require("../utils/roles");
 
@@ -12,6 +13,19 @@ router.get("/", async (_req, res) => {
       .sort({ createdAt: -1 });
 
     res.json(hospitals);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/account/me", authenticateUser, authorizeRoles(ROLES.HOSPITAL), async (req, res) => {
+  try {
+    const hospital = await Hospital.findOne({ userId: req.user.id, isActive: { $ne: false } })
+      .populate("doctors", "name specialization location experience fees profileImage rating reviewCount")
+      .populate("appointments", "patientName appointmentDate appointmentTime status queueNumber doctorId");
+
+    if (!hospital) return res.status(404).json({ error: "Hospital profile not found" });
+    res.json(hospital);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -38,8 +52,25 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+  let createdUser = null;
   try {
-    const hospital = await Hospital.create(req.body);
+    const { password, email, ...hospitalData } = req.body;
+    if (email && password) {
+      const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
+      if (existingUser) return res.status(409).json({ error: "That hospital login email is already in use" });
+      createdUser = await User.create({
+        name: hospitalData.name,
+        email: email.trim().toLowerCase(),
+        password,
+        role: ROLES.HOSPITAL,
+      });
+      hospitalData.userId = createdUser._id;
+    }
+    const hospital = await Hospital.create({ ...hospitalData, email: email?.trim().toLowerCase() || hospitalData.email || "" });
+    if (createdUser) {
+      createdUser.hospitalId = hospital._id;
+      await createdUser.save();
+    }
     console.info("admin_action", {
       action: "create_hospital",
       actorId: req.user.id,
@@ -53,13 +84,24 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
 
 router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
   try {
-    const hospital = await Hospital.findByIdAndUpdate(req.params.id, req.body, {
+    const { password, email, ...hospitalData } = req.body;
+    const existing = await Hospital.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Hospital not found" });
+    const hospital = await Hospital.findByIdAndUpdate(req.params.id, {
+      ...hospitalData,
+      ...(email ? { email: email.trim().toLowerCase() } : {}),
+    }, {
       new: true,
       runValidators: true,
     });
 
-    if (!hospital) {
-      return res.status(404).json({ error: "Hospital not found" });
+    if (password && existing.userId) {
+      const account = await User.findById(existing.userId).select("+password");
+      if (account) {
+        account.password = password;
+        if (email) account.email = email.trim().toLowerCase();
+        await account.save();
+      }
     }
 
     console.info("admin_action", {

@@ -20,12 +20,14 @@ const DoctorDashboard = lazy(() => import("./pages/DoctorDashboard"));
 const PatientDashboard = lazy(() => import("./pages/PatientDashboard"));
 const LaboratoryDashboard = lazy(() => import("./pages/LaboratoryDashboard"));
 const StaffDashboard = lazy(() => import("./pages/StaffDashboard"));
+const HospitalDashboard = lazy(() => import("./pages/HospitalDashboard"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const AccountDeletionPage = lazy(() => import("./pages/AccountDeletionPage"));
 const SeoPage = lazy(() => import("./pages/SeoPage"));
 const ResourceDetailsPage = lazy(() => import("./pages/ResourceDetailsPage"));
 const LabBookingPage = lazy(() => import("./pages/LabBookingPage"));
 const ResourcesDirectory = lazy(() => import("./pages/ResourcesDirectory"));
+const PasswordRecoveryPage = lazy(() => import("./pages/PasswordRecoveryPage"));
 
 function LoadingFallback() {
   return (
@@ -155,6 +157,9 @@ function App() {
         <Routes>
           <Route path="/" element={<RoleAwareHome />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/hospital-login" element={<Login />} />
+          <Route path="/forgot-password" element={<PasswordRecoveryPage />} />
+          <Route path="/reset-password" element={<PasswordRecoveryPage />} />
           <Route path="/doctor-login" element={<DoctorLogin />} />
           <Route path="/staff-login" element={<StaffLogin />} />
           <Route path="/lab-login" element={<LaboratoryLogin />} />
@@ -210,6 +215,14 @@ function App() {
             element={
               <ProtectedDashboard allowedRole="staff">
                 <StaffDashboard />
+              </ProtectedDashboard>
+            }
+          />
+          <Route
+            path="/hospital-dashboard"
+            element={
+              <ProtectedDashboard allowedRole="hospital">
+                <HospitalDashboard />
               </ProtectedDashboard>
             }
           />

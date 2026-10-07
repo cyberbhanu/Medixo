@@ -1,4 +1,5 @@
 const express = require("express");
+const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
@@ -27,6 +28,37 @@ const VALID_ROLES = Object.values(ROLES);
 
 // Fixed email regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getPasswordResetBaseUrl = () =>
+  String(process.env.CLIENT_URL || "http://localhost:5173")
+    .split(",")[0]
+    .trim()
+    .replace(/\/$/, "");
+
+const sendPasswordResetEmail = async ({ user, resetUrl }) => {
+  if (!process.env.RESEND_API_KEY) {
+    if (process.env.NODE_ENV !== "production") {
+      console.info("password_reset_url", resetUrl);
+      return;
+    }
+    throw new Error("Password recovery email is not configured");
+  }
+
+  const from = process.env.MAIL_FROM || process.env.RESEND_FROM_EMAIL;
+  if (!from) throw new Error("MAIL_FROM is not configured");
+
+  await axios.post(
+    "https://api.resend.com/emails",
+    {
+      from,
+      to: [user.email],
+      subject: "Reset your Medixo password",
+      text: `Hello ${user.name},\n\nUse this link to reset your Medixo password. It expires in 30 minutes:\n${resetUrl}\n\nIf you did not request this, you can ignore this email.`,
+      html: `<p>Hello ${user.name},</p><p>Use the link below to reset your Medixo password. It expires in 30 minutes.</p><p><a href="${resetUrl}">Reset your Medixo password</a></p><p>If you did not request this, you can ignore this email.</p>`,
+    },
+    { headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` } }
+  );
+};
 
 const anonymizedPatientEmail = (userId) =>
   `deleted-${String(userId)}@deleted.medixo.invalid`;
@@ -399,6 +431,66 @@ router.post("/login", async (req, res) => {
 });
 
 // =====================================================
+// PASSWORD RECOVERY
+// =====================================================
+
+router.post("/forgot-password", async (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const genericResponse = {
+    message: "If an account exists for that email, a password reset link has been sent.",
+  };
+
+  if (!EMAIL_REGEX.test(email)) return res.json(genericResponse);
+
+  try {
+    const user = await User.findOne({ email }).select("+passwordResetTokenHash +passwordResetExpiresAt");
+    if (!user || !user.isActive) return res.json(genericResponse);
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    user.passwordResetTokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    user.passwordResetExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await user.save();
+
+    const resetUrl = `${getPasswordResetBaseUrl()}/reset-password?token=${rawToken}`;
+    await sendPasswordResetEmail({ user, resetUrl });
+    return res.json(genericResponse);
+  } catch (error) {
+    console.error("Password reset request error:", error.message);
+    return res.status(503).json({ error: "Password recovery is temporarily unavailable. Please try again later." });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  const token = String(req.body?.token || "").trim();
+  const password = String(req.body?.password || "");
+
+  if (!token || password.length < 6) {
+    return res.status(400).json({ error: "A valid reset link and a password of at least 6 characters are required." });
+  }
+
+  try {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: { $gt: new Date() },
+      isActive: { $ne: false },
+    }).select("+password +passwordResetTokenHash +passwordResetExpiresAt");
+
+    if (!user) return res.status(400).json({ error: "This reset link is invalid or has expired." });
+
+    user.password = password;
+    user.passwordResetTokenHash = "";
+    user.passwordResetExpiresAt = null;
+    await user.save();
+
+    return res.json({ message: "Password updated successfully. You can now sign in." });
+  } catch (error) {
+    console.error("Password reset error:", error.message);
+    return res.status(500).json({ error: "Unable to reset the password right now." });
+  }
+});
+
+// =====================================================
 // SUPER ADMIN CREATE USER
 // POST /api/auth/admin/create-user
 // =====================================================
@@ -649,6 +741,12 @@ router.post(
         if (doctorHospitals.length) {
           await Hospital.updateMany(
             { _id: { $in: doctorHospitals } },
+            { $addToSet: { doctors: doctorProfile._id } }
+          );
+        }
+        if (doctorClinics.length) {
+          await Clinic.updateMany(
+            { _id: { $in: doctorClinics } },
             { $addToSet: { doctors: doctorProfile._id } }
           );
         }

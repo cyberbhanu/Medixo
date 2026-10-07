@@ -64,6 +64,10 @@ const StaffLogin = () => {
                 />
               </div>
 
+              <div className="auth-form-help">
+                <Link to="/forgot-password" className="auth-link">Forgot password?</Link>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Password</label>
                 <input

@@ -63,6 +63,7 @@ const EMPTY_CLINIC = {
   specialties: "",
   openingHours: "",
   mapUrl: "",
+  image: "",
   about: "",
   isVerified: false,
 };
@@ -80,6 +81,7 @@ const EMPTY_HOSPITAL = {
   about: "",
   mapUrl: "",
   image: "",
+  password: "",
 };
 
 const EMPTY_LAB = {
@@ -758,6 +760,16 @@ export default function AdminDashboard() {
     setEditingDoctorId("");
   };
 
+  const startDoctorForResource = (resourceType, resourceId) => {
+    resetDoctorForm();
+    setDoctorForm((current) => ({
+      ...current,
+      ...(resourceType === "hospital" ? { hospitalId: resourceId } : { clinicId: resourceId }),
+    }));
+    setSuccess(`Add a doctor for this ${resourceType}. The profile will be linked automatically.`);
+    scrollTo(doctorFormRef);
+  };
+
   const resetClinicForm = () => {
     setClinicForm(EMPTY_CLINIC);
     setEditingClinicId("");
@@ -917,6 +929,7 @@ export default function AdminDashboard() {
         : "",
       openingHours: clinic.openingHours || "",
       mapUrl: clinic.mapUrl || "",
+      image: clinic.image || "",
       about: clinic.about || "",
       isVerified: Boolean(clinic.isVerified),
     });
@@ -984,6 +997,7 @@ export default function AdminDashboard() {
       about: hospital.about || "",
       mapUrl: hospital.mapUrl || "",
       image: hospital.image || "",
+      password: "",
     });
     setError("");
     setSuccess("");
@@ -1683,6 +1697,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="dashboard-action-row">
+                      <button type="button" className="dashboard-primary-action" onClick={() => startDoctorForResource("clinic", clinic._id)}>Add Doctor Here</button>
                       <button
                         type="button"
                         className="dashboard-secondary-action"
@@ -1757,6 +1772,7 @@ export default function AdminDashboard() {
                 ["consultationFee", "Default consultation fee", "500"],
                 ["openingHours", "Opening hours", "9:00 AM - 8:00 PM"],
                 ["mapUrl", "Google Maps link", "https://maps.google.com/..."],
+                ["image", "Clinic image URL", "https://example.com/clinic.jpg"],
                 ["specialties", "Specialties", "General Medicine, Pediatrics"],
               ].map(([key, label, placeholder]) => (
                 <label className="dashboard-input-group" key={key}>
@@ -1962,6 +1978,18 @@ export default function AdminDashboard() {
                 </label>
               ))}
               <label className="dashboard-input-group">
+                <span>{editingHospitalId ? "New login password (optional)" : "Login password"}</span>
+                <input
+                  type="password"
+                  minLength="6"
+                  value={hospitalForm.password}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, password: e.target.value })}
+                  placeholder={editingHospitalId ? "Leave blank to keep current password" : "Set hospital login password"}
+                  required={!editingHospitalId && Boolean(hospitalForm.email)}
+                />
+                <small className="dashboard-field-hint">The hospital can sign in with its email and this password.</small>
+              </label>
+              <label className="dashboard-input-group">
                 <span>Facilities</span>
                 <input
                   value={hospitalForm.facilities}
@@ -2017,6 +2045,7 @@ export default function AdminDashboard() {
                   <span>{hospital.laboratories?.length || 0} labs</span>
                 </div>
                 <div className="dashboard-action-row">
+                  <button type="button" className="dashboard-primary-action" onClick={() => startDoctorForResource("hospital", hospital._id)}>Add Doctor Here</button>
                   <button type="button" className="dashboard-secondary-action" onClick={() => startHospitalEdit(hospital)}>Edit</button>
                   <button type="button" className="dashboard-secondary-action danger" onClick={() => handleDeleteHospital(hospital._id)}>Delete</button>
                 </div>

@@ -4,6 +4,7 @@ const ROLES = Object.freeze({
   PATIENT: "patient",
   LABORATORY: "laboratory",
   STAFF: "staff",
+  HOSPITAL: "hospital",
 });
 
 const ROLE_ALIASES = Object.freeze({
@@ -15,6 +16,7 @@ const ROLE_ALIASES = Object.freeze({
   doctor: ROLES.DOCTOR,
   patient: ROLES.PATIENT,
   staff: ROLES.STAFF,
+  hospital: ROLES.HOSPITAL,
   receptionist: ROLES.STAFF,
 });
 

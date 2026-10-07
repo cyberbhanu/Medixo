@@ -52,6 +52,7 @@ export default function LaboratoryLogin() {
                 <label className="form-label" htmlFor="lab-password">Password</label>
                 <input id="lab-password" type="password" name="password" placeholder="Enter your password" value={formData.password} onChange={(event) => setFormData({ ...formData, password: event.target.value })} className="form-input" required />
               </div>
+              <div className="auth-form-help"><Link to="/forgot-password" className="auth-link">Forgot password?</Link></div>
               <button type="submit" disabled={loading} className="auth-button auth-button-primary">
                 {loading ? "Signing in..." : "Sign in to laboratory"}
               </button>

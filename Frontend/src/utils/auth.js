@@ -63,5 +63,9 @@ export const getDashboardPath = (role) => {
     return "/staff-dashboard";
   }
 
+  if (normalizedRole === "hospital") {
+    return "/hospital-dashboard";
+  }
+
   return "/patient-dashboard";
 };
