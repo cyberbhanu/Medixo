@@ -19,6 +19,7 @@ import {
   adminCreateUser,
   deleteDoctor,
   uploadDoctorImage,
+  uploadClinicImage,
   getAdminStaff,
   createAdminStaff,
   updateAdminStaff,
@@ -92,6 +93,7 @@ const EMPTY_LAB = {
   address: "",
   phone: "",
   mapUrl: "",
+  logo: "",
   availableTests: "",
 };
 
@@ -266,6 +268,7 @@ export default function AdminDashboard() {
   const [savingStaff, setSavingStaff] = useState(false);
   const [savingCustomerPasswordKey, setSavingCustomerPasswordKey] = useState("");
   const [uploadingDoctorImage, setUploadingDoctorImage] = useState(false);
+  const [uploadingResourceImage, setUploadingResourceImage] = useState("");
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -878,6 +881,31 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleResourceImageUpload = async (resourceType, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingResourceImage(resourceType);
+    setError("");
+    try {
+      const data = await uploadClinicImage(file);
+      const imageUrl = data.imageUrl || "";
+      if (resourceType === "clinic") {
+        setClinicForm((current) => ({ ...current, image: imageUrl }));
+      } else if (resourceType === "hospital") {
+        setHospitalForm((current) => ({ ...current, image: imageUrl }));
+      } else {
+        setLabForm((current) => ({ ...current, logo: imageUrl }));
+      }
+      setSuccess(`${resourceType === "lab" ? "Laboratory" : resourceType.charAt(0).toUpperCase() + resourceType.slice(1)} image uploaded successfully.`);
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Unable to upload image."));
+    } finally {
+      setUploadingResourceImage("");
+      event.target.value = "";
+    }
+  };
+
   const handleClinicSubmit = async (event) => {
     event.preventDefault();
     setSavingClinic(true);
@@ -1035,6 +1063,7 @@ export default function AdminDashboard() {
       if (labForm.address.trim()) payload.address = labForm.address.trim();
       if (labForm.phone.trim()) payload.phone = labForm.phone.trim();
       if (labForm.mapUrl.trim()) payload.mapUrl = labForm.mapUrl.trim();
+      if (labForm.logo.trim()) payload.logo = labForm.logo.trim();
       if (labForm.password.trim()) payload.password = labForm.password;
 
       if (editingLabId) {
@@ -1064,6 +1093,7 @@ export default function AdminDashboard() {
       address: lab.address || "",
       phone: lab.phone || "",
       mapUrl: lab.mapUrl || "",
+      logo: lab.logo || "",
       availableTests: formatLabTests(lab.availableTests),
     });
     setError("");
@@ -1772,7 +1802,6 @@ export default function AdminDashboard() {
                 ["consultationFee", "Default consultation fee", "500"],
                 ["openingHours", "Opening hours", "9:00 AM - 8:00 PM"],
                 ["mapUrl", "Google Maps link", "https://maps.google.com/..."],
-                ["image", "Clinic image URL", "https://example.com/clinic.jpg"],
                 ["specialties", "Specialties", "General Medicine, Pediatrics"],
               ].map(([key, label, placeholder]) => (
                 <label className="dashboard-input-group" key={key}>
@@ -1787,6 +1816,15 @@ export default function AdminDashboard() {
                   />
                 </label>
               ))}
+
+              <label className="dashboard-input-group full-width">
+                <span>Clinic image</span>
+                <label className="dashboard-upload-box dashboard-resource-upload">
+                  <input type="file" accept="image/*" onChange={(event) => handleResourceImageUpload("clinic", event)} disabled={uploadingResourceImage === "clinic"} />
+                  {clinicForm.image ? <img src={clinicForm.image} alt="Clinic preview" /> : <span>{uploadingResourceImage === "clinic" ? "Uploading..." : "Upload clinic image"}</span>}
+                </label>
+                <input type="url" value={clinicForm.image} onChange={(e) => setClinicForm({ ...clinicForm, image: e.target.value })} placeholder="Or paste https://example.com/clinic.jpg" />
+              </label>
 
               <label className="dashboard-input-group">
                 <span>Appointment duration</span>
@@ -1964,7 +2002,6 @@ export default function AdminDashboard() {
                 ["email", "Email", "hospital@medixo.com"],
                 ["openingHours", "Opening hours", "Open 24 hours"],
                 ["mapUrl", "Map link", "https://maps.google.com/..."],
-                ["image", "Hospital image URL", "https://example.com/hospital.jpg"],
               ].map(([key, label, placeholder]) => (
                 <label className="dashboard-input-group" key={key}>
                   <span>{label}</span>
@@ -1977,6 +2014,14 @@ export default function AdminDashboard() {
                   />
                 </label>
               ))}
+              <label className="dashboard-input-group full-width">
+                <span>Hospital image</span>
+                <label className="dashboard-upload-box dashboard-resource-upload">
+                  <input type="file" accept="image/*" onChange={(event) => handleResourceImageUpload("hospital", event)} disabled={uploadingResourceImage === "hospital"} />
+                  {hospitalForm.image ? <img src={hospitalForm.image} alt="Hospital preview" /> : <span>{uploadingResourceImage === "hospital" ? "Uploading..." : "Upload hospital image"}</span>}
+                </label>
+                <input type="url" value={hospitalForm.image} onChange={(e) => setHospitalForm({ ...hospitalForm, image: e.target.value })} placeholder="Or paste https://example.com/hospital.jpg" />
+              </label>
               <label className="dashboard-input-group">
                 <span>{editingHospitalId ? "New login password (optional)" : "Login password"}</span>
                 <input
@@ -2099,6 +2144,14 @@ export default function AdminDashboard() {
               <label className="dashboard-input-group full-width">
                 <span>Google Maps link</span>
                 <input type="url" value={labForm.mapUrl} onChange={(e) => setLabForm({ ...labForm, mapUrl: e.target.value })} placeholder="https://maps.google.com/..." />
+              </label>
+              <label className="dashboard-input-group full-width">
+                <span>Laboratory image</span>
+                <label className="dashboard-upload-box dashboard-resource-upload">
+                  <input type="file" accept="image/*" onChange={(event) => handleResourceImageUpload("lab", event)} disabled={uploadingResourceImage === "lab"} />
+                  {labForm.logo ? <img src={labForm.logo} alt="Laboratory preview" /> : <span>{uploadingResourceImage === "lab" ? "Uploading..." : "Upload laboratory image"}</span>}
+                </label>
+                <input type="url" value={labForm.logo} onChange={(e) => setLabForm({ ...labForm, logo: e.target.value })} placeholder="Or paste https://example.com/laboratory.jpg" />
               </label>
               <label className="dashboard-input-group full-width">
                 <span>Available tests</span>

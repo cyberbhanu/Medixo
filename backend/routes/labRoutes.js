@@ -59,7 +59,7 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
   try {
-    const { name, email, password, location, availableTests = [] } = req.body;
+    const { name, email, password, location, logo, availableTests = [] } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: "Name, email, and password are required" });
@@ -84,6 +84,7 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
       email: normalizedEmail,
       name: name.trim(),
       location: location?.trim() || "",
+      logo: logo?.trim() || "",
       address: req.body.address?.trim() || "",
       phone: req.body.phone?.trim() || "",
       mapUrl: req.body.mapUrl?.trim() || "",
@@ -117,7 +118,7 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.LAB
     }
 
     const updatePayload = {};
-    ["name", "email", "location", "address", "phone", "mapUrl"].forEach((field) => {
+    ["name", "email", "location", "address", "phone", "mapUrl", "logo"].forEach((field) => {
       if (req.body[field] !== undefined) {
         updatePayload[field] = String(req.body[field]).trim();
       }
