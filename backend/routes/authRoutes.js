@@ -419,6 +419,7 @@ router.post("/login", async (req, res) => {
         // Useful for staff frontend
         clinicId: user.clinicId || null,
         doctorId: user.doctorId || null,
+        hospitalId: user.hospitalId || null,
       },
     });
   } catch (error) {

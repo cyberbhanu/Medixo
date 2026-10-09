@@ -820,6 +820,13 @@ const staffCanAccessAppointment = async (userId, appointment) => {
   );
 };
 
+const staffCanAccessDoctor = async (userId, doctorId) => {
+  const { staffUser, doctorIds } = await getStaffAccess(userId);
+  return Boolean(
+    staffUser && doctorIds.some((assignedDoctorId) => String(assignedDoctorId) === String(doctorId))
+  );
+};
+
 router.use(authenticateUser);
 
 router.get("/reports/patients", async (req, res) => {
@@ -1027,6 +1034,7 @@ router.get("/", async (_req, res) => {
 });
 
 router.post("/", async (req, res) => {
+  let createdStaffPatient = null;
   try {
     const isSuperAdmin = hasRole(req.user, ROLES.SUPER_ADMIN);
     const isPatient = hasRole(req.user, ROLES.PATIENT);
@@ -1037,7 +1045,7 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ error: "You are not allowed to create appointments or lab referrals" });
     }
 
-    if ((isDoctor || isStaff) && req.body.type !== "lab") {
+    if (isDoctor && req.body.type !== "lab") {
       return res.status(403).json({ error: "Only laboratory referrals can be created from this dashboard" });
     }
 
@@ -1048,7 +1056,7 @@ router.post("/", async (req, res) => {
 
     let sourceAppointment = null;
     let staffReferringDoctor = null;
-    if (isStaff) {
+    if (isStaff && req.body.type === "lab") {
       if (!req.body.labReferral || !mongoose.isValidObjectId(req.body.labReferral)) {
         return res.status(400).json({ error: "The source patient appointment is required for a staff referral" });
       }
@@ -1073,7 +1081,7 @@ router.post("/", async (req, res) => {
             patientEmail: req.user.email,
             status: "Scheduled",
           }
-        : isStaff
+        : isStaff && req.body.type === "lab"
           ? {
               ...req.body,
               doctorId: null,
@@ -1100,6 +1108,9 @@ router.post("/", async (req, res) => {
     }
 
     if (requestBody.type !== 'lab') {
+      if (isStaff && !(await staffCanAccessDoctor(req.user.id, requestBody.doctorId))) {
+        return res.status(403).json({ error: "You can only book appointments for doctors assigned to you" });
+      }
       const doctor = await Doctor.findById(requestBody.doctorId);
       if (!doctor || doctor.isActive === false) {
         return res.status(404).json({ error: "Selected doctor was not found" });
@@ -1122,12 +1133,46 @@ router.post("/", async (req, res) => {
       email: requestBody.patientEmail.trim().toLowerCase(),
     });
 
+    const shouldCreateStaffCredentials = isStaff && requestBody.type !== "lab";
+    const bookingReference = shouldCreateStaffCredentials ? generateBookingReference() : null;
+    const bookingPassword = shouldCreateStaffCredentials ? generateBookingPassword() : null;
+    let patientUser = matchingPatient;
+
+    if (shouldCreateStaffCredentials) {
+      if (patientUser && patientUser.role !== ROLES.PATIENT) {
+        return res.status(409).json({ error: "This email is already assigned to a staff or provider account" });
+      }
+      if (!patientUser) {
+        patientUser = new User({
+          name: requestBody.patientName.trim(),
+          email: requestBody.patientEmail.trim().toLowerCase(),
+          password: bookingPassword,
+          role: ROLES.PATIENT,
+          patientId: bookingReference,
+          phone: requestBody.patientPhone.trim(),
+          gender: requestBody.patientGender || "Other",
+        });
+        await patientUser.save();
+        createdStaffPatient = patientUser;
+      } else if (!patientUser.patientId) {
+        patientUser.patientId = bookingReference;
+        await patientUser.save();
+      }
+    }
+
     const appointment = new Appointment(
-      buildAppointmentPayload({
-        ...scheduledRequest,
-        patientId:
-          isPatient ? req.user.id : matchingPatient?._id || null,
-      })
+      {
+        ...buildAppointmentPayload({
+          ...scheduledRequest,
+          patientId: isPatient ? req.user.id : patientUser?._id || null,
+        }),
+        ...(bookingReference
+          ? {
+              bookingReference,
+              bookingPasswordHash: await bcrypt.hash(bookingPassword, 10),
+            }
+          : {}),
+      }
     );
     await saveAppointmentWithQueueRetry(appointment);
     if (appointment.doctorId) {
@@ -1183,6 +1228,16 @@ router.post("/", async (req, res) => {
       patientsAhead: queueAppointment?.patientsAhead ?? null,
     };
 
+    if (shouldCreateStaffCredentials) {
+      appointmentWithQueue.staffPatientCredentials = {
+        patientLoginId: patientUser.patientId,
+        patientLoginPassword: createdStaffPatient ? bookingPassword : null,
+        bookingReference,
+        bookingPassword,
+        existingPatientAccount: Boolean(matchingPatient),
+      };
+    }
+
     notifyAppointmentCreated({
       ...appointmentWithQueue,
       doctorId: appointment.doctorId,
@@ -1191,6 +1246,9 @@ router.post("/", async (req, res) => {
 
     res.status(201).json(appointmentWithQueue);
   } catch (error) {
+    if (createdStaffPatient?._id) {
+      await User.findByIdAndDelete(createdStaffPatient._id).catch(() => null);
+    }
     sendAppointmentWriteError(res, error);
   }
 });

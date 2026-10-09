@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { createAppointment, getAppointments, getLabs, updateAppointment } from "../api";
+import { createAppointment, getAppointments, getDoctors, getLabs, updateAppointment } from "../api";
 import DashboardLayout, { DashboardIcon, DashboardSection } from "../components/DashboardLayout";
 import { getStoredUser } from "../utils/auth";
 import ManageAppointmentModal from "../components/ManageAppointmentModal";
 import PrescriptionPrintButton from "../components/PrescriptionPrintButton";
 import QueueTicketPrintButton from "../components/QueueTicketPrintButton";
+import StaffBookingModal from "../components/StaffBookingModal";
 
 const ACTIVE_STATUSES = ["Scheduled", "Approved", "Rescheduled"];
 const getLocalDate = () => {
@@ -41,6 +42,7 @@ export default function StaffDashboard() {
   const firstName = user?.name?.split(" ")[0] || "Staff";
   const [appointments, setAppointments] = useState([]);
   const [labs, setLabs] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [dateScope, setDateScope] = useState("today");
   const [statusScope, setStatusScope] = useState("active");
   const [search, setSearch] = useState("");
@@ -48,14 +50,25 @@ export default function StaffDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [managingAppointment, setManagingAppointment] = useState(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingCredentials, setBookingCredentials] = useState(null);
 
   const loadDashboardData = async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
     if (!silent) setError("");
     try {
-      const [appointmentData, labData] = await Promise.all([getAppointments(), getLabs()]);
+      const [appointmentData, labData, doctorData] = await Promise.all([getAppointments(), getLabs(), getDoctors()]);
       setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
       setLabs(Array.isArray(labData) ? labData : []);
+      const assignedDoctorId = user?.doctorId?._id || user?.doctorId;
+      const assignedClinicId = user?.clinicId?._id || user?.clinicId;
+      const assignedHospitalId = user?.hospitalId?._id || user?.hospitalId;
+      setDoctors((Array.isArray(doctorData) ? doctorData : []).filter((doctor) => {
+        if (assignedDoctorId) return String(doctor._id) === String(assignedDoctorId);
+        const clinicIds = [doctor.clinic, ...(doctor.clinics || [])].map((id) => String(id?._id || id));
+        const hospitalIds = [doctor.hospital, ...(doctor.hospitals || [])].map((id) => String(id?._id || id));
+        return (assignedClinicId && clinicIds.includes(String(assignedClinicId))) || (assignedHospitalId && hospitalIds.includes(String(assignedHospitalId)));
+      }));
     } catch (requestError) {
       if (!silent) setError(requestError.response?.data?.error || "Failed to load staff data");
     } finally {
@@ -105,6 +118,21 @@ export default function StaffDashboard() {
       return true;
     } catch (requestError) {
       setError(requestError.response?.data?.error || "Unable to refer patient to the laboratory");
+      setSuccess("");
+      return false;
+    }
+  };
+
+  const handleBookAppointment = async (booking) => {
+    try {
+      const created = await createAppointment(booking);
+      setBookingCredentials(created?.staffPatientCredentials || null);
+      setSuccess(`Appointment booked successfully${created?.queueNumber ? `. Queue number: #${created.queueNumber}` : ""}.`);
+      setError("");
+      await loadDashboardData({ silent: true });
+      return true;
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "Unable to book the appointment");
       setSuccess("");
       return false;
     }
@@ -161,6 +189,7 @@ export default function StaffDashboard() {
       stats={stats}
       quickActions={[
         { label: "Refresh Queue", icon: "refresh", variant: "primary", onClick: loadDashboardData },
+        { label: "Book for Patient", icon: "calendar", variant: "primary", onClick: () => setBookingOpen(true) },
         { label: "Today's Queue", icon: "calendar", onClick: () => { setDateScope("today"); setStatusScope("active"); setSearch(""); } },
       ]}
       aside={
@@ -185,6 +214,11 @@ export default function StaffDashboard() {
     >
       {error ? <div className="dashboard-banner error">{error}</div> : null}
       {success ? <div className="dashboard-banner success">{success}</div> : null}
+
+      <DashboardSection title="Staff booking" action="Book for patient" onActionClick={() => setBookingOpen(true)}>
+        <p className="dashboard-section-description">Create a doctor appointment for a patient using one of your assigned doctors.</p>
+      </DashboardSection>
+      {bookingCredentials ? <div className="dashboard-banner success"><strong>Give these details to the patient:</strong> Patient ID: <strong>{bookingCredentials.patientLoginId}</strong> | Temporary password: <strong>{bookingCredentials.patientLoginPassword || "Use the patient’s existing password"}</strong> | Booking ID: <strong>{bookingCredentials.bookingReference}</strong> | Booking password: <strong>{bookingCredentials.bookingPassword}</strong>{bookingCredentials.existingPatientAccount ? " (existing patient account; login password was not changed)" : ""}</div> : null}
 
       <DashboardSection title="Patient queue" action="Refresh" onActionClick={loadDashboardData}>
         <div className="staff-queue-toolbar">
@@ -213,6 +247,7 @@ export default function StaffDashboard() {
       </DashboardSection>
 
       {managingAppointment && <ManageAppointmentModal appointment={managingAppointment} labs={labs} onClose={() => setManagingAppointment(null)} onSaveAppointment={handleSaveAppointment} onReferPatient={handleReferPatient} />}
+      {bookingOpen && <StaffBookingModal doctors={doctors} onClose={() => setBookingOpen(false)} onBook={handleBookAppointment} />}
     </DashboardLayout>
   );
 }
