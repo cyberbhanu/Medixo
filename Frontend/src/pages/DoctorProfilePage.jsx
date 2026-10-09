@@ -290,10 +290,19 @@ export default function DoctorProfilePage() {
                       }}
                     />
                   </label>
-                  <div className="dashboard-input-group queue-time-note">
-                    <span>Visit time</span>
-                    <p>The clinic schedule will assign your queue number and expected visit time automatically.</p>
-                  </div>
+                  <label className="dashboard-input-group">
+                    <span>Preferred appointment time</span>
+                    <input
+                      required
+                      type="time"
+                      value={form.appointmentTime}
+                      onChange={(event) => {
+                        setError("");
+                        setForm({ ...form, appointmentTime: event.target.value });
+                      }}
+                    />
+                    <small className="dashboard-field-hint">The clinic or doctor may confirm a different expected time after booking.</small>
+                  </label>
                   <label className="dashboard-input-group full-width">
                     <span>Reason</span>
                     <input required value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Fever, follow-up, routine visit" />

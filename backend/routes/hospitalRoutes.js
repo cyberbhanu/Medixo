@@ -1,8 +1,27 @@
 const router = require("express").Router();
 const Hospital = require("../models/Hospital");
+const Doctor = require("../models/Doctor");
 const User = require("../models/User");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { ROLES } = require("../utils/roles");
+
+const doctorFields = "name specialization location qualification experience fees profileImage rating reviewCount availability consultationType nextAvailableSlot";
+
+const attachAssignedDoctors = async (hospital) => {
+  const linkedDoctors = await Doctor.find({
+    isActive: { $ne: false },
+    $or: [{ hospital: hospital._id }, { hospitals: hospital._id }],
+  }).select(doctorFields).lean();
+  const existingDoctors = (hospital.doctors || []).map((doctor) =>
+    typeof doctor.toObject === "function" ? doctor.toObject() : doctor
+  );
+  const doctorsById = new Map();
+  [...existingDoctors, ...linkedDoctors].forEach((doctor) => {
+    if (doctor?._id) doctorsById.set(String(doctor._id), doctor);
+  });
+  hospital.doctors = Array.from(doctorsById.values());
+  return hospital;
+};
 
 router.get("/", async (_req, res) => {
   try {
@@ -12,7 +31,7 @@ router.get("/", async (_req, res) => {
       .populate("laboratories", "name location")
       .sort({ createdAt: -1 });
 
-    res.json(hospitals);
+    res.json(await Promise.all(hospitals.map(attachAssignedDoctors)));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -25,7 +44,7 @@ router.get("/account/me", authenticateUser, authorizeRoles(ROLES.HOSPITAL), asyn
       .populate("appointments", "patientName appointmentDate appointmentTime status queueNumber doctorId");
 
     if (!hospital) return res.status(404).json({ error: "Hospital profile not found" });
-    res.json(hospital);
+    res.json(await attachAssignedDoctors(hospital));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

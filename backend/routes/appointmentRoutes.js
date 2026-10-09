@@ -7,6 +7,8 @@ const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const User = require("../models/User");
 const Lab = require("../models/Lab");
+const Hospital = require("../models/Hospital");
+const Clinic = require("../models/Clinic");
 const { authenticateUser } = require("../middleware/auth");
 const { ROLES, hasRole } = require("../utils/roles");
 const { getJwtSecret } = require("../utils/jwt");
@@ -188,7 +190,7 @@ const getNextDoctorQueueTime = async ({ doctorId, appointmentDate, requestedTime
     .sort({ createdAt: 1, _id: 1 })
     .lean();
 
-  const scheduleStartTime = await getDoctorDailyStartTime(doctorId, appointmentDate);
+  const scheduleStartTime = requestedTime || (await getDoctorDailyStartTime(doctorId, appointmentDate));
   if (!existingAppointments.length) return scheduleStartTime;
 
   const anchorTime = existingAppointments[0].appointmentTime || scheduleStartTime;
@@ -347,6 +349,8 @@ const sendAppointmentWriteError = (res, error) => {
 const buildAppointmentPayload = (body) => ({
   doctorId: body.doctorId || null,
   labId: body.labId || null,
+  hospital: body.hospital || null,
+  clinic: body.clinic || null,
   type: body.type || "doctor",
   referredBy: body.referredBy || null,
   referredByStaff: body.referredByStaff || null,
@@ -373,6 +377,26 @@ const buildAppointmentPayload = (body) => ({
   reportUrl: body.reportUrl?.trim() || "",
   notes: body.notes?.trim() || "",
 });
+
+const getDoctorFacilityIds = (doctor) => ({
+  hospital: doctor?.hospital || doctor?.hospitals?.[0] || null,
+  clinic: doctor?.clinic || doctor?.clinics?.[0] || null,
+});
+
+const linkAppointmentToFacility = async (appointment) => {
+  const updates = [];
+  if (appointment.hospital) {
+    updates.push(Hospital.findByIdAndUpdate(appointment.hospital, {
+      $addToSet: { appointments: appointment._id },
+    }));
+  }
+  if (appointment.clinic) {
+    updates.push(Clinic.findByIdAndUpdate(appointment.clinic, {
+      $addToSet: { appointments: appointment._id },
+    }));
+  }
+  await Promise.all(updates);
+};
 
 const getDoctorProfileForUser = async (user) =>
   Doctor.findOne({
@@ -487,6 +511,7 @@ router.post("/guest", async (req, res) => {
     if (requestBody.type === "doctor" && (!doctor || doctor.isActive === false)) {
       return res.status(404).json({ error: "Selected doctor was not found" });
     }
+    if (doctor) Object.assign(requestBody, getDoctorFacilityIds(doctor));
 
     const scheduledRequest = await assignDoctorQueueTime(requestBody);
     const slotError = await ensureSlotIsAvailable(scheduledRequest);
@@ -536,6 +561,7 @@ router.post("/guest", async (req, res) => {
         $addToSet: { bookings: appointment._id, appointments: appointment._id },
       }).catch(() => null);
     }
+    await linkAppointmentToFacility(appointment);
 
     const populatedAppointment = await populateAppointment(
       Appointment.findById(appointment._id)
@@ -1078,6 +1104,7 @@ router.post("/", async (req, res) => {
       if (!doctor || doctor.isActive === false) {
         return res.status(404).json({ error: "Selected doctor was not found" });
       }
+      Object.assign(requestBody, getDoctorFacilityIds(doctor));
     } else {
       const lab = await Lab.findById(requestBody.labId);
       if (!lab || lab.isActive === false) {
@@ -1116,6 +1143,7 @@ router.post("/", async (req, res) => {
         $addToSet: { bookings: appointment._id, appointments: appointment._id },
       }).catch(() => null);
     }
+    await linkAppointmentToFacility(appointment);
     if (appointment.referredBy) {
       await Doctor.findByIdAndUpdate(appointment.referredBy, {
         $addToSet: { labReferrals: appointment._id },
@@ -1323,6 +1351,7 @@ router.put("/:id", async (req, res) => {
 
     const queueScheduleChanged =
       appointment.type === "doctor" &&
+      hasRole(req.user, ROLES.PATIENT) &&
       (sanitizedPayload.appointmentDate !== undefined ||
         sanitizedPayload.appointmentTime !== undefined ||
         sanitizedPayload.status === "Rescheduled");

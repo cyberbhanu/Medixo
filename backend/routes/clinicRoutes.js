@@ -1,7 +1,26 @@
 const router = require("express").Router();
 const Clinic = require("../models/Clinic");
+const Doctor = require("../models/Doctor");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { ROLES } = require("../utils/roles");
+
+const doctorFields = "name specialization location qualification experience fees profileImage rating reviewCount availability consultationType nextAvailableSlot";
+
+const attachAssignedDoctors = async (clinic) => {
+  const linkedDoctors = await Doctor.find({
+    isActive: { $ne: false },
+    $or: [{ clinic: clinic._id }, { clinics: clinic._id }],
+  }).select(doctorFields).lean();
+  const existingDoctors = (clinic.doctors || []).map((doctor) =>
+    typeof doctor.toObject === "function" ? doctor.toObject() : doctor
+  );
+  const doctorsById = new Map();
+  [...existingDoctors, ...linkedDoctors].forEach((doctor) => {
+    if (doctor?._id) doctorsById.set(String(doctor._id), doctor);
+  });
+  clinic.doctors = Array.from(doctorsById.values());
+  return clinic;
+};
 
 router.get("/", async (_req, res) => {
   try {
@@ -10,7 +29,7 @@ router.get("/", async (_req, res) => {
       .populate("departments", "name")
       .sort({ createdAt: -1 });
 
-    res.json(clinics);
+    res.json(await Promise.all(clinics.map(attachAssignedDoctors)));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -26,7 +45,7 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Clinic not found" });
     }
 
-    res.json(clinic);
+    res.json(await attachAssignedDoctors(clinic));
   } catch (error) {
     if (error.kind === "ObjectId") {
       return res.status(400).json({ error: "Invalid clinic ID format" });

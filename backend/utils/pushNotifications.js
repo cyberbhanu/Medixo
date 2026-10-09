@@ -137,16 +137,18 @@ const notifyAppointmentUpdated = async (previous, updated) => {
   if (!changedStatus && !changedSchedule) return [];
 
   const recipientIds = await getAppointmentRecipientIds(updated);
-  const details = changedStatus
-    ? `Your appointment status is now ${updated.status}.`
-    : `Your appointment is scheduled for ${updated.appointmentDate}; expected visit around ${updated.appointmentTime}.`;
+  const details = changedStatus && changedSchedule
+    ? `Your appointment status is now ${updated.status}. The expected visit time is ${updated.appointmentDate} at ${updated.appointmentTime}.`
+    : changedStatus
+      ? `Your appointment status is now ${updated.status}.`
+      : `Your appointment is scheduled for ${updated.appointmentDate}; expected visit around ${updated.appointmentTime}.`;
 
   return createNotifications({
     userIds: recipientIds,
-    title: changedStatus ? "Appointment status updated" : "Appointment time updated",
+    title: changedSchedule ? "Appointment time updated" : "Appointment status updated",
     message: `${details} Patient: ${updated.patientName}.`,
     appointmentId: updated._id,
-    data: { event: changedStatus ? "status" : "schedule" },
+    data: { event: changedSchedule ? "schedule" : "status" },
   });
 };
 

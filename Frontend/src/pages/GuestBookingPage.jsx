@@ -99,17 +99,11 @@ export default function GuestBookingPage() {
                       <span>New date</span>
                       <input type="date" value={reschedule.appointmentDate} onChange={(event) => setReschedule({ ...reschedule, appointmentDate: event.target.value })} />
                     </label>
-                    {appointment.type === "lab" ? (
-                      <label className="dashboard-input-group">
-                        <span>New time</span>
-                        <input type="time" value={reschedule.appointmentTime} onChange={(event) => setReschedule({ ...reschedule, appointmentTime: event.target.value })} />
-                      </label>
-                    ) : (
-                      <div className="dashboard-input-group queue-time-note">
-                        <span>Visit time</span>
-                        <p>Your new queue position and expected visit time will be assigned from the doctor’s clinic schedule.</p>
-                      </div>
-                    )}
+                    <label className="dashboard-input-group">
+                      <span>{appointment.type === "lab" ? "New time" : "Preferred new time"}</span>
+                      <input type="time" value={reschedule.appointmentTime} onChange={(event) => setReschedule({ ...reschedule, appointmentTime: event.target.value })} />
+                      {appointment.type === "doctor" ? <small className="dashboard-field-hint">The clinic may confirm a different expected time.</small> : null}
+                    </label>
                     <div className="dashboard-form-actions full-width">
                       <button type="button" className="dashboard-primary-action" disabled={loading} onClick={() => updateBooking(reschedule, "Booking rescheduled successfully")}>Reschedule</button>
                       <button type="button" className="dashboard-secondary-action" disabled={loading} onClick={() => updateBooking({ status: "Cancelled" }, "Booking cancelled")}>Cancel Booking</button>
