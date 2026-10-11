@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const Hospital = require("../models/Hospital");
 const Doctor = require("../models/Doctor");
+const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { ROLES } = require("../utils/roles");
@@ -20,6 +21,29 @@ const attachAssignedDoctors = async (hospital) => {
     if (doctor?._id) doctorsById.set(String(doctor._id), doctor);
   });
   hospital.doctors = Array.from(doctorsById.values());
+  return hospital;
+};
+
+const attachHospitalAppointments = async (hospital) => {
+  const doctorIds = (hospital.doctors || []).map((doctor) => doctor._id || doctor);
+  const linkedAppointments = await Appointment.find({
+    $or: [
+      { hospital: hospital._id },
+      ...(doctorIds.length ? [{ doctorId: { $in: doctorIds } }] : []),
+    ],
+  })
+    .select("patientName appointmentDate appointmentTime status queueNumber doctorId hospital clinic")
+    .populate("doctorId", "name specialization")
+    .sort({ appointmentDate: 1, appointmentTime: 1, createdAt: -1 })
+    .lean();
+  const existingAppointments = (hospital.appointments || []).map((appointment) =>
+    typeof appointment.toObject === "function" ? appointment.toObject() : appointment
+  );
+  const appointmentsById = new Map();
+  [...existingAppointments, ...linkedAppointments].forEach((appointment) => {
+    if (appointment?._id) appointmentsById.set(String(appointment._id), appointment);
+  });
+  hospital.appointments = Array.from(appointmentsById.values());
   return hospital;
 };
 
@@ -44,7 +68,8 @@ router.get("/account/me", authenticateUser, authorizeRoles(ROLES.HOSPITAL), asyn
       .populate("appointments", "patientName appointmentDate appointmentTime status queueNumber doctorId");
 
     if (!hospital) return res.status(404).json({ error: "Hospital profile not found" });
-    res.json(await attachAssignedDoctors(hospital));
+    await attachAssignedDoctors(hospital);
+    res.json(await attachHospitalAppointments(hospital));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
