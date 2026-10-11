@@ -2491,3 +2491,352 @@
     flex-basis: auto;
   }
 }
+
+.dashboard-page-admin .dashboard-admin-list {
+  gap: 8px;
+}
+
+.dashboard-page-admin .dashboard-admin-record {
+  gap: 9px;
+  padding: 13px 14px;
+  background: #fff;
+  border: 1px solid #e4e9f0;
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.dashboard-page-admin .dashboard-admin-record:hover {
+  background: #fbfcfe;
+  border-color: #cbd5e1;
+  box-shadow: none;
+  transform: none;
+}
+
+.dashboard-page-admin .dashboard-record-avatar {
+  width: 42px;
+  height: 42px;
+}
+
+.dashboard-page-admin .dashboard-record-avatar.fallback {
+  font-size: 17px;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-header h3 {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-header p {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-meta {
+  gap: 6px 14px;
+  color: #596579;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 6px 12px;
+  padding-top: 8px;
+  border-top: 1px solid #edf0f4;
+  color: #596579;
+  font-size: 12px;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-grid strong {
+  color: #344054;
+  font-weight: 700;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-inline-badge {
+  min-height: 27px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-action-row {
+  gap: 6px;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-action-row button {
+  flex: 0 1 auto;
+  min-height: 34px;
+  padding: 0 11px;
+  color: #344054;
+  background: #fff;
+  border: 1px solid #dce3ec;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-action-row button:hover {
+  color: #155eef;
+  background: #f5f8ff;
+  border-color: #b9cdf4;
+  transform: none;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-action-row button.danger {
+  color: #b42318;
+  background: #fff;
+  border-color: #f0d3d0;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-action-row button.danger:hover {
+  background: #fff5f4;
+  border-color: #e8aaa4;
+}
+
+@media (max-width: 767px) {
+  .dashboard-page-admin .dashboard-admin-record {
+    padding: 12px;
+  }
+
+  .dashboard-page-admin .dashboard-admin-record .dashboard-record-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-page-admin .dashboard-admin-record .dashboard-record-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-page-admin .dashboard-panel {
+  padding: 20px;
+  border-color: #e1e7ef;
+  box-shadow: 0 4px 16px rgba(16, 24, 40, 0.035);
+}
+
+.dashboard-page-admin .dashboard-panel-header {
+  padding-bottom: 13px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.dashboard-page-admin .dashboard-panel-header h2 {
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.dashboard-page-admin .dashboard-admin-grid {
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  gap: 14px;
+}
+
+.dashboard-page-admin .dashboard-form-card {
+  gap: 16px;
+  padding: 18px;
+  background: #fff;
+  border-color: #e1e7ef;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.035);
+}
+
+.dashboard-page-admin .dashboard-form-heading {
+  gap: 4px;
+  padding: 0 0 13px 12px;
+  border-bottom: 1px solid #edf0f4;
+  border-left: 3px solid #2470d8;
+}
+
+.dashboard-page-admin .dashboard-form-heading > span {
+  color: #52647d;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.dashboard-page-admin .dashboard-form-heading h3 {
+  margin: 0;
+  color: #172b4d;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.dashboard-page-admin .dashboard-form-heading p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dashboard-page-admin .dashboard-form-grid {
+  gap: 13px 12px;
+}
+
+.dashboard-page-admin .dashboard-input-group {
+  gap: 6px;
+}
+
+.dashboard-page-admin .dashboard-input-group > span {
+  color: #3c4b60;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-page-admin .dashboard-input-group input,
+.dashboard-page-admin .dashboard-input-group select,
+.dashboard-page-admin .dashboard-input-group textarea {
+  min-height: 42px;
+  padding-inline: 11px;
+  color: #172b4d;
+  background: #fff;
+  border-color: #d7dee8;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.dashboard-page-admin .dashboard-input-group textarea {
+  min-height: 88px;
+  padding: 10px 11px;
+}
+
+.dashboard-page-admin .dashboard-input-group input:focus,
+.dashboard-page-admin .dashboard-input-group select:focus,
+.dashboard-page-admin .dashboard-input-group textarea:focus {
+  border-color: #6e9de1;
+  box-shadow: 0 0 0 3px rgba(36, 112, 216, 0.1);
+}
+
+.dashboard-page-admin .dashboard-form-actions {
+  gap: 8px;
+  padding-top: 12px;
+  border-top-color: #edf0f4;
+}
+
+.dashboard-page-admin .dashboard-form-actions .dashboard-primary-action,
+.dashboard-page-admin .dashboard-form-actions .dashboard-secondary-action {
+  min-height: 38px;
+  border-radius: 6px;
+}
+
+.dashboard-page-admin .dashboard-admin-list > .dashboard-input-group {
+  gap: 6px;
+  padding: 10px;
+  background: rgba(248, 250, 252, 0.96);
+  border-color: #e1e7ef;
+  border-radius: 8px;
+}
+
+.dashboard-page-admin .dashboard-admin-list > .dashboard-input-group > span {
+  font-size: 11px;
+  color: #536278;
+}
+
+.dashboard-page-admin .dashboard-admin-list > .dashboard-input-group input {
+  min-height: 39px;
+  background: #fff;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-identity {
+  gap: 10px;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-identity h3 {
+  color: #1c2d44;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 6px 12px;
+  padding: 9px 10px;
+  background: #f7f9fc;
+  border-radius: 6px;
+  line-height: 1.45;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-meta svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: #74839a;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-grid {
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 7px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dashboard-page-admin .dashboard-admin-record .dashboard-record-grid > span {
+  padding: 7px 8px;
+  background: #f8fafc;
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.dashboard-page-admin .dashboard-patient-row .dashboard-customer-password-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  padding-top: 10px;
+  border-top: 1px solid #edf0f4;
+}
+
+.dashboard-page-admin .dashboard-customer-password-row .dashboard-input-group {
+  min-width: 0;
+}
+
+.dashboard-page-admin .dashboard-list-pager {
+  padding: 8px 2px 0;
+}
+
+@media (max-width: 767px) {
+  .dashboard-page-admin .dashboard-panel {
+    padding: 15px;
+  }
+
+  .dashboard-page-admin .dashboard-admin-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 11px;
+  }
+
+  .dashboard-page-admin .dashboard-form-card {
+    gap: 13px;
+    padding: 14px;
+  }
+
+  .dashboard-page-admin .dashboard-form-grid {
+    gap: 11px 10px;
+  }
+
+  .dashboard-page-admin .dashboard-admin-record .dashboard-record-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px 10px;
+  }
+
+  .dashboard-page-admin .dashboard-admin-record .dashboard-record-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page-admin .dashboard-admin-record .dashboard-action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-page-admin .dashboard-admin-record .dashboard-action-row button {
+    width: auto;
+    min-height: 38px;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-page-admin .dashboard-admin-record .dashboard-record-meta,
+  .dashboard-page-admin .dashboard-admin-record .dashboard-record-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-page-admin .dashboard-patient-row .dashboard-customer-password-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

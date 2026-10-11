@@ -92,7 +92,7 @@ export default function DashboardLayout({
   aside,
 }) {
   return (
-    <main className="dashboard-page">
+    <main className={`dashboard-page${role === "Admin Dashboard" ? " dashboard-page-admin" : ""}`}>
       <Navbar />
 
       <section className="dashboard-hero">
