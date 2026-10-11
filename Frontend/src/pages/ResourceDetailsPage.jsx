@@ -9,6 +9,8 @@ const RESOURCE_CONFIG = {
   labs: { label: "Laboratory", load: getLabById },
 };
 
+const isValidDoctorId = (value) => /^[a-f\d]{24}$/i.test(String(value || ""));
+
 export default function ResourceDetailsPage({ resourceType }) {
   const { resourceId } = useParams();
   const navigate = useNavigate();
@@ -39,7 +41,9 @@ export default function ResourceDetailsPage({ resourceType }) {
     return () => { active = false; };
   }, [config, resourceId]);
 
-  const doctors = resource?.doctors || [];
+  const doctors = (resource?.doctors || []).filter((doctor) =>
+    doctor && isValidDoctorId(doctor._id) && doctor.name
+  );
   const tests = resource?.availableTests || [];
 
   return (
@@ -81,7 +85,7 @@ export default function ResourceDetailsPage({ resourceType }) {
                       <li key={doctor._id}>
                         <div>
                           <strong>Dr. {doctor.name}</strong>
-                          <span>{doctor.specialization}</span>
+                          <span>{doctor.specialization || "Specialty not listed"}</span>
                         </div>
                         <Link to={`/doctors/${doctor._id}`} className="resource-inline-action">Book appointment</Link>
                       </li>
@@ -90,7 +94,7 @@ export default function ResourceDetailsPage({ resourceType }) {
                 </section>
               </div>
               <div className="resource-details-actions">
-                {resourceType === "labs" ? <Link to={`/labs/${resource._id}/book`} className="resource-primary-action">Book a test</Link> : resource.doctors?.[0]?._id ? <Link to={`/doctors/${resource.doctors[0]._id}`} className="resource-primary-action">Book appointment</Link> : <Link to="/doctors" className="resource-primary-action">Find doctors here</Link>}
+                {resourceType === "labs" ? <Link to={`/labs/${resource._id}/book`} className="resource-primary-action">Book a test</Link> : doctors[0]?._id ? <Link to={`/doctors/${doctors[0]._id}`} className="resource-primary-action">Book appointment</Link> : <Link to="/doctors" className="resource-primary-action">Find doctors here</Link>}
                 {resourceType === "labs" ? <Link to="/lab-login" className="resource-secondary-action">Laboratory login</Link> : <Link to="/hospital-login" className="resource-secondary-action">Hospital login</Link>}
               </div>
             </>

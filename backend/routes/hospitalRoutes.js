@@ -19,7 +19,9 @@ const attachAssignedDoctors = async (hospital) => {
   );
   const doctorsById = new Map();
   [...existingDoctors, ...linkedDoctors].forEach((doctor) => {
-    if (doctor?._id) doctorsById.set(String(doctor._id), doctor);
+    if (doctor?._id && mongoose.Types.ObjectId.isValid(doctor._id)) {
+      doctorsById.set(String(doctor._id), doctor);
+    }
   });
   hospital.doctors = Array.from(doctorsById.values());
   return hospital;
