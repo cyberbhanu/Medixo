@@ -32,7 +32,7 @@ const content = {
       },
       {
         title: "Email support",
-        body: "Send your question to support@medixo.com and our team will review your request.",
+        body: "Send your question to support@medixohealthcare.com and our team will review your request.",
       },
       {
         title: "Find care",

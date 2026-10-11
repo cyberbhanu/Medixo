@@ -31,7 +31,7 @@ export default function Footer() {
               </div>
               <div className="site-footer-contact-row">
                 <Icon name="mail" />
-                <a href="mailto:support@medixo.com">support@medixo.com</a>
+                <a href="mailto:support@medixohealthcare.com">support@medixohealthcare.com</a>
               </div>
             </div>
           </div>
