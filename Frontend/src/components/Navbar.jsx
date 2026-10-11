@@ -48,7 +48,7 @@ function RoleLinks({ role, onNavigate }) {
       <>
         <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Home</Link>
         <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>My Appointments</Link>
-        <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Clinic Details</Link>
+        <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Practice Details</Link>
         <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Availability</Link>
       </>
     );

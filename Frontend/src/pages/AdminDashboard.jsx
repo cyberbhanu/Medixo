@@ -83,6 +83,7 @@ const EMPTY_HOSPITAL = {
   mapUrl: "",
   image: "",
   password: "",
+  doctorIds: [],
 };
 
 const EMPTY_LAB = {
@@ -121,6 +122,7 @@ const STATUS_OPTIONS = [
 ];
 
 const ADMIN_LIST_PAGE_SIZE = 6;
+const showLegacyClinicManagement = false;
 
 const STAFF_ROLES = [
   "Receptionist",
@@ -719,12 +721,6 @@ export default function AdminDashboard() {
     },
     {
       icon: "hospital",
-      value: String(clinics.length),
-      label: "Clinics",
-      note: "Participating clinics",
-    },
-    {
-      icon: "hospital",
       value: String(hospitals.length),
       label: "Hospitals",
       note: "Hospital profiles managed by admin",
@@ -1004,6 +1000,7 @@ export default function AdminDashboard() {
     try {
       const payload = {
         ...hospitalForm,
+        doctorIds: Array.isArray(hospitalForm.doctorIds) ? hospitalForm.doctorIds : [],
         facilities: parseListField(hospitalForm.facilities),
         emergencyAvailable: Boolean(hospitalForm.emergencyAvailable),
       };
@@ -1041,6 +1038,7 @@ export default function AdminDashboard() {
       mapUrl: hospital.mapUrl || "",
       image: hospital.image || "",
       password: "",
+      doctorIds: (hospital.doctors || []).map((doctor) => doctor._id || doctor),
     });
     setError("");
     setSuccess("");
@@ -1378,10 +1376,9 @@ export default function AdminDashboard() {
     <DashboardLayout
       role="Admin Dashboard"
       title={`Control center for ${firstName}`}
-      subtitle="Manage doctors, clinics, hospitals, laboratories, patients, staff, and every appointment from one central Medixo control center."
+      subtitle="Manage doctors, hospitals, laboratories, patients, staff, and every appointment from one central Medixo control center."
       chips={[
         "Doctor management",
-        "Clinic management",
         "Hospital management",
         "Laboratory management",
         "Patient tracking",
@@ -1442,7 +1439,7 @@ export default function AdminDashboard() {
             <div className="dashboard-mini-list">
               <div className="dashboard-mini-row">
                 <span className="dashboard-mini-dot" />
-                <p>Admin controls all doctor, clinic, staff, patient and appointment records.</p>
+                <p>Admin controls all doctor, hospital, staff, patient and appointment records.</p>
               </div>
               <div className="dashboard-mini-row">
                 <span className="dashboard-mini-dot" />
@@ -1450,7 +1447,7 @@ export default function AdminDashboard() {
               </div>
               <div className="dashboard-mini-row">
                 <span className="dashboard-mini-dot" />
-                <p>Doctor and clinic cards show their booking and patient workload.</p>
+                <p>Doctor and hospital records show their booking and patient workload.</p>
               </div>
               <div className="dashboard-mini-row">
                 <span className="dashboard-mini-dot" />
@@ -1792,7 +1789,7 @@ export default function AdminDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection
+      {showLegacyClinicManagement && <DashboardSection
         title="Clinic Management"
         action={editingClinicId ? "Editing Clinic" : "Add Clinic"}
         onActionClick={() => {
@@ -1998,7 +1995,7 @@ export default function AdminDashboard() {
             {renderListPager("clinics", clinicSearchResults, "clinics")}
           </div>
         </div>
-      </DashboardSection>
+      </DashboardSection>}
 
       <DashboardSection
         title="Hospital Management"
@@ -2074,6 +2071,22 @@ export default function AdminDashboard() {
                   <option value="yes">Available</option>
                   <option value="no">Not available</option>
                 </select>
+              </label>
+              <label className="dashboard-input-group full-width">
+                <span>Assign existing doctors</span>
+                <select
+                  multiple
+                  size="5"
+                  value={hospitalForm.doctorIds}
+                  onChange={(e) => setHospitalForm({ ...hospitalForm, doctorIds: Array.from(e.target.selectedOptions, (option) => option.value) })}
+                >
+                  {doctors.map((doctor) => (
+                    <option key={doctor._id} value={doctor._id}>
+                      {doctor.name} — {doctor.specialization} ({doctor.location || "Location not set"})
+                    </option>
+                  ))}
+                </select>
+                <small className="dashboard-field-hint">Select one or more doctors already added to Medixo. Use Ctrl or Command to select multiple doctors.</small>
               </label>
               <label className="dashboard-input-group full-width">
                 <span>About the hospital</span>
@@ -2888,7 +2901,7 @@ export default function AdminDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Doctor & Clinic Workload">
+      <DashboardSection title="Doctor Workload">
         <div className="dashboard-performance-grid">
           {doctors.slice(0, 6).map((doctor) => {
             const stat = doctorStats.get(String(doctor._id)) || {
@@ -2921,37 +2934,6 @@ export default function AdminDashboard() {
             );
           })}
 
-          {clinics.slice(0, 6).map((clinic) => {
-            const stat = clinicStats.get(String(clinic._id)) || {
-              doctors: clinic.doctors?.length || 0,
-              appointments: 0,
-              patients: new Set(),
-            };
-
-            return (
-              <article key={`clinic-${clinic._id}`} className="dashboard-performance-card">
-                <span className="dashboard-icon-bubble">
-                  <DashboardIcon name="hospital" />
-                </span>
-                <h3>{clinic.name}</h3>
-                <p>{clinic.city}, {clinic.state}</p>
-                <div className="dashboard-metric-list" style={{ marginTop: 18 }}>
-                  <div className="dashboard-metric-row">
-                    <span>Doctors</span>
-                    <strong>{stat.doctors}</strong>
-                  </div>
-                  <div className="dashboard-metric-row">
-                    <span>Patients</span>
-                    <strong>{stat.patients.size}</strong>
-                  </div>
-                  <div className="dashboard-metric-row">
-                    <span>Appointments</span>
-                    <strong>{stat.appointments}</strong>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
         </div>
       </DashboardSection>
     </DashboardLayout>

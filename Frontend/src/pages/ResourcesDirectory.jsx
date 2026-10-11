@@ -1,20 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getClinics, getHospitals, getLabs } from "../api";
+import { getHospitals, getLabs } from "../api";
 import "../styles/resources-directory.css";
 
 const CONFIG = {
   facilities: {
-    title: "Hospitals & Clinics",
-    description: "Compare hospitals, clinics, locations, services, and available doctors.",
-    load: async () => {
-      const [hospitals, clinics] = await Promise.all([getHospitals(), getClinics()]);
-      return [
-        ...hospitals.map((item) => ({ ...item, resourceType: "hospitals", resourceLabel: "Hospital" })),
-        ...clinics.map((item) => ({ ...item, resourceType: "clinics", resourceLabel: "Clinic" })),
-      ];
-    },
+    title: "Hospitals",
+    description: "Compare hospitals, locations, services, and available doctors.",
+    load: async () => (await getHospitals()).map((item) => ({ ...item, resourceType: "hospitals", resourceLabel: "Hospital" })),
   },
   labs: {
     title: "Laboratories",

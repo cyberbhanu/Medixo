@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const mongoose = require("mongoose");
 const Hospital = require("../models/Hospital");
 const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
@@ -45,6 +46,35 @@ const attachHospitalAppointments = async (hospital) => {
   });
   hospital.appointments = Array.from(appointmentsById.values());
   return hospital;
+};
+
+const normalizeDoctorIds = (doctorIds) => Array.isArray(doctorIds)
+  ? [...new Set(doctorIds.filter((id) => mongoose.Types.ObjectId.isValid(id)).map(String))]
+  : [];
+
+const validateDoctorIds = async (doctorIds) => {
+  const ids = normalizeDoctorIds(doctorIds);
+  if (!ids.length) return ids;
+  const count = await Doctor.countDocuments({ _id: { $in: ids }, isActive: { $ne: false } });
+  if (count !== ids.length) throw new Error("One or more selected doctors were not found");
+  return ids;
+};
+
+const syncHospitalDoctors = async (hospitalId, doctorIds) => {
+  const ids = normalizeDoctorIds(doctorIds);
+  await Hospital.findByIdAndUpdate(hospitalId, { doctors: ids });
+  await Doctor.updateMany(
+    { _id: { $in: ids } },
+    { $addToSet: { hospitals: hospitalId } }
+  );
+  await Doctor.updateMany(
+    { _id: { $in: ids }, hospital: null },
+    { $set: { hospital: hospitalId } }
+  );
+  await Doctor.updateMany(
+    { _id: { $nin: ids }, $or: [{ hospital: hospitalId }, { hospitals: hospitalId }] },
+    { $pull: { hospitals: hospitalId }, $set: { hospital: null } }
+  );
 };
 
 router.get("/", async (_req, res) => {
@@ -98,7 +128,9 @@ router.get("/:id", async (req, res) => {
 router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
   let createdUser = null;
   try {
-    const { password, email, ...hospitalData } = req.body;
+    const { password, email, doctorIds, ...hospitalData } = req.body;
+    const assignedDoctorIds = await validateDoctorIds(doctorIds);
+    hospitalData.doctors = assignedDoctorIds;
     if (email && password) {
       const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
       if (existingUser) return res.status(409).json({ error: "That hospital login email is already in use" });
@@ -115,6 +147,7 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
       createdUser.hospitalId = hospital._id;
       await createdUser.save();
     }
+    await syncHospitalDoctors(hospital._id, assignedDoctorIds);
     console.info("admin_action", {
       action: "create_hospital",
       actorId: req.user.id,
@@ -128,11 +161,13 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
 
 router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
   try {
-    const { password, email, ...hospitalData } = req.body;
+    const { password, email, doctorIds, ...hospitalData } = req.body;
     const existing = await Hospital.findById(req.params.id);
     if (!existing) return res.status(404).json({ error: "Hospital not found" });
+    const assignedDoctorIds = await validateDoctorIds(doctorIds);
     const hospital = await Hospital.findByIdAndUpdate(req.params.id, {
       ...hospitalData,
+      doctors: assignedDoctorIds,
       ...(email ? { email: email.trim().toLowerCase() } : {}),
     }, {
       new: true,
@@ -147,6 +182,8 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
         await account.save();
       }
     }
+
+    await syncHospitalDoctors(req.params.id, assignedDoctorIds);
 
     console.info("admin_action", {
       action: "update_hospital",

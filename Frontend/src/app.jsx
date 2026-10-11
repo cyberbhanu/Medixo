@@ -175,7 +175,7 @@ function App() {
           <Route path="/about" element={<SeoPage type="about" />} />
           <Route path="/contact" element={<SeoPage type="contact" />} />
           <Route path="/hospitals/:resourceId" element={<ResourceDetailsPage resourceType="hospitals" />} />
-          <Route path="/clinics/:resourceId" element={<ResourceDetailsPage resourceType="clinics" />} />
+          <Route path="/clinics/*" element={<Navigate to="/hospitals" replace />} />
           <Route path="/labs/:resourceId" element={<ResourceDetailsPage resourceType="labs" />} />
           <Route path="/labs/:resourceId/book" element={<LabBookingPage />} />
           <Route

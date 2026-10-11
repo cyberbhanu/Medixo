@@ -5,7 +5,7 @@ const content = {
   about: {
     eyebrow: "About Medixo",
     title: "One clear place for everyday healthcare decisions.",
-    description: "Medixo connects patients with doctors, clinics, hospitals, and laboratories through a simple healthcare directory and appointment experience.",
+    description: "Medixo connects patients with doctors, hospitals, and laboratories through a simple healthcare directory and appointment experience.",
     sections: [
       {
         title: "Healthcare made easier",
@@ -13,7 +13,7 @@ const content = {
       },
       {
         title: "Built for connected care",
-        body: "Doctors, staff, laboratories, clinics, hospitals, and administrators get tools to manage appointments, queues, referrals, and patient care operations in one place.",
+        body: "Doctors, staff, laboratories, hospitals, and administrators get tools to manage appointments, queues, referrals, and patient care operations in one place.",
       },
       {
         title: "Our focus",
@@ -36,7 +36,7 @@ const content = {
       },
       {
         title: "Find care",
-        body: "You can browse doctors, hospitals, clinics, and laboratories directly from Medixo.",
+        body: "You can browse doctors, hospitals, and laboratories directly from Medixo.",
         links: [
           { label: "Browse doctors", to: "/doctors" },
           { label: "Browse hospitals", to: "/hospitals" },

@@ -57,8 +57,8 @@ const pageConfig = {
   },
   about: {
     cards: [
-      { index: "01", label: "Patient-first care", title: "For Patients", description: "Search doctors by city, specialty, clinic, fee, and availability.", link: "/doctors" },
-      { index: "02", label: "Provider tools", title: "For Doctors", description: "Maintain clinic details, review appointment requests, and keep availability clear.", link: "/doctor-login" },
+      { index: "01", label: "Patient-first care", title: "For Patients", description: "Search doctors by city, specialty, fee, and availability.", link: "/doctors" },
+      { index: "02", label: "Provider tools", title: "For Doctors", description: "Maintain practice details, review appointment requests, and keep availability clear.", link: "/doctor-login" },
       { index: "03", label: "Connected operations", title: "For Admins", description: "List providers, assign teams, and monitor appointments from one organized workspace.", link: "/login" },
     ],
   },
@@ -81,7 +81,7 @@ const testimonials = [
   {
     name: "Ritika Sharma",
     role: "Patient",
-    quote: "Finding a specialist and comparing clinic timings felt simple. I booked my appointment without calling multiple clinics.",
+    quote: "Finding a specialist and comparing appointment timings felt simple. I booked my appointment without calling multiple hospitals.",
   },
   {
     name: "Amit Verma",
@@ -343,7 +343,7 @@ function SearchPanel({
         <Icon name="search" />
         <input
           type="search"
-          placeholder="Search doctors, hospitals, clinics, treatments, diseases..."
+          placeholder="Search doctors, hospitals, treatments, diseases..."
           value={filters.query}
           onChange={(event) => onFiltersChange({ ...filters, query: event.target.value })}
         />
@@ -353,7 +353,6 @@ function SearchPanel({
           <option value="all">All</option>
           <option value="doctor">Doctors</option>
           <option value="hospital">Hospitals</option>
-          <option value="clinic">Clinics</option>
           <option value="lab">Labs</option>
         </select>
       </label>
@@ -581,13 +580,13 @@ function HospitalCard({ item, type, onView, onBook }) {
         {item.logo || item.image ? (
           <img src={item.logo || item.image} alt={item.name} loading="lazy" />
         ) : (
-          <span><Icon name={type === "hospital" ? "hospital" : "clinic"} /></span>
+          <span><Icon name="hospital" /></span>
         )}
       </div>
       <div className="resource-body">
         <div className="doctor-card-title-row">
           <div>
-            <span className="resource-eyebrow">{type === "hospital" ? "Hospital" : "Clinic"}</span>
+            <span className="resource-eyebrow">Hospital</span>
             <h3>{item.name}</h3>
           </div>
           <span className="rating"><Icon name="star" /> {Number(item.rating || 4.6).toFixed(1)}</span>
@@ -608,7 +607,7 @@ function HospitalCard({ item, type, onView, onBook }) {
           </div>
         ) : null}
         <div className="home-card-actions">
-          <button type="button" onClick={() => onView(item, type)}>{type === "hospital" ? "View Hospital" : "View Clinic"}</button>
+          <button type="button" onClick={() => onView(item, "hospital")}>View Hospital</button>
           <button type="button" className="secondary-card-action" onClick={() => onBook(item, type)}>Book Appointment</button>
         </div>
       </div>
@@ -768,7 +767,6 @@ export default function Home() {
   const [homepageData, setHomepageData] = useState({
     doctors: [],
     hospitals: [],
-    clinics: [],
     labs: [],
     departments: [],
   });
@@ -794,14 +792,13 @@ export default function Home() {
         setHomepageData({
           doctors: asArray(data.doctors).filter(isValidRecord),
           hospitals: asArray(data.hospitals).filter(isValidRecord),
-          clinics: asArray(data.clinics).filter(isValidRecord),
           labs: asArray(data.labs).filter(isValidRecord),
           departments: asArray(data.departments).filter(isValidRecord),
         });
       } catch (error) {
         console.error("Failed to load homepage data", error);
         setError(error.response?.data?.error || "Failed to load homepage data");
-        setHomepageData({ doctors: [], hospitals: [], clinics: [], labs: [], departments: [] });
+        setHomepageData({ doctors: [], hospitals: [], labs: [], departments: [] });
       } finally {
         setLoading(false);
       }
@@ -810,7 +807,7 @@ export default function Home() {
     loadHomepageData();
   }, []);
 
-  const { doctors, hospitals, clinics, labs } = homepageData;
+  const { doctors, hospitals, labs } = homepageData;
 
   const specialtyOptions = useMemo(
     () => uniqueSorted(doctors.map((doctor) => doctor.specialization)),
@@ -821,10 +818,9 @@ export default function Home() {
     () => uniqueSorted([
       ...doctors.map(getDoctorCity),
       ...hospitals.map(getResourceCity),
-      ...clinics.map(getResourceCity),
       ...labs.map(getResourceCity),
     ]),
-    [clinics, doctors, hospitals, labs]
+    [doctors, hospitals, labs]
   );
 
   const popularSpecialties = useMemo(
@@ -841,11 +837,6 @@ export default function Home() {
     if (filters.type !== "all" && filters.type !== "hospital") return [];
     return hospitals.filter((hospital) => facilityMatchesFilters(hospital, filters));
   }, [filters, hospitals]);
-
-  const filteredClinics = useMemo(() => {
-    if (filters.type !== "all" && filters.type !== "clinic") return [];
-    return clinics.filter((clinic) => facilityMatchesFilters(clinic, filters));
-  }, [clinics, filters]);
 
   const filteredLabs = useMemo(() => {
     if (filters.type !== "all" && filters.type !== "lab") return [];
@@ -882,9 +873,8 @@ export default function Home() {
   const visibleFacilities = useMemo(
     () => [
       ...filteredHospitals.map((item) => ({ item, type: "hospital" })),
-      ...filteredClinics.map((item) => ({ item, type: "clinic" })),
-    ].slice(0, showAllFacilities ? filteredHospitals.length + filteredClinics.length : 6),
-    [filteredClinics, filteredHospitals, showAllFacilities]
+    ].slice(0, showAllFacilities ? filteredHospitals.length : 6),
+    [filteredHospitals, showAllFacilities]
   );
 
   const visibleLabs = useMemo(
@@ -906,10 +896,9 @@ export default function Home() {
     () => [
       { label: "Active Doctors", mobileLabel: "Doctors", value: doctors.length, icon: "doctor" },
       { label: "Hospitals", mobileLabel: "Hospitals", value: hospitals.length, icon: "hospital" },
-      { label: "Clinics", mobileLabel: "Clinics", value: clinics.length, icon: "clinic" },
       { label: "Laboratories", mobileLabel: "Labs", value: labs.length, icon: "pulse" },
     ],
-    [clinics.length, doctors.length, hospitals.length, labs.length]
+    [doctors.length, hospitals.length, labs.length]
   );
 
   const handleUseLocation = async ({ automatic = false } = {}) => {
@@ -1005,7 +994,7 @@ export default function Home() {
     }
 
     if (item?.name) {
-      navigate(`/${type === "clinic" ? "clinics" : "hospitals"}/${item._id}`);
+      navigate(`/hospitals/${item._id}`);
     } else {
       navigate("/doctors");
     }
@@ -1175,8 +1164,8 @@ export default function Home() {
       </section>
 
       <section className="content-section shell" id="hospitals">
-        <SectionHeader title="Hospitals & Clinics" linkTo="/hospitals">
-          <p className="section-kicker">Discover clinics, chambers, and hospital-based providers.</p>
+        <SectionHeader title="Hospitals" linkTo="/hospitals">
+          <p className="section-kicker">Discover hospitals, services, locations, and available doctors.</p>
         </SectionHeader>
         <div className="resource-grid resource-slider">
           {loading ? (
@@ -1192,12 +1181,12 @@ export default function Home() {
               />
             ))
           ) : (
-            <p className="dashboard-empty-state">No active hospitals or clinics match these filters yet.</p>
+            <p className="dashboard-empty-state">No active hospitals match these filters yet.</p>
           )}
         </div>
-        {!loading && filteredHospitals.length + filteredClinics.length > 6 ? (
+        {!loading && filteredHospitals.length > 6 ? (
           <button type="button" className="home-see-more" onClick={() => setShowAllFacilities((visible) => !visible)}>
-            {showAllFacilities ? "Show Less" : `See More Facilities (${filteredHospitals.length + filteredClinics.length - 6})`}
+            {showAllFacilities ? "Show Less" : `See More Hospitals (${filteredHospitals.length - 6})`}
           </button>
         ) : null}
       </section>
@@ -1289,9 +1278,9 @@ export default function Home() {
         <div className="booking-cta">
           <div>
             <span>Ready to book?</span>
-            <h2>Choose a doctor, review clinic details, and request your appointment.</h2>
+            <h2>Choose a doctor, review hospital details, and request your appointment.</h2>
             <p>
-              Patients can compare specialties, fees, clinic locations, and available timings before submitting a booking request.
+              Patients can compare specialties, fees, hospital locations, and available timings before submitting a booking request.
             </p>
           </div>
           <Link to="/doctors" className="booking-cta-link">

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { getClinicById, getHospitalById, getLabById } from "../api";
+import { getHospitalById, getLabById } from "../api";
 import "../styles/resource-details.css";
 
 const RESOURCE_CONFIG = {
   hospitals: { label: "Hospital", load: getHospitalById },
-  clinics: { label: "Clinic", load: getClinicById },
   labs: { label: "Laboratory", load: getLabById },
 };
 
