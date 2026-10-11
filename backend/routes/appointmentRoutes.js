@@ -92,13 +92,20 @@ const sanitizeGuestAppointment = (appointment) => {
 const authenticateGuestBooking = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || "";
-    const [scheme, token] = authHeader.split(" ");
-    if (scheme !== "Bearer" || !token) {
+    const parts = authHeader.trim().split(/\s+/);
+    const scheme = parts[0] || "";
+    const token = parts.slice(1).join(" ");
+
+    if (scheme.toLowerCase() !== "bearer" || !token) {
       return res.status(401).json({ error: "Booking access is required" });
     }
 
     const payload = jwt.verify(token, getJwtSecret());
-    if (payload.type !== "guest_booking" || String(payload.id) !== String(req.params.id)) {
+    if (
+      payload.type !== "guest_booking" ||
+      String(payload.id) !== String(req.params.id) ||
+      !payload.bookingReference
+    ) {
       return res.status(401).json({ error: "Invalid booking access" });
     }
 
@@ -110,7 +117,7 @@ const authenticateGuestBooking = async (req, res, next) => {
     }
 
     req.guestAppointment = appointment;
-    next();
+    return next();
   } catch (_error) {
     return res.status(401).json({ error: "Booking access has expired. Please enter your booking ID and password again." });
   }
@@ -1036,6 +1043,8 @@ router.get("/", async (_req, res) => {
 router.post("/", async (req, res) => {
   let createdStaffPatient = null;
   try {
+    const requestedType = String(req.body?.type || "doctor").trim().toLowerCase();
+    const normalizedType = requestedType === "lab" ? "lab" : "doctor";
     const isSuperAdmin = hasRole(req.user, ROLES.SUPER_ADMIN);
     const isPatient = hasRole(req.user, ROLES.PATIENT);
     const isDoctor = hasRole(req.user, ROLES.DOCTOR);
@@ -1045,7 +1054,7 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ error: "You are not allowed to create appointments or lab referrals" });
     }
 
-    if (isDoctor && req.body.type !== "lab") {
+    if (isDoctor && normalizedType !== "lab") {
       return res.status(403).json({ error: "Only laboratory referrals can be created from this dashboard" });
     }
 
@@ -1056,7 +1065,7 @@ router.post("/", async (req, res) => {
 
     let sourceAppointment = null;
     let staffReferringDoctor = null;
-    if (isStaff && req.body.type === "lab") {
+    if (isStaff && normalizedType === "lab") {
       if (!req.body.labReferral || !mongoose.isValidObjectId(req.body.labReferral)) {
         return res.status(400).json({ error: "The source patient appointment is required for a staff referral" });
       }
@@ -1076,14 +1085,16 @@ router.post("/", async (req, res) => {
       isPatient
         ? {
             ...req.body,
+            type: normalizedType,
             patientId: req.user.id,
             patientName: req.user.name,
             patientEmail: req.user.email,
             status: "Scheduled",
           }
-        : isStaff && req.body.type === "lab"
+        : isStaff && normalizedType === "lab"
           ? {
               ...req.body,
+              type: "lab",
               doctorId: null,
               referredBy: staffReferringDoctor._id,
               referredByStaff: req.user.id,
@@ -1099,6 +1110,7 @@ router.post("/", async (req, res) => {
             }
         : {
             ...req.body,
+            type: normalizedType,
             referredBy: isDoctor ? referringDoctor._id : req.body.referredBy,
           };
 

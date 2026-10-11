@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Hospital = require("../models/Hospital");
+const Clinic = require("../models/Clinic");
 
 const {
   authenticateUser,
@@ -50,31 +51,51 @@ router.get("/staff", async (req, res) => {
 // =====================================================
 
 const validateAssignment = async (hospitalId, clinicId, doctorId) => {
-  if (hospitalId) {
-    const hospital = await Hospital.findOne({ _id: hospitalId, isActive: { $ne: false } });
-    if (!hospital) return "Selected hospital was not found";
+  const normalizedHospitalId = hospitalId ? String(hospitalId).trim() : null;
+  const normalizedClinicId = clinicId ? String(clinicId).trim() : null;
+  const normalizedDoctorId = doctorId ? String(doctorId).trim() : null;
+
+  if (normalizedHospitalId) {
+    const hospital = await Hospital.findOne({
+      _id: normalizedHospitalId,
+      isActive: { $ne: false },
+    });
+
+    if (!hospital) {
+      return "Selected hospital was not found";
+    }
   }
 
-  if (!doctorId) {
+  if (normalizedClinicId) {
+    const clinic = await Clinic.findById(normalizedClinicId);
+
+    if (!clinic) {
+      return "Selected clinic was not found";
+    }
+
+    if (clinic.isActive === false) {
+      return "Selected clinic is inactive";
+    }
+  }
+
+  if (!normalizedDoctorId) {
     return null;
   }
 
-  const doctor = await Doctor.findById(doctorId);
+  const doctor = await Doctor.findById(normalizedDoctorId);
 
   if (!doctor) {
     return "Selected doctor was not found";
   }
 
-  if (!clinicId) {
+  if (!normalizedClinicId) {
     return null;
   }
 
   const belongsToClinic =
-    String(doctor.clinic || "") === String(clinicId) ||
+    String(doctor.clinic || "") === normalizedClinicId ||
     (Array.isArray(doctor.clinics) &&
-      doctor.clinics.some(
-        (id) => String(id) === String(clinicId)
-      ));
+      doctor.clinics.some((id) => String(id) === normalizedClinicId));
 
   if (!belongsToClinic) {
     return "Selected doctor does not belong to the selected clinic";
@@ -104,14 +125,16 @@ router.post("/staff", async (req, res) => {
       joiningDate,
     } = req.body;
 
-    if (!name || !email || !password) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+
+    if (!name || !normalizedEmail || !password) {
       return res.status(400).json({
         error: "Name, email and password are required",
       });
     }
 
     const existingUser = await User.findOne({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
     });
 
     if (existingUser) {
@@ -133,8 +156,8 @@ router.post("/staff", async (req, res) => {
     }
 
     const staff = new User({
-      name,
-      email: email.toLowerCase(),
+      name: String(name).trim(),
+      email: normalizedEmail,
       password,
       role: "staff",
 
@@ -192,6 +215,8 @@ router.put("/staff/:id", async (req, res) => {
       joiningDate,
     } = req.body;
 
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : null;
+
     const staff = await User.findOne({
       _id: req.params.id,
       role: "staff",
@@ -209,6 +234,19 @@ router.put("/staff/:id", async (req, res) => {
       });
     }
 
+    if (normalizedEmail) {
+      const duplicateUser = await User.findOne({
+        email: normalizedEmail,
+        _id: { $ne: staff._id },
+      });
+
+      if (duplicateUser) {
+        return res.status(409).json({
+          error: "A user with this email already exists",
+        });
+      }
+    }
+
     const assignmentError = await validateAssignment(
       hospitalId || null,
       clinicId || null,
@@ -221,10 +259,10 @@ router.put("/staff/:id", async (req, res) => {
       });
     }
 
-    staff.name = name ?? staff.name;
+    staff.name = name ? String(name).trim() : staff.name;
 
-    if (email) {
-      staff.email = email.toLowerCase();
+    if (normalizedEmail) {
+      staff.email = normalizedEmail;
     }
 
     staff.phone = phone ?? staff.phone;
@@ -235,7 +273,7 @@ router.put("/staff/:id", async (req, res) => {
     staff.clinicId = clinicId || null;
     staff.doctorId = doctorId || null;
 
-    staff.staffRole = staffRole || staff.staffRole;
+    staff.staffRole = staffRole ? String(staffRole).trim() || staff.staffRole : staff.staffRole;
 
     if (password) {
       staff.password = password;

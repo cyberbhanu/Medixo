@@ -22,11 +22,13 @@ export default function HospitalDashboard() {
       role="Hospital Dashboard"
       title={hospital?.name || "Hospital dashboard"}
       subtitle="Review your hospital profile, assigned doctors, and appointment activity."
+      chips={["Hospital profile", "Assigned doctors", "Appointment activity"]}
       stats={[
         { label: "Assigned Doctors", value: doctors.length, icon: "doctor" },
         { label: "Appointments", value: appointments.length, icon: "calendar" },
         { label: "City", value: hospital?.city || "-", icon: "pulse" },
       ]}
+      quickActions={[]}
     >
       {error ? <p className="dashboard-alert error">{error}</p> : null}
       <section className="dashboard-section">

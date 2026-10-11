@@ -120,7 +120,8 @@ router.get("/:id", async (req, res) => {
     const hospital = await Hospital.findOne({ _id: req.params.id, isActive: { $ne: false } })
       .populate("doctors", "name specialization qualification experience fees profileImage rating reviewCount availability consultationType nextAvailableSlot")
       .populate("departments", "name description")
-      .populate("laboratories", "name location address rating homeSampleCollection availableTests");
+      .populate("laboratories", "name location address rating homeSampleCollection availableTests")
+      .lean();
 
     if (!hospital) {
       return res.status(404).json({ error: "Hospital not found" });

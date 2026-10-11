@@ -6,9 +6,11 @@ const { normalizeRole, hasRole } = require("../utils/roles");
 async function authenticateUser(req, res, next) {
   try {
     const authHeader = req.headers.authorization || "";
-    const [scheme, token] = authHeader.split(" ");
+    const parts = authHeader.trim().split(/\s+/);
+    const scheme = parts[0] || "";
+    const token = parts.slice(1).join(" ");
 
-    if (scheme !== "Bearer" || !token) {
+    if (scheme.toLowerCase() !== "bearer" || !token) {
       return res.status(401).json({ error: "Authentication required" });
     }
 
@@ -24,6 +26,8 @@ async function authenticateUser(req, res, next) {
     }
 
     const normalizedRole = normalizeRole(user.role);
+    const safeRole = normalizedRole || user.role;
+
     if (normalizedRole && user.role !== normalizedRole) {
       user.role = normalizedRole;
       await user.save();
@@ -33,10 +37,10 @@ async function authenticateUser(req, res, next) {
       id: String(user._id),
       name: user.name,
       email: user.email,
-      role: normalizedRole || user.role,
+      role: safeRole,
     };
 
-    next();
+    return next();
   } catch (error) {
     return res.status(401).json({ error: "Invalid or expired token" });
   }

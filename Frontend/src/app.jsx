@@ -67,6 +67,10 @@ function RoleAwareHome() {
     return <Navigate to="/doctor-dashboard" replace />;
   }
 
+  if (role === "patient") {
+    return <Navigate to="/patient-dashboard" replace />;
+  }
+
   if (role === "super_admin") {
     return <Navigate to="/admin-dashboard" replace />;
   }
@@ -77,6 +81,10 @@ function RoleAwareHome() {
 
   if (role === "staff") {
     return <Navigate to="/staff-dashboard" replace />;
+  }
+
+  if (role === "hospital") {
+    return <Navigate to="/hospital-dashboard" replace />;
   }
 
   return <Home />;
