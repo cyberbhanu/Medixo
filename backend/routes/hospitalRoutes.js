@@ -116,6 +116,7 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Hospital not found" });
     }
 
+    await attachAssignedDoctors(hospital);
     res.json(hospital);
   } catch (error) {
     if (error.kind === "ObjectId") {

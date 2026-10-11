@@ -271,6 +271,7 @@ export default function AdminDashboard() {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [clinicSearch, setClinicSearch] = useState("");
   const [hospitalSearch, setHospitalSearch] = useState("");
+  const [hospitalDoctorSearch, setHospitalDoctorSearch] = useState("");
   const [labSearch, setLabSearch] = useState("");
   const [staffSearch, setStaffSearch] = useState("");
   const [customerPasswordDrafts, setCustomerPasswordDrafts] = useState({});
@@ -290,6 +291,15 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [locatingField, setLocatingField] = useState("");
+
+  const hospitalDoctorOptions = useMemo(() => {
+    const query = hospitalDoctorSearch.trim().toLowerCase();
+    if (!query) return doctors;
+    return doctors.filter((doctor) =>
+      [doctor.name, doctor.specialization, doctor.location, doctor.qualification]
+        .some((value) => String(value || "").toLowerCase().includes(query))
+    );
+  }, [doctors, hospitalDoctorSearch]);
 
   const scrollTo = (ref) => {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2073,20 +2083,41 @@ export default function AdminDashboard() {
                 </select>
               </label>
               <label className="dashboard-input-group full-width">
-                <span>Assign existing doctors</span>
-                <select
-                  multiple
-                  size="5"
-                  value={hospitalForm.doctorIds}
-                  onChange={(e) => setHospitalForm({ ...hospitalForm, doctorIds: Array.from(e.target.selectedOptions, (option) => option.value) })}
-                >
-                  {doctors.map((doctor) => (
-                    <option key={doctor._id} value={doctor._id}>
-                      {doctor.name} — {doctor.specialization} ({doctor.location || "Location not set"})
-                    </option>
-                  ))}
-                </select>
-                <small className="dashboard-field-hint">Select one or more doctors already added to Medixo. Use Ctrl or Command to select multiple doctors.</small>
+                <span>Doctors available at this hospital</span>
+                <input
+                  type="search"
+                  value={hospitalDoctorSearch}
+                  onChange={(e) => setHospitalDoctorSearch(e.target.value)}
+                  placeholder="Search by doctor name, specialty, or city"
+                />
+                <div className="hospital-doctor-picker" role="group" aria-label="Doctors assigned to this hospital">
+                  {hospitalDoctorOptions.length ? hospitalDoctorOptions.map((doctor) => {
+                    const selected = hospitalForm.doctorIds.includes(doctor._id);
+                    return (
+                      <label className={`hospital-doctor-option${selected ? " is-selected" : ""}`} key={doctor._id}>
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => setHospitalForm((current) => ({
+                            ...current,
+                            doctorIds: selected
+                              ? current.doctorIds.filter((id) => id !== doctor._id)
+                              : [...current.doctorIds, doctor._id],
+                          }))}
+                        />
+                        <span>
+                          <strong>Dr. {doctor.name}</strong>
+                          <small>{doctor.specialization || "Specialty not listed"} · {doctor.location || "Location not set"}</small>
+                        </span>
+                      </label>
+                    );
+                  }) : <small className="dashboard-field-hint">No doctors match this search.</small>}
+                </div>
+                <small className="dashboard-field-hint">
+                  {hospitalForm.doctorIds.length
+                    ? `${hospitalForm.doctorIds.length} doctor${hospitalForm.doctorIds.length === 1 ? "" : "s"} selected. Patients will see these doctors on the hospital page.`
+                    : "Select one or more doctors already added to Medixo."}
+                </small>
               </label>
               <label className="dashboard-input-group full-width">
                 <span>About the hospital</span>
