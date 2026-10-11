@@ -10,9 +10,17 @@ const { ROLES } = require("../utils/roles");
 const doctorFields = "name specialization location qualification experience fees profileImage rating reviewCount availability consultationType nextAvailableSlot";
 
 const attachAssignedDoctors = async (hospital) => {
+  const storedHospital = await Hospital.findById(hospital._id).select("doctors").lean();
+  const storedDoctorIds = (storedHospital?.doctors || []).filter((doctorId) =>
+    mongoose.Types.ObjectId.isValid(doctorId)
+  );
   const linkedDoctors = await Doctor.find({
     isActive: { $ne: false },
-    $or: [{ hospital: hospital._id }, { hospitals: hospital._id }],
+    $or: [
+      { _id: { $in: storedDoctorIds } },
+      { hospital: hospital._id },
+      { hospitals: hospital._id },
+    ],
   }).select(doctorFields).lean();
   const existingDoctors = (hospital.doctors || []).map((doctor) =>
     typeof doctor.toObject === "function" ? doctor.toObject() : doctor
