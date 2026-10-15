@@ -46,10 +46,10 @@ function RoleLinks({ role, onNavigate }) {
   if (role === "doctor") {
     return (
       <>
-        <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Home</Link>
-        <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>My Appointments</Link>
-        <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Practice Details</Link>
-        <Link to="/doctor-dashboard" onClick={getClickHandler("/doctor-dashboard")}>Availability</Link>
+        <Link to="/doctor-dashboard#doctor-dashboard-home" onClick={getClickHandler("/doctor-dashboard#doctor-dashboard-home")}>Home</Link>
+        <Link to="/doctor-dashboard#doctor-patient-queue" onClick={getClickHandler("/doctor-dashboard#doctor-patient-queue")}>My Appointments</Link>
+        <Link to="/doctor-dashboard#doctor-practice-details" onClick={getClickHandler("/doctor-dashboard#doctor-practice-details")}>Practice Details</Link>
+        <Link to="/doctor-dashboard#doctor-availability" onClick={getClickHandler("/doctor-dashboard#doctor-availability")}>Availability</Link>
       </>
     );
   }
@@ -58,8 +58,9 @@ function RoleLinks({ role, onNavigate }) {
     return (
       <>
         <Link to="/admin-dashboard?view=home" onClick={getClickHandler("/admin-dashboard?view=home")}>Home</Link>
-        <Link to="/admin-dashboard" onClick={getClickHandler("/admin-dashboard")}>Doctors</Link>
-        <Link to="/admin-dashboard?view=appointments" onClick={getClickHandler("/admin-dashboard?view=appointments")}>Appointments</Link>
+        <Link to="/admin-dashboard#admin-doctors" onClick={getClickHandler("/admin-dashboard#admin-doctors")}>Doctors</Link>
+        <Link to="/admin-dashboard#admin-appointments" onClick={getClickHandler("/admin-dashboard#admin-appointments")}>Appointments</Link>
+        <Link to="/admin-dashboard#admin-patients" onClick={getClickHandler("/admin-dashboard#admin-patients")}>Patients</Link>
       </>
     );
   }
@@ -77,9 +78,21 @@ function RoleLinks({ role, onNavigate }) {
   if (role === "staff") {
     return (
       <>
-        <Link to="/staff-dashboard" onClick={getClickHandler("/staff-dashboard")}>Home</Link>
-        <Link to="/staff-dashboard" onClick={getClickHandler("/staff-dashboard")}>Appointments</Link>
-        <Link to="/staff-dashboard" onClick={getClickHandler("/staff-dashboard")}>Patients</Link>
+        <Link to="/staff-dashboard#staff-dashboard-home" onClick={getClickHandler("/staff-dashboard#staff-dashboard-home")}>Home</Link>
+        <Link to="/staff-dashboard#staff-patient-queue" onClick={getClickHandler("/staff-dashboard#staff-patient-queue")}>Appointments</Link>
+        <Link to="/staff-dashboard#staff-booking" onClick={getClickHandler("/staff-dashboard#staff-booking")}>Book for Patient</Link>
+      </>
+    );
+  }
+
+  if (role === "patient") {
+    return (
+      <>
+        <Link to="/patient-dashboard#patient-dashboard-home" onClick={getClickHandler("/patient-dashboard#patient-dashboard-home")}>Home</Link>
+        <Link to="/patient-dashboard#upcoming-appointments" onClick={getClickHandler("/patient-dashboard#upcoming-appointments")}>Appointments</Link>
+        <Link to="/doctors" onClick={getClickHandler("/doctors")}>Doctors</Link>
+        <Link to="/patient-dashboard#treatment-history" onClick={getClickHandler("/patient-dashboard#treatment-history")}>Treatment History</Link>
+        <Link to="/patient-dashboard#recommended-doctors" onClick={getClickHandler("/patient-dashboard#recommended-doctors")}>Recommended Doctors</Link>
       </>
     );
   }
@@ -88,10 +101,10 @@ function RoleLinks({ role, onNavigate }) {
     <>
       <Link to="/" onClick={getClickHandler("/")}>Home</Link>
       <Link to="/doctors" onClick={getClickHandler("/doctors")}>Doctors</Link>
-      <Link to="/#specializations" onClick={getClickHandler("/#specializations")}>Specializations</Link>
-      <Link to="/#hospitals" onClick={getClickHandler("/#hospitals")}>Hospitals</Link>
-      <Link to="/#lab-tests" onClick={getClickHandler("/#lab-tests")}>Lab Tests</Link>
-      <Link to="/#health-packages" onClick={getClickHandler("/#health-packages")}>Health Packages</Link>
+      <Link to="/?view=public#specializations" onClick={getClickHandler("/?view=public#specializations")}>Specializations</Link>
+      <Link to="/?view=public#hospitals" onClick={getClickHandler("/?view=public#hospitals")}>Hospitals</Link>
+      <Link to="/?view=public#lab-tests" onClick={getClickHandler("/?view=public#lab-tests")}>Lab Tests</Link>
+      <Link to="/?view=public#health-packages" onClick={getClickHandler("/?view=public#health-packages")}>Health Packages</Link>
       <Link to="/my-booking" onClick={getClickHandler("/my-booking")}>My Booking</Link>
     </>
   );
@@ -189,12 +202,43 @@ export default function Navbar() {
   const isHashActive = (hash) => location.pathname === "/" && location.hash === hash;
   const isHomePage = location.pathname === "/";
   const isAdminUser = normalizeRole(user?.role) === "super_admin";
-  const adminAppointmentsPath = "/admin-dashboard?view=appointments";
+  const isPatientUser = normalizeRole(user?.role) === "patient";
+  const isDoctorUser = normalizeRole(user?.role) === "doctor";
+  const isStaffUser = normalizeRole(user?.role) === "staff";
   const isAppointmentsActive = user && (
     isAdminUser
-      ? location.pathname === "/admin-dashboard" && new URLSearchParams(location.search).get("view") === "appointments"
-      : location.pathname === dashboardPath
+      ? location.pathname === "/admin-dashboard" && (
+        location.hash === "#admin-appointments" ||
+        new URLSearchParams(location.search).get("view") === "appointments"
+      )
+      : isPatientUser
+        ? location.pathname === dashboardPath && location.hash === "#upcoming-appointments"
+        : isDoctorUser
+          ? location.pathname === dashboardPath && location.hash === "#doctor-patient-queue"
+          : isStaffUser
+            ? location.pathname === dashboardPath && location.hash === "#staff-patient-queue"
+            : location.pathname === dashboardPath
   );
+  const patientHomePath = "/patient-dashboard#patient-dashboard-home";
+  const patientAppointmentsPath = "/patient-dashboard#upcoming-appointments";
+  const roleHomePath = isPatientUser
+    ? patientHomePath
+    : isDoctorUser
+      ? "/doctor-dashboard#doctor-dashboard-home"
+      : isStaffUser
+        ? "/staff-dashboard#staff-dashboard-home"
+        : isAdminUser
+          ? "/admin-dashboard?view=home"
+          : dashboardPath;
+  const roleAppointmentsPath = isPatientUser
+    ? patientAppointmentsPath
+    : isDoctorUser
+      ? "/doctor-dashboard#doctor-patient-queue"
+      : isStaffUser
+        ? "/staff-dashboard#staff-patient-queue"
+        : isAdminUser
+          ? "/admin-dashboard#admin-appointments"
+          : dashboardPath;
 
   return (
     <header className="site-header">
@@ -369,11 +413,19 @@ export default function Navbar() {
           <button
             type="button"
             className={
-              (!user && location.pathname === "/") && !location.hash
-                ? "active"
-                : ""
+              user
+                ? isPatientUser
+                  ? location.pathname === dashboardPath && location.hash === "#patient-dashboard-home"
+                    ? "active"
+                    : ""
+                  : location.pathname === dashboardPath
+                    ? "active"
+                    : ""
+                : location.pathname === "/" && !location.hash
+                  ? "active"
+                  : ""
             }
-            onClick={() => handleMobileNav(user ? dashboardPath : "/")}
+            onClick={() => handleMobileNav(user ? roleHomePath : "/")}
           >
             <Icon name="home" />
             <span>Home</span>
@@ -416,7 +468,7 @@ export default function Navbar() {
                 : ""
             }
             onClick={() =>
-              handleMobileNav(user ? (isAdminUser ? adminAppointmentsPath : dashboardPath) : "/login")
+              handleMobileNav(user ? roleAppointmentsPath : "/login")
             }
           >
             <Icon name="calendar" />

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createAppointment, getAppointments, getDoctors, getLabs, updateAppointment } from "../api";
 import DashboardLayout, { DashboardIcon, DashboardSection } from "../components/DashboardLayout";
 import { getStoredUser } from "../utils/auth";
@@ -52,40 +52,46 @@ export default function StaffDashboard() {
   const [managingAppointment, setManagingAppointment] = useState(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingCredentials, setBookingCredentials] = useState(null);
+  const assignedDoctorId = String(user?.doctorId?._id || user?.doctorId || "");
+  const assignedClinicId = String(user?.clinicId?._id || user?.clinicId || "");
+  const assignedHospitalId = String(user?.hospitalId?._id || user?.hospitalId || "");
 
-  const loadDashboardData = async ({ silent = false } = {}) => {
+  const loadDashboardData = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
-    if (!silent) setError("");
+    if (!silent) {
+      setError("");
+      setSuccess("");
+    }
     try {
       const [appointmentData, labData, doctorData] = await Promise.all([getAppointments(), getLabs(), getDoctors()]);
       setAppointments(Array.isArray(appointmentData) ? appointmentData : []);
       setLabs(Array.isArray(labData) ? labData : []);
-      const assignedDoctorId = user?.doctorId?._id || user?.doctorId;
-      const assignedClinicId = user?.clinicId?._id || user?.clinicId;
-      const assignedHospitalId = user?.hospitalId?._id || user?.hospitalId;
       setDoctors((Array.isArray(doctorData) ? doctorData : []).filter((doctor) => {
         if (assignedDoctorId) return String(doctor._id) === String(assignedDoctorId);
         const clinicIds = [doctor.clinic, ...(doctor.clinics || [])].map((id) => String(id?._id || id));
         const hospitalIds = [doctor.hospital, ...(doctor.hospitals || [])].map((id) => String(id?._id || id));
         return (assignedClinicId && clinicIds.includes(String(assignedClinicId))) || (assignedHospitalId && hospitalIds.includes(String(assignedHospitalId)));
       }));
+      if (!silent) setSuccess("Patient queue refreshed.");
+      return true;
     } catch (requestError) {
       if (!silent) setError(requestError.response?.data?.error || "Failed to load staff data");
+      return false;
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [assignedClinicId, assignedDoctorId, assignedHospitalId]);
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [loadDashboardData]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (!managingAppointment) loadDashboardData({ silent: true });
     }, 15000);
     return () => window.clearInterval(interval);
-  }, [managingAppointment]);
+  }, [loadDashboardData, managingAppointment]);
 
   const handleSaveAppointment = async (appointmentId, draft) => {
     try {
@@ -165,8 +171,10 @@ export default function StaffDashboard() {
         return true;
       })
       .sort((left, right) => {
+        const dateDifference = getAppointmentTimestamp(left) - getAppointmentTimestamp(right);
+        if (dateDifference) return dateDifference;
         const queueDifference = (left.queueNumber || 9999) - (right.queueNumber || 9999);
-        return queueDifference || getAppointmentTimestamp(left) - getAppointmentTimestamp(right);
+        return queueDifference;
       });
   }, [appointments, dateScope, search, statusScope]);
 
@@ -175,13 +183,27 @@ export default function StaffDashboard() {
   const completedToday = todayAppointments.filter((appointment) => appointment.status === "Completed");
   const stats = [
     { icon: "calendar", value: String(activeToday.length), label: "Open today", note: "Patients moving through the queue" },
-    { icon: "users", value: String(new Set(todayAppointments.map((appointment) => appointment.patientEmail)).size), label: "Patients today", note: "Unique patient appointments" },
+    {
+      icon: "users",
+      value: String(new Set(
+        todayAppointments.map((appointment) =>
+          appointment.patientId ||
+          appointment.patientEmail?.trim().toLowerCase() ||
+          appointment.patientPhone ||
+          appointment.patientName?.trim().toLowerCase() ||
+          appointment._id
+        )
+      ).size),
+      label: "Patients today",
+      note: "Unique patients with appointments today",
+    },
     { icon: "clock", value: String(checkedInToday.length), label: "Checked in", note: "Ready for the doctor" },
     { icon: "check", value: String(completedToday.length), label: "Completed", note: "Visits closed today" },
   ];
 
   return (
     <DashboardLayout
+      id="staff-dashboard-home"
       role="Staff Dashboard"
       title={`Front desk queue for ${firstName}`}
       subtitle="Keep the clinic moving: confirm patients, manage the live queue, and send a clean patient record and blank prescription sheet to the doctor."
@@ -190,7 +212,16 @@ export default function StaffDashboard() {
       quickActions={[
         { label: "Refresh Queue", icon: "refresh", variant: "primary", onClick: loadDashboardData },
         { label: "Book for Patient", icon: "calendar", variant: "primary", onClick: () => setBookingOpen(true) },
-        { label: "Today's Queue", icon: "calendar", onClick: () => { setDateScope("today"); setStatusScope("active"); setSearch(""); } },
+        {
+          label: "Today's Queue",
+          icon: "calendar",
+          onClick: () => {
+            setDateScope("today");
+            setStatusScope("active");
+            setSearch("");
+            document.getElementById("staff-patient-queue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          },
+        },
       ]}
       aside={
         <>
@@ -215,12 +246,12 @@ export default function StaffDashboard() {
       {error ? <div className="dashboard-banner error">{error}</div> : null}
       {success ? <div className="dashboard-banner success">{success}</div> : null}
 
-      <DashboardSection title="Staff booking" action="Book for patient" onActionClick={() => setBookingOpen(true)}>
+      <DashboardSection id="staff-booking" title="Staff booking" action="Book for patient" onActionClick={() => setBookingOpen(true)}>
         <p className="dashboard-section-description">Create a doctor appointment for a patient using one of your assigned doctors.</p>
       </DashboardSection>
       {bookingCredentials ? <div className="dashboard-banner success"><strong>Give these details to the patient:</strong> Patient ID: <strong>{bookingCredentials.patientLoginId}</strong> | Temporary password: <strong>{bookingCredentials.patientLoginPassword || "Use the patient’s existing password"}</strong> | Booking ID: <strong>{bookingCredentials.bookingReference}</strong> | Booking password: <strong>{bookingCredentials.bookingPassword}</strong>{bookingCredentials.existingPatientAccount ? " (existing patient account; login password was not changed)" : ""}</div> : null}
 
-      <DashboardSection title="Patient queue" action="Refresh" onActionClick={loadDashboardData}>
+      <DashboardSection id="staff-patient-queue" title="Patient queue" action={loading ? "Refreshing..." : "Refresh"} onActionClick={() => loadDashboardData()}>
         <div className="staff-queue-toolbar">
           <label className="dashboard-input-group"><span>Find patient</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, phone, doctor or reason" /></label>
           <label className="dashboard-input-group"><span>Queue date</span><select value={dateScope} onChange={(event) => setDateScope(event.target.value)}><option value="today">Today</option><option value="upcoming">Today and upcoming</option><option value="all">All dates</option></select></label>

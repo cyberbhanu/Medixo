@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api";
-import { getDashboardPath, setStoredAuth } from "../utils/auth";
+import { getDashboardPath, normalizeRole, setStoredAuth } from "../utils/auth";
 import Navbar from "./Navbar";
 import "../styles/auth.css";
 
@@ -23,7 +23,12 @@ const Login = () => {
       const data = await login(formData);
       setStoredAuth(data.token, data.user);
       alert("Login successful");
-      navigate(getDashboardPath(data.user?.role));
+      const dashboardPath = getDashboardPath(data.user?.role);
+      navigate(
+        normalizeRole(data.user?.role) === "patient"
+          ? `${dashboardPath}#patient-dashboard-home`
+          : dashboardPath
+      );
     } catch (error) {
       setError(error.response?.data?.error || "Login failed");
     } finally {

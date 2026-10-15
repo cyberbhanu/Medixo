@@ -164,7 +164,7 @@ const downloadCsv = (rows, filename) => {
   link.href = url;
   link.download = filename;
   link.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
 const errorMessage = (error, fallback) =>
@@ -320,6 +320,8 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    if (location.hash) return undefined;
+
     const view = new URLSearchParams(location.search).get("view");
     const timer = window.setTimeout(() => {
       if (view === "appointments") {
@@ -330,7 +332,7 @@ export default function AdminDashboard() {
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [location.search]);
+  }, [location.hash, location.search]);
 
   const staffDoctors = useMemo(() => {
     return Array.isArray(doctors) ? doctors : [];
@@ -340,6 +342,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setRefreshingData(true);
     setError("");
+    setSuccess("");
 
     try {
       const [doctorResult, clinicResult, hospitalResult, labResult, appointmentResult, staffResult] =
@@ -401,9 +404,12 @@ export default function AdminDashboard() {
 
       if (failures.length) {
         setError(failures[0]);
+        return false;
       }
+      return true;
     } catch (requestError) {
       setError(errorMessage(requestError, "Failed to load admin data"));
+      return false;
     } finally {
       setLoading(false);
       setRefreshingData(false);
@@ -411,8 +417,9 @@ export default function AdminDashboard() {
   };
 
   const handleRefreshData = async () => {
-    await loadDashboardData();
-    setSuccess("Admin data refreshed successfully.");
+    if (await loadDashboardData()) {
+      setSuccess("Admin data refreshed successfully.");
+    }
   };
 
   useEffect(() => {
@@ -1384,6 +1391,7 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout
+      id="admin-dashboard-home"
       role="Admin Dashboard"
       title={`Control center for ${firstName}`}
       subtitle="Manage doctors, hospitals, laboratories, patients, staff, and every appointment from one central Medixo control center."
@@ -1508,6 +1516,7 @@ export default function AdminDashboard() {
       {success ? <div className="dashboard-banner success">{success}</div> : null}
 
       <DashboardSection
+        id="admin-doctors"
         title="Doctor Management"
         action={editingDoctorId ? "Editing Doctor" : "Add Doctor"}
         onActionClick={() => {
@@ -2264,6 +2273,7 @@ export default function AdminDashboard() {
       </DashboardSection>
 
       <DashboardSection
+        id="admin-patients"
         title="Patient Management"
         action="Export Patients"
         onActionClick={exportPatients}
@@ -2447,7 +2457,7 @@ export default function AdminDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Monthly Patient Report" action="Export Excel" onActionClick={exportMonthlyPatientReport}>
+      <DashboardSection title="Monthly Patient Report" action="Export CSV" onActionClick={exportMonthlyPatientReport}>
         <div className="dashboard-report-toolbar">
           <label className="dashboard-input-group">
             <span>Report month</span>
@@ -2754,6 +2764,7 @@ export default function AdminDashboard() {
       </DashboardSection>
 
       <DashboardSection
+        id="admin-appointments"
         title="Appointment Management"
         action="Export CSV"
         onActionClick={exportAppointments}

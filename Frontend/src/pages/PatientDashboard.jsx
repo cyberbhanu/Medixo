@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
+import { useNavigate } from "react-router-dom";
 import { createAppointment, deleteAccount, getAppointments, getDoctors, getLabs, updateAppointment } from "../api";
 import DashboardLayout, {
   DashboardIcon,
@@ -7,23 +8,35 @@ import DashboardLayout, {
 } from "../components/DashboardLayout";
 import { getStoredUser } from "../utils/auth";
 
-const activity = [
-  "Blood test report uploaded and reviewed",
-  "Insurance details updated successfully",
-  "Prescription reminder set for 8:00 PM",
-  "Annual health package renewed",
-];
-
-const careChecklist = [
-  "Take Vitamin D after breakfast",
-  "Upload ECG report before tomorrow",
-  "Complete pre-visit questionnaire",
-  "Confirm fasting instructions for lab work",
-];
-
 const PHONE_REGEX = /^[0-9+\-\s()]{7,15}$/;
 const UPCOMING_STATUSES = ["Scheduled", "Approved", "Rescheduled"];
 const todayDate = () => new Date().toISOString().split("T")[0];
+const scrollToDashboardSection = (id) => {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+function DoctorAvatar({ doctor }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = doctor.profileImage || doctor.image;
+
+  if (!image || imageFailed) {
+    return (
+      <div className="dashboard-doctor-avatar" aria-hidden="true">
+        {doctor.name?.charAt(0) || "D"}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="dashboard-doctor-avatar-image"
+      src={image}
+      alt={`Dr. ${doctor.name || "profile"}`}
+      loading="lazy"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
 
 const isFutureAppointment = (date, time) => {
   if (!date || !time) {
@@ -182,6 +195,7 @@ const validateAppointmentForm = (form) => {
 };
 
 export default function PatientDashboard() {
+  const navigate = useNavigate();
   const user = getStoredUser();
   const firstName = user?.name?.split(" ")[0] || "Patient";
   const [appointments, setAppointments] = useState([]);
@@ -330,7 +344,7 @@ export default function PatientDashboard() {
       ...currentForm,
       doctorId: doctor._id,
     }));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToDashboardSection("appointment-booking");
   };
 
   const startRescheduleAppointment = (appointment) => {
@@ -430,6 +444,25 @@ export default function PatientDashboard() {
     () => appointments.filter((appointment) => appointment.status === "Completed"),
     [appointments]
   );
+  const recentActivity = useMemo(
+    () => [...appointments]
+      .sort((left, right) =>
+        new Date(right.updatedAt || right.createdAt || right.appointmentDate || 0).getTime() -
+        new Date(left.updatedAt || left.createdAt || left.appointmentDate || 0).getTime()
+      )
+      .slice(0, 4)
+      .map((appointment) => {
+        const provider = appointment.type === "lab"
+          ? appointment.labId?.name || "Laboratory"
+          : appointment.doctorId?.name || "Doctor";
+        const status = appointment.status || "scheduled";
+        return {
+          key: appointment._id,
+          text: `${status} ${appointment.type === "lab" ? "lab test" : "appointment"} with ${provider} · ${appointment.appointmentDate || "Date pending"}`,
+        };
+      }),
+    [appointments]
+  );
   const nextAppointment = upcomingAppointments[0];
   const completedAppointments = treatmentHistory.length;
   const stats = [
@@ -463,6 +496,7 @@ export default function PatientDashboard() {
 
   return (
     <DashboardLayout
+      id="patient-dashboard-home"
       role="Patient Dashboard"
       title={`Welcome back, ${firstName}`}
       subtitle="Track appointments, reports, reminders, and your ongoing care journey from one clean workspace."
@@ -473,34 +507,37 @@ export default function PatientDashboard() {
           icon: "plus",
           label: "Book Appointment",
           variant: "primary",
-          onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+          onClick: () => scrollToDashboardSection("appointment-booking"),
         },
-        { icon: "file", label: "Upload Report" },
-        { icon: "message", label: "Message Doctor" },
+        { icon: "users", label: "Browse Doctors", onClick: () => navigate("/doctors") },
       ]}
       aside={
         <>
-          <DashboardSection title="Care Checklist">
-            <div className="dashboard-checklist">
-              {careChecklist.map((item) => (
-                <div key={item} className="dashboard-check-item">
-                  <span className="dashboard-tick">
-                    <DashboardIcon name="check" />
-                  </span>
-                  <p>{item}</p>
-                </div>
-              ))}
+          <DashboardSection title="Patient Account">
+            <div className="dashboard-metric-list">
+              <div className="dashboard-metric-row">
+                <span>Name</span>
+                <strong>{user?.name || "Patient"}</strong>
+              </div>
+              <div className="dashboard-metric-row">
+                <span>Email</span>
+                <strong className="patient-account-email">{user?.email || "Not available"}</strong>
+              </div>
+              <div className="dashboard-metric-row">
+                <span>Upcoming visits</span>
+                <strong>{upcomingAppointments.length}</strong>
+              </div>
             </div>
           </DashboardSection>
 
-          <DashboardSection title="Recent Activity">
+          <DashboardSection title="Recent Appointment Activity">
             <div className="dashboard-mini-list">
-              {activity.map((item) => (
-                <div key={item} className="dashboard-mini-row">
+              {recentActivity.length ? recentActivity.map((item) => (
+                <div key={item.key} className="dashboard-mini-row">
                   <span className="dashboard-mini-dot" />
-                  <p>{item}</p>
+                  <p>{item.text}</p>
                 </div>
-              ))}
+              )) : <p className="dashboard-empty-state">Your appointment updates will appear here.</p>}
             </div>
           </DashboardSection>
         </>
@@ -509,7 +546,7 @@ export default function PatientDashboard() {
       {error ? <div className="dashboard-banner error">{error}</div> : null}
       {success ? <div className="dashboard-banner success">{success}</div> : null}
 
-      <DashboardSection title="Patient Appointment Form" action="Book for yourself">
+      <DashboardSection id="appointment-booking" title="Patient Appointment Form">
         <form className="dashboard-form-card patient-appointment-form-card" onSubmit={handleAppointmentSubmit}>
           <div className="dashboard-form-grid">
             <label className="dashboard-input-group full-width">
@@ -722,7 +759,7 @@ export default function PatientDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Upcoming Appointments" action="View Calendar">
+      <DashboardSection id="upcoming-appointments" title="Upcoming Appointments">
         <div className="dashboard-card-list">
           {loading ? (
             <p className="dashboard-empty-state">Loading appointments...</p>
@@ -751,9 +788,9 @@ export default function PatientDashboard() {
                     <DashboardIcon name="message" /> {item.patientPhone}
                   </span>
                 </div>
-                <button type="button">
-                  {item.patientsAhead !== null ? `${item.patientsAhead} ahead` : "Open Details"}
-                </button>
+                {item.patientsAhead !== null && item.patientsAhead !== undefined ? (
+                  <span className="dashboard-time-pill">{item.patientsAhead} ahead</span>
+                ) : null}
                 {["Scheduled", "Approved", "Rescheduled"].includes(item.status) ? (
                   <div className="dashboard-appointment-actions">
                     {reschedulingAppointmentId === item._id ? (
@@ -831,6 +868,7 @@ export default function PatientDashboard() {
       </DashboardSection>
 
       <DashboardSection
+        id="treatment-history"
         title="Treatment History"
         action={treatmentHistory.length ? "Download PDF" : undefined}
         onActionClick={() => generateHistoryPdf(treatmentHistory, user)}
@@ -886,16 +924,19 @@ export default function PatientDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Recommended Doctors" action="See More">
+      <DashboardSection
+        id="recommended-doctors"
+        title="Recommended Doctors"
+        action="See More"
+        onActionClick={() => navigate("/doctors")}
+      >
         <div className="dashboard-doctor-grid">
           {loading ? (
             <p className="dashboard-empty-state">Loading doctors...</p>
           ) : recommendedDoctors.length ? (
             recommendedDoctors.map((doctor) => (
               <article key={doctor._id} className="dashboard-recommend-card">
-                <div className="dashboard-doctor-avatar" aria-hidden="true">
-                  {doctor.name?.charAt(0) || "D"}
-                </div>
+                <DoctorAvatar doctor={doctor} />
                 <div>
                   <h3>{doctor.name}</h3>
                   <p>{doctor.specialization} - {doctor.locationUrl ? <a className="doctor-map-link" href={doctor.locationUrl} target="_blank" rel="noreferrer">{doctor.location}</a> : doctor.location}</p>

@@ -245,6 +245,7 @@
 }
 
 .dashboard-panel {
+  scroll-margin-top: 104px;
   padding: 22px;
 }
 
@@ -297,6 +298,7 @@
 }
 
 .dashboard-panel-header button,
+.dashboard-panel-action-label,
 .dashboard-appointment-card button,
 .dashboard-recommend-card button,
 .dashboard-table-row button {
@@ -308,6 +310,15 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 800;
+}
+
+.dashboard-panel-action-label {
+  display: inline-flex;
+  align-items: center;
+  color: #667085;
+  background: #f8fafc;
+  border-color: #e4e7ec;
+  cursor: default;
 }
 
 .dashboard-panel-header button:hover,
@@ -487,6 +498,12 @@
   color: #111827;
   font-size: 18px;
   font-weight: 800;
+}
+
+.patient-account-email {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .dashboard-table-row {

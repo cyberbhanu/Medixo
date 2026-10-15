@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import NotificationCenter from "./NotificationCenter";
 import "../styles/dashboard.css";
@@ -47,6 +48,7 @@ function StatCard({ item }) {
 }
 
 export function DashboardSection({
+  id,
   title,
   action,
   onActionClick,
@@ -55,9 +57,16 @@ export function DashboardSection({
   defaultOpen = true,
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (id && hash === `#${id}`) {
+      setIsOpen(true);
+    }
+  }, [hash, id]);
 
   return (
-    <section className="dashboard-panel">
+    <section id={id} className="dashboard-panel">
       <div className="dashboard-panel-header">
         <div className="dashboard-panel-title-row">
           {collapsible ? (
@@ -74,7 +83,11 @@ export function DashboardSection({
           ) : null}
           <h2>{title}</h2>
         </div>
-        {action ? <button type="button" onClick={onActionClick}>{action}</button> : null}
+        {action && onActionClick ? (
+          <button type="button" onClick={onActionClick}>{action}</button>
+        ) : action ? (
+          <span className="dashboard-panel-action-label">{action}</span>
+        ) : null}
       </div>
       {!collapsible || isOpen ? children : null}
     </section>
@@ -82,6 +95,7 @@ export function DashboardSection({
 }
 
 export default function DashboardLayout({
+  id,
   role,
   title,
   subtitle,
@@ -91,8 +105,23 @@ export default function DashboardLayout({
   children,
   aside,
 }) {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      document.getElementById(hash.slice(1))?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [hash, id]);
+
   return (
-    <main className={`dashboard-page${role === "Admin Dashboard" ? " dashboard-page-admin" : ""}`}>
+    <main id={id} className={`dashboard-page${role === "Admin Dashboard" ? " dashboard-page-admin" : ""}`}>
       <Navbar />
 
       <section className="dashboard-hero">

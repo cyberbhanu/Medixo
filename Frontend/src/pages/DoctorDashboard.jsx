@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getAppointments, getDoctors, updateDoctorHospitalDetails, updateDoctorAvailability, getLabs, createAppointment, updateAppointment } from "../api";
 import DashboardLayout, {
   DashboardIcon,
@@ -11,6 +11,10 @@ import PrescriptionPrintButton from "../components/PrescriptionPrintButton";
 import QueueTicketPrintButton from "../components/QueueTicketPrintButton";
 import "../styles/modal.css";
 import { getStoredUser } from "../utils/auth";
+
+const scrollToDashboardSection = (id) => {
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
 export default function DoctorDashboard() {
   const user = getStoredUser();
@@ -27,48 +31,50 @@ export default function DoctorDashboard() {
   const [queueSearch, setQueueSearch] = useState("");
   const [queueStatus, setQueueStatus] = useState("active");
 
-  useEffect(() => {
+  const loadDashboardData = useCallback(async () => {
     if (!user?.id && !user?.email) {
       setLoading(false);
-      return;
+      return false;
     }
 
-    const loadDashboardData = async () => {
-      setLoading(true);
-      setError("");
+    setLoading(true);
+    setError("");
 
-      try {
-        const [doctorProfiles, labData] = await Promise.all([
-          getDoctors({
+    try {
+      const [doctorProfiles, labData] = await Promise.all([
+        getDoctors({
           userId: user.id,
           email: user.email,
-          }),
-          getLabs()
-        ]);
+        }),
+        getLabs()
+      ]);
 
-        const activeDoctorProfile = doctorProfiles[0] || null;
-        setDoctorProfile(activeDoctorProfile);
-        setLabs(labData);
+      const activeDoctorProfile = doctorProfiles[0] || null;
+      setDoctorProfile(activeDoctorProfile);
+      setLabs(labData);
 
-        if (!activeDoctorProfile?._id) {
-          setAppointments([]);
-          return;
-        }
-
-        const appointmentData = await getAppointments({
-          doctorId: activeDoctorProfile._id,
-        });
-
-        setAppointments(appointmentData);
-      } catch (requestError) {
-        setError(requestError.response?.data?.error || "Failed to load doctor dashboard");
-      } finally {
-        setLoading(false);
+      if (!activeDoctorProfile?._id) {
+        setAppointments([]);
+        return true;
       }
-    };
 
-    loadDashboardData();
+      const appointmentData = await getAppointments({
+        doctorId: activeDoctorProfile._id,
+      });
+
+      setAppointments(appointmentData);
+      return true;
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "Failed to load doctor dashboard");
+      return false;
+    } finally {
+      setLoading(false);
+    }
   }, [user?.email, user?.id]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const handleSaveAppointment = async (appointmentId, draft) => {
     try {
@@ -118,15 +124,29 @@ export default function DoctorDashboard() {
     }
   };
 
-  const activePatients = new Set(appointments.map((appointment) => appointment.patientEmail)).size;
+  const activePatients = new Set(
+    appointments
+      .map((appointment) =>
+        appointment.patientId ||
+        appointment.patientEmail?.trim().toLowerCase() ||
+        appointment.patientPhone ||
+        appointment.patientName?.trim().toLowerCase()
+      )
+      .filter(Boolean)
+  ).size;
   const completedAppointments = appointments.filter(
     (appointment) => appointment.status === "Completed"
   ).length;
-  const weeklyEarnings = appointments
-    .filter((appointment) => appointment.status !== "Cancelled")
-    .reduce((total, appointment) => total + (appointment.doctorId?.fees || doctorProfile?.fees || 0), 0);
+  const scheduledVisitValue = appointments
+    .filter((appointment) => ["Scheduled", "Approved", "Rescheduled"].includes(appointment.status))
+    .reduce((total, appointment) => total + Number(appointment.doctorId?.fees || doctorProfile?.fees || 0), 0);
   const requests = appointments
-    .filter((appointment) => appointment.status !== "Completed")
+    .filter((appointment) => ["Scheduled", "Approved", "Rescheduled"].includes(appointment.status))
+    .sort((left, right) =>
+      `${left.appointmentDate || ""} ${left.appointmentTime || ""}`.localeCompare(
+        `${right.appointmentDate || ""} ${right.appointmentTime || ""}`
+      )
+    )
     .slice(0, 4)
     .map(
       (appointment) =>
@@ -149,7 +169,7 @@ export default function DoctorDashboard() {
       icon: "users",
       value: String(activePatients),
       label: "Active Patients",
-      note: "Unique patient emails assigned to you",
+      note: "Unique patients assigned to your appointments",
     },
     {
       icon: "star",
@@ -159,9 +179,9 @@ export default function DoctorDashboard() {
     },
     {
       icon: "rupee",
-      value: `Rs. ${weeklyEarnings}`,
-      label: "Projected Earnings",
-      note: "Calculated from your linked appointments",
+      value: `Rs. ${scheduledVisitValue.toLocaleString("en-IN")}`,
+      label: "Scheduled Visit Value",
+      note: "Estimated fees for active appointments; not payment data",
     },
   ];
 
@@ -187,25 +207,27 @@ export default function DoctorDashboard() {
           .includes(query);
       })
       .sort((left, right) => {
-        const queueDifference = (left.queueNumber || 9999) - (right.queueNumber || 9999);
-        if (queueDifference) return queueDifference;
-        return `${left.appointmentDate} ${left.appointmentTime}`.localeCompare(
-          `${right.appointmentDate} ${right.appointmentTime}`
+        const dateDifference = `${left.appointmentDate || ""} ${left.appointmentTime || ""}`.localeCompare(
+          `${right.appointmentDate || ""} ${right.appointmentTime || ""}`
         );
+        if (dateDifference) return dateDifference;
+        const queueDifference = (left.queueNumber || 9999) - (right.queueNumber || 9999);
+        return queueDifference;
       });
   }, [appointments, queueSearch, queueStatus]);
 
   return (
     <DashboardLayout
+      id="doctor-dashboard-home"
       role="Doctor Dashboard"
       title={`Good to see you, Dr. ${firstName}`}
       subtitle="Manage appointments, review patients faster, and keep your clinic day running on time with live data connected to your signup details."
       chips={["Smart schedule", "Patient insights", "Fast follow-ups"]}
       stats={stats}
       quickActions={[
-        { icon: "plus", label: "Add Slot", variant: "primary" },
-        { icon: "bell", label: "Send Reminder" },
-        { icon: "chart", label: "View Analytics" },
+        { icon: "stetho", label: "Edit Practice", variant: "primary", onClick: () => setShowEditModal(true), disabled: !doctorProfile },
+        { icon: "calendar", label: "Edit Schedule", onClick: () => setShowAvailabilityModal(true), disabled: !doctorProfile },
+        { icon: "users", label: "View Patient Queue", onClick: () => scrollToDashboardSection("doctor-patient-queue") },
       ]}
       aside={
         <>
@@ -236,14 +258,15 @@ export default function DoctorDashboard() {
       {error ? <div className="dashboard-banner error">{error}</div> : null}
       {success ? <div className="dashboard-banner success">{success}</div> : null}
 
-      <DashboardSection title="Hospital/Clinic Details">
+      <DashboardSection id="doctor-practice-details" title="Hospital/Clinic Details">
         <ClinicDetailsCard 
           doctorProfile={doctorProfile}
           onEdit={() => setShowEditModal(true)}
         />
       </DashboardSection>
 
-      <DashboardSection 
+      <DashboardSection
+        id="doctor-availability"
         title="Availability & Blocked Times" 
         action="Edit Schedule"
         onActionClick={() => setShowAvailabilityModal(true)}
@@ -272,7 +295,12 @@ export default function DoctorDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Patient Care Queue" action="Professional view">
+      <DashboardSection
+        id="doctor-patient-queue"
+        title="Patient Care Queue"
+        action={loading ? "Refreshing..." : "Refresh Queue"}
+        onActionClick={loadDashboardData}
+      >
         <div className="staff-queue-toolbar">
           <label className="dashboard-input-group">
             <span>Find patient</span>
@@ -346,7 +374,7 @@ export default function DoctorDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Follow-up Performance" action="Export">
+      <DashboardSection id="doctor-follow-up-performance" title="Follow-up Performance">
         <div className="dashboard-performance-grid">
           <article className="dashboard-performance-card">
             <span className="dashboard-icon-bubble">
@@ -445,21 +473,37 @@ function EditAvailabilityModal({ doctorProfile, onClose, onSave }) {
   const [error, setError] = useState("");
 
   const handleToggleDay = (index) => {
-    const newAvail = [...availability];
-    newAvail[index].isAvailable = !newAvail[index].isAvailable;
-    setAvailability(newAvail);
+    setAvailability((current) =>
+      current.map((schedule, scheduleIndex) =>
+        scheduleIndex === index
+          ? { ...schedule, isAvailable: !schedule.isAvailable }
+          : schedule
+      )
+    );
   };
 
   const handleTimeChange = (index, field, value) => {
-    const newAvail = [...availability];
-    newAvail[index][field] = value;
-    setAvailability(newAvail);
+    setAvailability((current) =>
+      current.map((schedule, scheduleIndex) =>
+        scheduleIndex === index ? { ...schedule, [field]: value } : schedule
+      )
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    const invalidSchedule = availability.find(
+      (schedule) =>
+        schedule.isAvailable &&
+        (!schedule.startTime || !schedule.endTime || schedule.startTime >= schedule.endTime)
+    );
+    if (invalidSchedule) {
+      setError(`${invalidSchedule.day}: end time must be later than start time.`);
+      return;
+    }
+
+    setLoading(true);
     try {
       await onSave(availability);
     } catch (err) {
