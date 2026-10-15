@@ -2293,7 +2293,13 @@
 .notification-status-row { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: #f8fafc; color: #64748b; font-size: 11px; }
 .notification-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
 .notification-unread-label { margin-left: auto; color: #167c80; font-weight: 800; }
+.notification-push-status { margin: 10px 12px 0; padding: 9px 10px; border-radius: 7px; background: #f1f5f9; color: #475569; font-size: 11px; line-height: 1.45; }
+.notification-push-status-enabled { background: #ecfdf5; color: #047857; }
+.notification-push-status-denied, .notification-push-status-unavailable, .notification-push-status-unsupported, .notification-push-status-error { background: #fff7ed; color: #9a3412; }
+.notification-platform-note { margin: 8px 12px 0; color: #64748b; font-size: 10px; line-height: 1.45; }
 .notification-enable { width: calc(100% - 24px); margin: 12px; padding: 10px 12px; border: 0; border-radius: 8px; background: #167c80; color: #fff; cursor: pointer; font-weight: 700; }
+.notification-enable:disabled, .notification-mark-all:disabled { cursor: wait; opacity: .65; }
+.notification-error { margin: 10px 12px 0; padding: 9px 10px; border-radius: 7px; background: #fef2f2; color: #b91c1c; font-size: 11px; line-height: 1.45; }
 .notification-list { max-height: 360px; overflow: auto; }
 .notification-section-label { padding: 10px 16px 6px; color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .notification-item { display: block; width: 100%; padding: 13px 16px; border: 0; border-bottom: 1px solid #edf1f5; background: #fff; text-align: left; cursor: pointer; }

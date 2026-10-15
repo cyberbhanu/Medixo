@@ -1,44 +1,19 @@
 const router = require("express").Router();
 const Notification = require("../models/Notification");
 const PushSubscription = require("../models/PushSubscription");
-const Appointment = require("../models/Appointment");
-const User = require("../models/User");
 const { authenticateUser } = require("../middleware/auth");
-const { getVapidPublicKey } = require("../utils/pushNotifications");
+const { getVapidPublicKey, isPushConfigured } = require("../utils/pushNotifications");
 
 router.get("/vapid-public-key", (_req, res) => {
-  res.json({ enabled: Boolean(getVapidPublicKey()), publicKey: getVapidPublicKey() });
+  const enabled = isPushConfigured();
+  res.json({ enabled, publicKey: enabled ? getVapidPublicKey() : "" });
 });
 
 router.use(authenticateUser);
 
-const getNotificationQuery = async (userId) => {
-  const user = await User.findById(userId).select("role doctorId").lean();
-
-  if (user?.role !== "staff") {
-    return { userId };
-  }
-
-  if (!user.doctorId) {
-    return { userId, appointmentId: null };
-  }
-
-  const assignedAppointmentIds = await Appointment.distinct("_id", {
-    doctorId: user.doctorId,
-  });
-
-  return {
-    userId,
-    $or: [
-      { appointmentId: null },
-      { appointmentId: { $in: assignedAppointmentIds } },
-    ],
-  };
-};
-
 router.get("/", async (req, res) => {
   try {
-    const notificationQuery = await getNotificationQuery(req.user.id);
+    const notificationQuery = { userId: req.user.id };
     const notifications = await Notification.find(notificationQuery)
       .sort({ createdAt: -1 })
       .limit(30)
@@ -71,7 +46,7 @@ router.post("/subscribe", async (req, res) => {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
-    res.status(201).json({ message: "Phone notifications enabled" });
+    res.status(201).json({ message: "Push notifications enabled" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -79,7 +54,7 @@ router.post("/subscribe", async (req, res) => {
 
 router.delete("/subscribe", async (req, res) => {
   await PushSubscription.deleteOne({ userId: req.user.id, endpoint: req.body?.endpoint });
-  res.json({ message: "Phone notifications disabled" });
+  res.json({ message: "Push notifications disabled" });
 });
 
 router.patch("/read-all", async (req, res) => {

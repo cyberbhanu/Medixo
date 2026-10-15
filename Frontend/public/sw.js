@@ -10,7 +10,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "Medixo", {
       body: data.body || "You have a new appointment update.",
-      icon: "/favicon.svg",
+      icon: "/icons/medixo-192.png",
       badge: "/favicon.svg",
       tag: data.notificationId || "medixo-notification",
       data: { url: data.url || "/patient-dashboard" },
@@ -20,7 +20,10 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = new URL(event.notification.data?.url || "/patient-dashboard", self.location.origin).href;
+  const target = new URL(event.notification.data?.url || "/patient-dashboard#upcoming-appointments", self.location.origin);
+  const url = target.origin === self.location.origin
+    ? target.href
+    : new URL("/patient-dashboard#upcoming-appointments", self.location.origin).href;
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       const existing = clientList.find((client) => "focus" in client);

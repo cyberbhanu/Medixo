@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getNotificationPublicKey,
@@ -16,92 +16,166 @@ const decodeBase64Key = (value) => {
   return Uint8Array.from(window.atob(base64), (character) => character.charCodeAt(0));
 };
 
+const getPushErrorMessage = (error) =>
+  error?.response?.data?.error || error?.message || "Unable to update notifications. Please try again.";
+
+const isAppleTouchDevice = () =>
+  /iPhone|iPad|iPod/i.test(navigator.userAgent)
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
 export default function NotificationCenter({ refreshInterval = 30000 }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [pushAvailable, setPushAvailable] = useState(false);
+  const [pushState, setPushState] = useState("checking");
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [notificationError, setNotificationError] = useState("");
+  const [pushError, setPushError] = useState("");
 
-  const loadNotifications = async ({ silent = false } = {}) => {
+  const loadNotifications = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setRefreshing(true);
     try {
       const data = await getNotifications();
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
       setLastUpdated(new Date());
-    } catch {
-      // Notifications should never block the dashboard.
+      setNotificationError("");
+    } catch (error) {
+      setNotificationError(getPushErrorMessage(error));
     } finally {
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadNotifications();
     const interval = window.setInterval(() => loadNotifications({ silent: true }), refreshInterval);
     return () => window.clearInterval(interval);
-  }, [refreshInterval]);
+  }, [loadNotifications, refreshInterval]);
 
   useEffect(() => {
+    let cancelled = false;
     const checkPush = async () => {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+      if (!window.isSecureContext) {
+        setPushState("unsupported");
+        return;
+      }
+
+      if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+        setPushState(isAppleTouchDevice() ? "install-required" : "unsupported");
+        return;
+      }
+
+      if (window.Notification.permission === "denied") {
+        setPushState("denied");
+        return;
+      }
+
       try {
         const keyData = await getNotificationPublicKey();
-        setPushAvailable(Boolean(keyData.enabled && keyData.publicKey));
+        if (!keyData.enabled || !keyData.publicKey) {
+          if (!cancelled) setPushState("unavailable");
+          return;
+        }
+
         const registration = await navigator.serviceWorker.register("/sw.js");
         const subscription = await registration.pushManager.getSubscription();
-        setPushEnabled(Boolean(subscription));
-      } catch {
-        setPushAvailable(false);
+        if (subscription) {
+          await subscribeToNotifications(subscription.toJSON());
+          if (!cancelled) setPushState("enabled");
+          return;
+        }
+
+        if (!cancelled) setPushState("ready");
+      } catch (error) {
+        if (!cancelled) {
+          setPushState("error");
+          setPushError(getPushErrorMessage(error));
+        }
       }
     };
+
     checkPush();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const enablePush = async () => {
     setBusy(true);
+    setPushError("");
     try {
       const keyData = await getNotificationPublicKey();
-      if (!keyData.enabled || !keyData.publicKey) throw new Error("Push notifications are not configured yet.");
-      const permission = await window.Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Notification permission was not granted.");
+      if (!keyData.enabled || !keyData.publicKey) {
+        setPushState("unavailable");
+        return;
+      }
+
+      const permission = window.Notification.permission === "granted"
+        ? "granted"
+        : await window.Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushState(permission === "denied" ? "denied" : "ready");
+        return;
+      }
+
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: decodeBase64Key(keyData.publicKey),
-      });
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: decodeBase64Key(keyData.publicKey),
+        });
+      }
+
       await subscribeToNotifications(subscription.toJSON());
-      setPushEnabled(true);
+      setPushState("enabled");
     } catch (error) {
-      window.alert(error.message || "Unable to enable phone notifications.");
+      setPushState("error");
+      setPushError(getPushErrorMessage(error));
     } finally {
       setBusy(false);
     }
   };
 
   const markRead = async (item) => {
-    if (item.readAt) return;
-    await markNotificationRead(item._id);
-    setNotifications((current) => current.map((notification) => notification._id === item._id ? { ...notification, readAt: new Date().toISOString() } : notification));
-    setUnreadCount((current) => Math.max(0, current - 1));
+    if (item.readAt) return true;
+    try {
+      await markNotificationRead(item._id);
+      setNotifications((current) => current.map((notification) => notification._id === item._id
+        ? { ...notification, readAt: new Date().toISOString() }
+        : notification));
+      setUnreadCount((current) => Math.max(0, current - 1));
+      setNotificationError("");
+      return true;
+    } catch (error) {
+      setNotificationError(getPushErrorMessage(error));
+      return false;
+    }
   };
 
   const openNotification = async (item) => {
-    await markRead(item);
+    if (!await markRead(item)) return;
     const user = getStoredUser();
     navigate(item.data?.url || getDashboardPath(user?.role));
     setOpen(false);
   };
 
   const markAllRead = async () => {
-    await markAllNotificationsRead();
-    setNotifications((current) => current.map((item) => ({ ...item, readAt: item.readAt || new Date().toISOString() })));
-    setUnreadCount(0);
+    setBusy(true);
+    try {
+      await markAllNotificationsRead();
+      setNotifications((current) => current.map((item) => ({ ...item, readAt: item.readAt || new Date().toISOString() })));
+      setUnreadCount(0);
+      setNotificationError("");
+    } catch (error) {
+      setNotificationError(getPushErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const unreadNotifications = notifications.filter((item) => !item.readAt);
@@ -116,6 +190,17 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
       <span className="notification-item-content"><strong>{item.title}</strong><span>{item.message}</span><small>{new Date(item.createdAt).toLocaleString()}</small></span>
     </button>
   );
+
+  const pushStatusText = {
+    checking: "Checking this browser...",
+    ready: "Push alerts are available on this device.",
+    enabled: "Push alerts are enabled on this device.",
+    denied: "Notifications are blocked. Allow them in your browser or device settings.",
+    "install-required": "On iPhone or iPad, install Medixo from Share > Add to Home Screen, then open the installed app to enable push alerts.",
+    unsupported: "Push alerts need a supported browser and a secure connection (HTTPS or localhost).",
+    unavailable: "Push alerts are not configured on this server yet.",
+    error: "Push alerts could not be set up. Please try again.",
+  }[pushState];
 
   return (
     <div className="notification-center">
@@ -133,18 +218,24 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
             </div>
           </div>
           <div className="notification-status-row"><span className="notification-live-dot" /> Live updates every {Math.round(refreshInterval / 1000)}s <span className="notification-unread-label">{unreadCount} unread</span></div>
-          {pushAvailable && !pushEnabled ? (
+          <div className={`notification-push-status notification-push-status-${pushState}`} role="status">{pushStatusText}</div>
+          {["ready", "enabled"].includes(pushState) ? (
+            <p className="notification-platform-note">On iPhone or iPad, add Medixo to your Home Screen and enable alerts from the installed app.</p>
+          ) : null}
+          {["ready", "error"].includes(pushState) ? (
             <button type="button" className="notification-enable" onClick={enablePush} disabled={busy}>
-              {busy ? "Enabling..." : "Enable phone notifications"}
+              {busy ? "Enabling..." : pushState === "error" ? "Retry push notifications" : "Enable push notifications"}
             </button>
           ) : null}
+          {pushError ? <p className="notification-error" role="alert">{pushError}</p> : null}
+          {notificationError ? <p className="notification-error" role="alert">{notificationError}</p> : null}
           {!notifications.length ? <p className="notification-empty">No appointment notifications yet.</p> : <div className="notification-list">
             {unreadNotifications.length ? <div className="notification-section-label">New</div> : null}
             {unreadNotifications.map(renderNotification)}
             {readNotifications.length ? <div className="notification-section-label">Earlier</div> : null}
             {readNotifications.map(renderNotification)}
           </div>}
-          {unreadCount ? <button type="button" className="notification-mark-all" onClick={markAllRead}>Mark all as read</button> : null}
+          {unreadCount ? <button type="button" className="notification-mark-all" onClick={markAllRead} disabled={busy}>Mark all as read</button> : null}
         </div>
       ) : null}
     </div>
