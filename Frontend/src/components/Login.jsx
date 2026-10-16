@@ -25,6 +25,10 @@ const Login = ({ adminOnly = false }) => {
         setError("Admin credentials are required for this login page.");
         return;
       }
+      if (!adminOnly && normalizeRole(data.user?.role) === "super_admin") {
+        setError("Please use the Admin Login page for administrator access.");
+        return;
+      }
       setStoredAuth(data.token, data.user);
       alert("Login successful");
       const dashboardPath = getDashboardPath(data.user?.role);

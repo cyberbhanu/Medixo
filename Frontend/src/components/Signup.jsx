@@ -190,6 +190,10 @@ const Signup = () => {
                   Sign in here
                 </Link>
               </p>
+              <p className="auth-footer-text">
+                Administrator?{" "}
+                <Link to="/admin-login" className="auth-link">Admin Login</Link>
+              </p>
             </div>
           </div>
 
