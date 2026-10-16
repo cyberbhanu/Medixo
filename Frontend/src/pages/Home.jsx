@@ -59,7 +59,7 @@ const pageConfig = {
     cards: [
       { index: "01", label: "Patient-first care", title: "For Patients", description: "Search doctors by city, specialty, fee, and availability.", link: "/doctors" },
       { index: "02", label: "Provider tools", title: "For Doctors", description: "Maintain practice details, review appointment requests, and keep availability clear.", link: "/doctor-login" },
-      { index: "03", label: "Connected operations", title: "For Admins", description: "List providers, assign teams, and monitor appointments from one organized workspace.", link: "/login" },
+      { index: "03", label: "Connected operations", title: "For Admins", description: "List providers, assign teams, and monitor appointments from one organized workspace.", link: "/admin-login" },
     ],
   },
 };

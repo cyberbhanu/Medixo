@@ -165,6 +165,7 @@ function App() {
         <Routes>
           <Route path="/" element={<RoleAwareHome />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin-login" element={<Login adminOnly />} />
           <Route path="/hospital-login" element={<Login />} />
           <Route path="/forgot-password" element={<PasswordRecoveryPage />} />
           <Route path="/reset-password" element={<PasswordRecoveryPage />} />
