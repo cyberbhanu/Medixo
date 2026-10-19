@@ -3,6 +3,7 @@ const Lab = require("../models/Lab");
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
+const { isGlobalAdmin, cityMatches } = require("../utils/adminScope");
 const { ROLES, hasRole } = require("../utils/roles");
 
 router.get("/", async (req, res) => {
@@ -57,8 +58,11 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, req.body.location)) {
+      return res.status(403).json({ error: "Laboratory location is outside your assigned district" });
+    }
     const { name, email, password, location, logo, availableTests = [] } = req.body;
 
     if (!name || !email || !password) {
@@ -103,8 +107,14 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
   }
 });
 
-router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.LABORATORY), async (req, res) => {
+router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN, ROLES.LABORATORY), async (req, res) => {
   try {
+    if (req.user?.role === ROLES.DISTRICT_ADMIN) {
+      const existingLab = await Lab.findById(req.params.id).select("location").lean();
+      if (!existingLab || !cityMatches(req.user, existingLab.location) || !cityMatches(req.user, req.body.location)) {
+        return res.status(403).json({ error: "Laboratory is outside your assigned district" });
+      }
+    }
     const lab = await Lab.findById(req.params.id);
     if (!lab) {
       return res.status(404).json({ error: "Laboratory not found" });
@@ -162,8 +172,14 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.LAB
   }
 });
 
-router.delete("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.delete("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
+    if (!isGlobalAdmin(req.user)) {
+      const existingLab = await Lab.findById(req.params.id).select("location").lean();
+      if (!existingLab || !cityMatches(req.user, existingLab.location)) {
+        return res.status(403).json({ error: "Laboratory is outside your assigned district" });
+      }
+    }
     const lab = await Lab.findById(req.params.id);
     if (!lab) {
       return res.status(404).json({ error: "Laboratory not found" });

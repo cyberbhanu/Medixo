@@ -54,7 +54,7 @@ function RoleLinks({ role, onNavigate }) {
     );
   }
 
-  if (role === "super_admin") {
+  if (role === "super_admin" || role === "district_admin") {
     return (
       <>
         <Link to="/admin-dashboard?view=home" onClick={getClickHandler("/admin-dashboard?view=home")}>Home</Link>
@@ -201,7 +201,7 @@ export default function Navbar() {
 
   const isHashActive = (hash) => location.pathname === "/" && location.hash === hash;
   const isHomePage = location.pathname === "/";
-  const isAdminUser = normalizeRole(user?.role) === "super_admin";
+  const isAdminUser = ["super_admin", "district_admin"].includes(normalizeRole(user?.role));
   const isPatientUser = normalizeRole(user?.role) === "patient";
   const isDoctorUser = normalizeRole(user?.role) === "doctor";
   const isStaffUser = normalizeRole(user?.role) === "staff";

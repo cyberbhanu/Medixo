@@ -21,11 +21,11 @@ const Login = ({ adminOnly = false }) => {
     setLoading(true);
     try {
       const data = await login(formData);
-      if (adminOnly && normalizeRole(data.user?.role) !== "super_admin") {
+      if (adminOnly && !["super_admin", "district_admin"].includes(normalizeRole(data.user?.role))) {
         setError("Admin credentials are required for this login page.");
         return;
       }
-      if (!adminOnly && normalizeRole(data.user?.role) === "super_admin") {
+      if (!adminOnly && ["super_admin", "district_admin"].includes(normalizeRole(data.user?.role))) {
         setError("Please use the Admin Login page for administrator access.");
         return;
       }

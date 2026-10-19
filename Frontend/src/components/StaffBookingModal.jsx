@@ -4,6 +4,7 @@ import "../styles/modal.css";
 const EMPTY_FORM = {
   doctorId: "", patientName: "", patientEmail: "", patientPhone: "", patientAge: "",
   patientGender: "Other", appointmentDate: "", appointmentTime: "", reason: "", notes: "",
+  paymentStatus: "Pending", paymentMethod: "",
 };
 
 const today = () => {
@@ -49,6 +50,8 @@ export default function StaffBookingModal({ doctors, onClose, onBook }) {
             <label className="modal-form-group"><span className="modal-label">Gender</span><select className="modal-input" value={form.patientGender} onChange={(event) => update("patientGender", event.target.value)}><option>Male</option><option>Female</option><option>Other</option></select></label>
             <label className="modal-form-group"><span className="modal-label">Preferred date</span><input type="date" min={today()} className="modal-input" value={form.appointmentDate} onChange={(event) => update("appointmentDate", event.target.value)} required /></label>
             <label className="modal-form-group"><span className="modal-label">Preferred time (optional)</span><input type="time" className="modal-input" value={form.appointmentTime} onChange={(event) => update("appointmentTime", event.target.value)} /><small className="dashboard-field-hint">Leave blank to use the next queue time from the doctor schedule.</small></label>
+            <label className="modal-form-group"><span className="modal-label">Payment method</span><select className="modal-input" value={form.paymentMethod} onChange={(event) => update("paymentMethod", event.target.value)}><option value="">Not selected</option><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option><option value="Online">Online</option><option value="Insurance">Insurance</option><option value="Other">Other</option></select></label>
+            <label className="modal-form-group"><span className="modal-label">Payment status</span><select className="modal-input" value={form.paymentStatus} onChange={(event) => update("paymentStatus", event.target.value)}><option value="Pending">Pending</option><option value="Paid">Paid</option><option value="Failed">Failed</option><option value="Refunded">Refunded</option></select></label>
           </div>
           <label className="modal-form-group"><span className="modal-label">Reason</span><input className="modal-input" value={form.reason} onChange={(event) => update("reason", event.target.value)} required /></label>
           <label className="modal-form-group"><span className="modal-label">Notes</span><textarea rows="3" className="modal-input" value={form.notes} onChange={(event) => update("notes", event.target.value)} /></label>

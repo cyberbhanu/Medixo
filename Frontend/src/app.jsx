@@ -44,7 +44,8 @@ function ProtectedDashboard({ allowedRole, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (normalizeRole(user.role) !== normalizeRole(allowedRole)) {
+  const allowedRoles = Array.isArray(allowedRole) ? allowedRole : [allowedRole];
+  if (!allowedRoles.map(normalizeRole).includes(normalizeRole(user.role))) {
     return <Navigate to={getDashboardPath(user.role)} replace />;
   }
 
@@ -72,6 +73,10 @@ function RoleAwareHome() {
   }
 
   if (role === "super_admin") {
+    return <Navigate to="/admin-dashboard" replace />;
+  }
+
+  if (role === "district_admin") {
     return <Navigate to="/admin-dashboard" replace />;
   }
 
@@ -206,7 +211,7 @@ function App() {
           <Route
             path="/admin-dashboard"
             element={
-              <ProtectedDashboard allowedRole="super_admin">
+              <ProtectedDashboard allowedRole={["super_admin", "district_admin"]}>
                 <AdminDashboard />
               </ProtectedDashboard>
             }

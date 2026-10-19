@@ -37,6 +37,10 @@ export const normalizeRole = (role) => {
     return "super_admin";
   }
 
+  if (["district-admin", "district_admin", "districtadmin", "co_admin", "coadmin"].includes(normalized)) {
+    return "district_admin";
+  }
+
   if (normalized === "lab" || normalized === "laboratory") {
     return "laboratory";
   }
@@ -48,6 +52,10 @@ export const getDashboardPath = (role) => {
   const normalizedRole = normalizeRole(role);
 
   if (normalizedRole === "super_admin") {
+    return "/admin-dashboard";
+  }
+
+  if (normalizedRole === "district_admin") {
     return "/admin-dashboard";
   }
 

@@ -150,6 +150,12 @@ const AppointmentSchema = new mongoose.Schema(
       enum: ["Pending", "Paid", "Failed", "Refunded"],
       default: "Pending",
     },
+    paymentMethod: {
+      type: String,
+      enum: ["", "Cash", "UPI", "Card", "Online", "Insurance", "Other"],
+      default: "",
+      trim: true,
+    },
     testName: {
       type: String,
       trim: true,

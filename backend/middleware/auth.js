@@ -38,6 +38,8 @@ async function authenticateUser(req, res, next) {
       name: user.name,
       email: user.email,
       role: safeRole,
+      district: user.district || "",
+      managedCities: Array.isArray(user.managedCities) ? user.managedCities : [],
     };
 
     return next();

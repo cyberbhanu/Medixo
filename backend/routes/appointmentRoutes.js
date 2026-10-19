@@ -11,6 +11,7 @@ const Hospital = require("../models/Hospital");
 const Clinic = require("../models/Clinic");
 const { authenticateUser } = require("../middleware/auth");
 const { ROLES, hasRole } = require("../utils/roles");
+const { isGlobalAdmin, getScopedDoctors, getScopedLabs } = require("../utils/adminScope");
 const { getJwtSecret } = require("../utils/jwt");
 const { notifyAppointmentCreated, notifyAppointmentUpdated } = require("../utils/pushNotifications");
 
@@ -37,6 +38,7 @@ const EDITABLE_FIELDS = [
   "prescriptionUrl",
   "labReferral",
   "paymentStatus",
+  "paymentMethod",
   "testName",
   "reportUrl",
   "notes",
@@ -259,6 +261,7 @@ const validateAppointmentPayload = ({
   reason,
   status,
   paymentStatus,
+  paymentMethod,
 }) => {
   const isLab = type === "lab";
   if (
@@ -321,6 +324,10 @@ const validateAppointmentPayload = ({
     return "Invalid payment status selected";
   }
 
+  if (paymentMethod && !["Cash", "UPI", "Card", "Online", "Insurance", "Other"].includes(paymentMethod)) {
+    return "Invalid payment method selected";
+  }
+
   return null;
 };
 
@@ -380,6 +387,7 @@ const buildAppointmentPayload = (body) => ({
   prescriptionUrl: body.prescriptionUrl?.trim() || "",
   labReferral: body.labReferral || null,
   paymentStatus: body.paymentStatus || "Pending",
+  paymentMethod: body.paymentMethod?.trim() || "",
   testName: body.testName?.trim() || "",
   reportUrl: body.reportUrl?.trim() || "",
   notes: body.notes?.trim() || "",
@@ -866,6 +874,15 @@ router.get("/reports/patients", async (req, res) => {
         }
         filters.clinic = req.query.clinicId;
       }
+    } else if (hasRole(req.user, ROLES.DISTRICT_ADMIN)) {
+      const [doctors, labs] = await Promise.all([
+        getScopedDoctors(req.user),
+        getScopedLabs(req.user),
+      ]);
+      filters.$or = [
+        { type: "doctor", doctorId: { $in: doctors.map((doctor) => doctor._id) } },
+        { type: "lab", labId: { $in: labs.map((lab) => lab._id) } },
+      ];
     } else if (hasRole(req.user, ROLES.DOCTOR)) {
       const doctorProfile = await getDoctorProfileForUser(req.user);
       if (!doctorProfile) return res.json({ month, summary: {}, patients: [] });
@@ -929,6 +946,8 @@ router.get("/reports/patients", async (req, res) => {
         patient.lastVisit = appointment.appointmentDate || patient.lastVisit;
         patient.lastStatus = appointment.status || patient.lastStatus;
         patient.lastReason = appointment.reason || patient.lastReason;
+          patient.lastPaymentMethod = appointment.paymentMethod || patient.lastPaymentMethod || "";
+          patient.lastPaymentStatus = appointment.paymentStatus || patient.lastPaymentStatus || "Pending";
         patient.age = appointment.patientAge || patient.age;
         patient.gender = appointment.patientGender || patient.gender;
       }
@@ -983,6 +1002,15 @@ router.get("/", async (_req, res) => {
       if (_req.query.patientEmail) {
         filters.patientEmail = _req.query.patientEmail.trim().toLowerCase();
       }
+    } else if (hasRole(_req.user, ROLES.DISTRICT_ADMIN)) {
+      const [doctors, labs] = await Promise.all([
+        getScopedDoctors(_req.user),
+        getScopedLabs(_req.user),
+      ]);
+      filters.$or = [
+        { type: "doctor", doctorId: { $in: doctors.map((doctor) => doctor._id) } },
+        { type: "lab", labId: { $in: labs.map((lab) => lab._id) } },
+      ];
     } else if (hasRole(_req.user, ROLES.DOCTOR)) {
       const doctorProfile = await getDoctorProfileForUser(_req.user);
 
@@ -1274,6 +1302,15 @@ router.put("/:id", async (req, res) => {
 
     if (hasRole(req.user, ROLES.SUPER_ADMIN)) {
       // Admins can update any appointment.
+    } else if (hasRole(req.user, ROLES.DISTRICT_ADMIN)) {
+      const [doctors, labs] = await Promise.all([
+        getScopedDoctors(req.user),
+        getScopedLabs(req.user),
+      ]);
+      const allowed = (appointment.type === "lab"
+        ? labs.map((lab) => String(lab._id)).includes(String(appointment.labId || ""))
+        : doctors.map((doctor) => String(doctor._id)).includes(String(appointment.doctorId || "")));
+      if (!allowed) return res.status(403).json({ error: "Appointment is outside your assigned district" });
     } else if (hasRole(req.user, ROLES.DOCTOR)) {
       const doctorProfile = await getDoctorProfileForUser(req.user);
       const isAssignedDoctor = doctorProfile && String(doctorProfile._id) === String(appointment.doctorId);
@@ -1326,6 +1363,8 @@ router.put("/:id", async (req, res) => {
         "appointmentDate",
         "appointmentTime",
         "status",
+        "paymentStatus",
+        "paymentMethod",
         "reason",
         "disease",
         "treatmentPlan",

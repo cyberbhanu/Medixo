@@ -35,6 +35,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: [
         "super_admin",
+        "district_admin",
         "doctor",
         "patient",
         "laboratory",
@@ -48,6 +49,20 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    // Cities/districts this co-admin is allowed to manage.
+    district: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    managedCities: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
 
     phone: {
       type: String,

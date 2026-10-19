@@ -113,6 +113,14 @@ export const adminCreateUser = async (userData) => {
   return response.data;
 };
 
+export const createDistrictAdmin = async (adminData) => {
+  const response = await API.post("/auth/admin/create-user", {
+    ...adminData,
+    role: "district_admin",
+  });
+  return response.data;
+};
+
 export const requestAccountDeletion = async (email, reason) => {
   const response = await API.post("/auth/account-deletion-request", { email, reason });
   return response.data;

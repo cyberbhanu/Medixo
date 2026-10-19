@@ -17,6 +17,7 @@ import {
   deleteClinic,
   updateDoctor,
   adminCreateUser,
+  createDistrictAdmin,
   deleteDoctor,
   uploadDoctorImage,
   uploadClinicImage,
@@ -32,7 +33,7 @@ import DashboardLayout, {
   DashboardIcon,
   DashboardSection,
 } from "../components/DashboardLayout";
-import { getStoredUser } from "../utils/auth";
+import { getStoredUser, normalizeRole } from "../utils/auth";
 import { getCurrentCity } from "../utils/location";
 import { useLocation } from "react-router-dom";
 import PrescriptionPrintButton from "../components/PrescriptionPrintButton";
@@ -112,6 +113,14 @@ const EMPTY_STAFF = {
   address: "",
 };
 
+const EMPTY_CO_ADMIN = {
+  name: "",
+  email: "",
+  password: "",
+  district: "",
+  managedCities: "",
+};
+
 const STATUS_OPTIONS = [
   "Scheduled",
   "Approved",
@@ -121,7 +130,7 @@ const STATUS_OPTIONS = [
   "Rescheduled",
 ];
 
-const ADMIN_LIST_PAGE_SIZE = 6;
+const ADMIN_LIST_PAGE_SIZE = 3;
 const showLegacyClinicManagement = false;
 
 const STAFF_ROLES = [
@@ -240,6 +249,7 @@ export default function AdminDashboard() {
   const [hospitalForm, setHospitalForm] = useState(EMPTY_HOSPITAL);
   const [labForm, setLabForm] = useState(EMPTY_LAB);
   const [staffForm, setStaffForm] = useState(EMPTY_STAFF);
+  const [coAdminForm, setCoAdminForm] = useState(EMPTY_CO_ADMIN);
 
   const [editingDoctorId, setEditingDoctorId] = useState("");
   const [editingClinicId, setEditingClinicId] = useState("");
@@ -284,6 +294,7 @@ export default function AdminDashboard() {
   const [savingHospital, setSavingHospital] = useState(false);
   const [savingLab, setSavingLab] = useState(false);
   const [savingStaff, setSavingStaff] = useState(false);
+  const [savingCoAdmin, setSavingCoAdmin] = useState(false);
   const [savingCustomerPasswordKey, setSavingCustomerPasswordKey] = useState("");
   const [uploadingDoctorImage, setUploadingDoctorImage] = useState(false);
   const [uploadingResourceImage, setUploadingResourceImage] = useState("");
@@ -345,6 +356,13 @@ export default function AdminDashboard() {
     setSuccess("");
 
     try {
+      const districtCities = new Set(
+        (Array.isArray(user?.managedCities) ? user.managedCities : [])
+          .map((city) => String(city || "").trim().toLowerCase())
+          .filter(Boolean)
+      );
+      const restrictToDistrict = normalizeRole(user?.role) === "district_admin";
+      const inDistrict = (value) => !restrictToDistrict || districtCities.has(String(value || "").trim().toLowerCase());
       const [doctorResult, clinicResult, hospitalResult, labResult, appointmentResult, staffResult] =
         await Promise.allSettled([
           getDoctors(),
@@ -358,7 +376,7 @@ export default function AdminDashboard() {
       const failures = [];
 
       if (doctorResult.status === "fulfilled") {
-        setDoctors(Array.isArray(doctorResult.value) ? doctorResult.value : []);
+        setDoctors((Array.isArray(doctorResult.value) ? doctorResult.value : []).filter((doctor) => inDistrict(doctor.location)));
       } else {
         failures.push(errorMessage(doctorResult.reason, "Unable to load doctors"));
       }
@@ -370,13 +388,13 @@ export default function AdminDashboard() {
       }
 
       if (hospitalResult.status === "fulfilled") {
-        setHospitals(Array.isArray(hospitalResult.value) ? hospitalResult.value : []);
+        setHospitals((Array.isArray(hospitalResult.value) ? hospitalResult.value : []).filter((hospital) => inDistrict(hospital.city)));
       } else {
         failures.push(errorMessage(hospitalResult.reason, "Unable to load hospitals"));
       }
 
       if (labResult.status === "fulfilled") {
-        setLabs(Array.isArray(labResult.value) ? labResult.value : []);
+        setLabs((Array.isArray(labResult.value) ? labResult.value : []).filter((lab) => inDistrict(lab.location)));
       } else {
         failures.push(errorMessage(labResult.reason, "Unable to load laboratories"));
       }
@@ -590,7 +608,7 @@ export default function AdminDashboard() {
             }))
           }
         >
-          {showingAll ? "Show less" : "See more"}
+          {showingAll ? "Show less" : `View all ${label}`}
         </button>
       </div>
     );
@@ -819,6 +837,32 @@ export default function AdminDashboard() {
   const resetStaffForm = () => {
     setStaffForm(EMPTY_STAFF);
     setEditingStaffId("");
+  };
+
+  const resetCoAdminForm = () => setCoAdminForm(EMPTY_CO_ADMIN);
+
+  const handleCoAdminSubmit = async (event) => {
+    event.preventDefault();
+    setSavingCoAdmin(true);
+    setError("");
+    setSuccess("");
+    try {
+      const managedCities = String(coAdminForm.managedCities || "")
+        .split(",")
+        .map((city) => city.trim())
+        .filter(Boolean);
+      await createDistrictAdmin({
+        ...coAdminForm,
+        district: coAdminForm.district.trim(),
+        managedCities,
+      });
+      resetCoAdminForm();
+      setSuccess("District co-admin created successfully.");
+    } catch (requestError) {
+      setError(errorMessage(requestError, "Unable to create the district co-admin."));
+    } finally {
+      setSavingCoAdmin(false);
+    }
   };
 
   const handleDoctorSubmit = async (event) => {
@@ -1514,6 +1558,50 @@ export default function AdminDashboard() {
     >
       {error ? <div className="dashboard-banner error">{error}</div> : null}
       {success ? <div className="dashboard-banner success">{success}</div> : null}
+
+      {normalizeRole(user?.role) === "super_admin" ? (
+        <DashboardSection
+          id="admin-co-admins"
+          title="District Co-Admins"
+          action="Create Co-Admin"
+          onActionClick={resetCoAdminForm}
+        >
+          <form className="dashboard-form-card" onSubmit={handleCoAdminSubmit}>
+            <div className="dashboard-form-heading">
+              <span>Regional access</span>
+              <h3>Create a district administrator</h3>
+              <p>Assign one or more cities. This administrator can manage doctors, staff, laboratories, and appointments only in those cities.</p>
+            </div>
+            <div className="dashboard-form-grid">
+              <label className="dashboard-input-group">
+                <span>Name *</span>
+                <input value={coAdminForm.name} onChange={(e) => setCoAdminForm({ ...coAdminForm, name: e.target.value })} required placeholder="District Admin" />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Email login *</span>
+                <input type="email" value={coAdminForm.email} onChange={(e) => setCoAdminForm({ ...coAdminForm, email: e.target.value })} required placeholder="district.admin@medixo.com" />
+              </label>
+              <label className="dashboard-input-group">
+                <span>Password *</span>
+                <input type="password" minLength={6} value={coAdminForm.password} onChange={(e) => setCoAdminForm({ ...coAdminForm, password: e.target.value })} required />
+              </label>
+              <label className="dashboard-input-group">
+                <span>District</span>
+                <input value={coAdminForm.district} onChange={(e) => setCoAdminForm({ ...coAdminForm, district: e.target.value })} placeholder="Madhepura" />
+              </label>
+              <label className="dashboard-input-group dashboard-input-group-wide">
+                <span>Managed cities *</span>
+                <input value={coAdminForm.managedCities} onChange={(e) => setCoAdminForm({ ...coAdminForm, managedCities: e.target.value })} required placeholder="Madhepura, Saharsa" />
+              </label>
+            </div>
+            <div className="dashboard-form-actions">
+              <button type="submit" className="dashboard-button primary" disabled={savingCoAdmin}>
+                {savingCoAdmin ? "Creating..." : "Create District Co-Admin"}
+              </button>
+            </div>
+          </form>
+        </DashboardSection>
+      ) : null}
 
       <DashboardSection
         id="admin-doctors"
@@ -2356,6 +2444,10 @@ export default function AdminDashboard() {
                     <span>
                       <strong>Status:</strong> {patient.lastAppointment?.status || "—"}
                     </span>
+                    <span>
+                      <strong>Payment:</strong> {patient.lastAppointment?.paymentMethod || "Not selected"}
+                      {patient.lastAppointment?.paymentStatus ? ` (${patient.lastAppointment.paymentStatus})` : ""}
+                    </span>
                   </div>
 
                   <div className="dashboard-action-row">
@@ -2502,7 +2594,7 @@ export default function AdminDashboard() {
                     <td><strong>{patient.name}</strong><span>{patient.age || "-"} yrs · {patient.gender || "-"}</span></td>
                     <td><span>{patient.email || "No email"}</span><span>{patient.phone || "No phone"}</span></td>
                     <td><strong>{patient.visits}</strong><span>{patient.completedVisits} completed</span></td>
-                    <td><span>{patient.lastVisit || "-"}</span><span>{patient.lastReason || "-"}</span></td>
+                    <td><span>{patient.lastVisit || "-"}</span><span>{patient.lastReason || "-"}</span><span>Payment: {patient.lastPaymentMethod || "Not selected"}</span></td>
                     <td><span>{patient.doctors?.join(", ") || "-"}</span><span>{patient.clinics?.join(", ") || "No clinic"}</span></td>
                     <td><span className="dashboard-inline-badge">{patient.lastStatus || "-"}</span></td>
                   </tr>
@@ -2897,6 +2989,7 @@ export default function AdminDashboard() {
                   <span><strong>Gender:</strong> {appointment.patientGender || "—"}</span>
                   <span><strong>Reason:</strong> {appointment.reason || "—"}</span>
                   <span><strong>Payment:</strong> {appointment.paymentStatus || "—"}</span>
+                  <span><strong>Method:</strong> {appointment.paymentMethod || "Not selected"}</span>
                 </div>
 
                 {appointment.notes ? (

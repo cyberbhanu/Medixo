@@ -19,6 +19,8 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
     treatmentPlan: appointment.treatmentPlan || "",
     notes: appointment.notes || "",
     status: appointment.status || "Scheduled",
+    paymentStatus: appointment.paymentStatus || "Pending",
+    paymentMethod: appointment.paymentMethod || "",
   });
   const [savingAppointmentUpdate, setSavingAppointmentUpdate] = useState(false);
 
@@ -139,6 +141,29 @@ const ManageAppointmentModal = ({ appointment, labs = [], onClose, onSaveAppoint
                 <option value="Cancelled">Cancelled</option>
               </select>
             </label>
+            <div className="modal-form-grid">
+              <label className="modal-form-group">
+                <span className="modal-label">Payment method</span>
+                <select value={appointmentDraft.paymentMethod} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, paymentMethod: e.target.value })} className="modal-input">
+                  <option value="">Not selected</option>
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Card">Card</option>
+                  <option value="Online">Online</option>
+                  <option value="Insurance">Insurance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label className="modal-form-group">
+                <span className="modal-label">Payment status</span>
+                <select value={appointmentDraft.paymentStatus} onChange={(e) => setAppointmentDraft({ ...appointmentDraft, paymentStatus: e.target.value })} className="modal-input">
+                  <option value="Pending">Pending</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Failed">Failed</option>
+                  <option value="Refunded">Refunded</option>
+                </select>
+              </label>
+            </div>
             <div className="modal-buttons">
               <button type="button" onClick={onClose} className="modal-cancel-btn">Close</button>
               <button type="submit" className="modal-submit-btn" disabled={savingAppointmentUpdate}>{savingAppointmentUpdate ? "Saving..." : "Save Patient Record"}</button>

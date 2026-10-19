@@ -352,6 +352,7 @@ export default function DoctorDashboard() {
                       <span>{item.patientAge || "-"} yrs</span>
                       <span>{item.patientGender || "-"}</span>
                       <span>{item.disease || "No diagnosis recorded"}</span>
+                      <span>Payment: {item.paymentMethod || "Not selected"}{item.paymentStatus ? ` (${item.paymentStatus})` : ""}</span>
                     </div>
                     <div className="dashboard-record-actions">
                       <button type="button" onClick={() => setManagingAppointment(item)} className="dashboard-primary-action dashboard-compact-action">Manage Patient</button>

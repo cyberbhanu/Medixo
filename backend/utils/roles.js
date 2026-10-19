@@ -1,5 +1,6 @@
 const ROLES = Object.freeze({
   SUPER_ADMIN: "super_admin",
+  DISTRICT_ADMIN: "district_admin",
   DOCTOR: "doctor",
   PATIENT: "patient",
   LABORATORY: "laboratory",
@@ -11,6 +12,11 @@ const ROLE_ALIASES = Object.freeze({
   admin: ROLES.SUPER_ADMIN,
   superadmin: ROLES.SUPER_ADMIN,
   super_admin: ROLES.SUPER_ADMIN,
+  "district-admin": ROLES.DISTRICT_ADMIN,
+  district_admin: ROLES.DISTRICT_ADMIN,
+  districtadmin: ROLES.DISTRICT_ADMIN,
+  co_admin: ROLES.DISTRICT_ADMIN,
+  coadmin: ROLES.DISTRICT_ADMIN,
   lab: ROLES.LABORATORY,
   laboratory: ROLES.LABORATORY,
   doctor: ROLES.DOCTOR,

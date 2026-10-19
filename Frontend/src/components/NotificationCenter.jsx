@@ -23,7 +23,7 @@ const isAppleTouchDevice = () =>
   /iPhone|iPad|iPod/i.test(navigator.userAgent)
   || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-export default function NotificationCenter({ refreshInterval = 30000 }) {
+export default function NotificationCenter({ refreshInterval = 30000, showPermissionPrompt = false }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -191,6 +191,8 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
     </button>
   );
 
+  const showInlinePermissionPrompt = showPermissionPrompt && ["ready", "error"].includes(pushState);
+
   const pushStatusText = {
     checking: "Checking this browser...",
     ready: "Push alerts are available on this device.",
@@ -208,6 +210,15 @@ export default function NotificationCenter({ refreshInterval = 30000 }) {
         <DashboardIcon name="bell" />
         {unreadCount > 0 ? <span className="notification-count">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
       </button>
+      {showInlinePermissionPrompt ? (
+        <div className="notification-inline-prompt" role="status">
+          <strong>Stay updated on appointments</strong>
+          <span>Allow notifications to receive new bookings and queue changes.</span>
+          <button type="button" className="notification-enable" onClick={enablePush} disabled={busy}>
+            {busy ? "Enabling..." : pushState === "error" ? "Retry notifications" : "Allow notifications"}
+          </button>
+        </div>
+      ) : null}
       {open ? (
         <div className="notification-popover">
           <div className="notification-popover-header">

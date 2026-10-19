@@ -5,6 +5,8 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Hospital = require("../models/Hospital");
 const Clinic = require("../models/Clinic");
+const { ROLES } = require("../utils/roles");
+const { isGlobalAdmin, getScopedDoctors, getScopedHospitals, getScopedLabs } = require("../utils/adminScope");
 
 const {
   authenticateUser,
@@ -13,12 +15,12 @@ const {
 
 // =====================================================
 // ADMIN ACCESS
-// Every route below is Super Admin only
+// Super admins are global; district admins are restricted to their managed cities.
 // =====================================================
 
 router.use(
   authenticateUser,
-  authorizeRoles("super_admin")
+  authorizeRoles("super_admin", "district_admin")
 );
 
 // =====================================================
@@ -28,9 +30,12 @@ router.use(
 
 router.get("/staff", async (req, res) => {
   try {
-    const staff = await User.find({
-      role: "staff",
-    })
+    const doctorIds = (await getScopedDoctors(req.user)).map((doctor) => doctor._id);
+    const hospitalIds = (await getScopedHospitals(req.user)).map((hospital) => hospital._id);
+    const staffFilter = isGlobalAdmin(req.user)
+      ? { role: "staff" }
+      : { role: "staff", $or: [{ doctorId: { $in: doctorIds } }, { hospitalId: { $in: hospitalIds } }] };
+    const staff = await User.find(staffFilter)
       .select("-password")
       .populate("clinicId", "name city state")
       .populate("hospitalId", "name city state")
@@ -143,6 +148,22 @@ router.post("/staff", async (req, res) => {
       });
     }
 
+    if (!isGlobalAdmin(req.user)) {
+      const [scopedDoctors, scopedHospitals] = await Promise.all([
+        getScopedDoctors(req.user),
+        getScopedHospitals(req.user),
+      ]);
+      if (hospitalId && !scopedHospitals.some((item) => String(item._id) === String(hospitalId))) {
+        return res.status(403).json({ error: "This hospital is outside your assigned district" });
+      }
+      if (doctorId && !scopedDoctors.some((item) => String(item._id) === String(doctorId))) {
+        return res.status(403).json({ error: "This doctor is outside your assigned district" });
+      }
+      if (!hospitalId && !doctorId) {
+        return res.status(403).json({ error: "Assign staff to a doctor or hospital in your district" });
+      }
+    }
+
     const assignmentError = await validateAssignment(
       hospitalId || null,
       clinicId || null,
@@ -226,6 +247,23 @@ router.put("/staff/:id", async (req, res) => {
       return res.status(404).json({
         error: "Staff member not found",
       });
+    }
+
+    if (!isGlobalAdmin(req.user)) {
+      const [scopedDoctors, scopedHospitals] = await Promise.all([
+        getScopedDoctors(req.user),
+        getScopedHospitals(req.user),
+      ]);
+      const canAccess = [staff.doctorId, staff.hospitalId].some((id) =>
+        [...scopedDoctors, ...scopedHospitals].some((item) => String(item._id) === String(id))
+      );
+      if (!canAccess) return res.status(403).json({ error: "Staff member is outside your assigned district" });
+      if (hospitalId && !scopedHospitals.some((item) => String(item._id) === String(hospitalId))) {
+        return res.status(403).json({ error: "This hospital is outside your assigned district" });
+      }
+      if (doctorId && !scopedDoctors.some((item) => String(item._id) === String(doctorId))) {
+        return res.status(403).json({ error: "This doctor is outside your assigned district" });
+      }
     }
 
     if (password && password.length < 6) {
@@ -356,6 +394,17 @@ router.patch("/staff/:id/status", async (req, res) => {
       });
     }
 
+    if (!isGlobalAdmin(req.user)) {
+      const [scopedDoctors, scopedHospitals] = await Promise.all([
+        getScopedDoctors(req.user),
+        getScopedHospitals(req.user),
+      ]);
+      const canAccess = [staff.doctorId, staff.hospitalId].some((id) =>
+        [...scopedDoctors, ...scopedHospitals].some((item) => String(item._id) === String(id))
+      );
+      if (!canAccess) return res.status(403).json({ error: "Staff member is outside your assigned district" });
+    }
+
     staff.isActive = Boolean(req.body.isActive);
 
     await staff.save();
@@ -391,6 +440,17 @@ router.delete("/staff/:id", async (req, res) => {
       return res.status(404).json({
         error: "Staff member not found",
       });
+    }
+
+    if (!isGlobalAdmin(req.user)) {
+      const [scopedDoctors, scopedHospitals] = await Promise.all([
+        getScopedDoctors(req.user),
+        getScopedHospitals(req.user),
+      ]);
+      const canAccess = [staff.doctorId, staff.hospitalId].some((id) =>
+        [...scopedDoctors, ...scopedHospitals].some((item) => String(item._id) === String(id))
+      );
+      if (!canAccess) return res.status(403).json({ error: "Staff member is outside your assigned district" });
     }
 
     await User.findByIdAndDelete(staff._id);

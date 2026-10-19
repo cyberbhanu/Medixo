@@ -154,7 +154,10 @@ export default function DashboardLayout({
               </button>
             ))}
           </div>
-          <NotificationCenter refreshInterval={role === "Staff Dashboard" ? 10000 : 30000} />
+          <NotificationCenter
+            refreshInterval={role === "Staff Dashboard" ? 10000 : 30000}
+            showPermissionPrompt={role === "Staff Dashboard" || role === "Doctor Dashboard"}
+          />
         </div>
         <div className="shell dashboard-stat-grid">
           {stats.map((item) => (

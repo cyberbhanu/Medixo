@@ -76,6 +76,8 @@ const formatUserResponse = (user) => ({
   name: user.name,
   email: user.email,
   role: normalizeRole(user.role) || user.role,
+  district: user.district || "",
+  managedCities: Array.isArray(user.managedCities) ? user.managedCities : [],
 });
 
 // =====================================================
@@ -499,7 +501,7 @@ router.post("/reset-password", async (req, res) => {
 router.post(
   "/admin/create-user",
   authenticateUser,
-  authorizeRoles(ROLES.SUPER_ADMIN),
+  authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN),
   async (req, res) => {
     let createdUser = null;
     let createdDoctor = null;
@@ -526,6 +528,8 @@ router.post(
         hospitalId,
         hospitals,
         department,
+        district,
+        managedCities,
       } = req.body;
 
       // -------------------------------------------------
@@ -569,6 +573,31 @@ router.post(
           error:
             "Invalid user role selected",
         });
+      }
+
+      if (selectedRole === ROLES.DISTRICT_ADMIN) {
+        if (!req.user || req.user.role !== ROLES.SUPER_ADMIN) {
+          return res.status(403).json({ error: "Only the super admin can create co-admin accounts" });
+        }
+        const cities = Array.isArray(managedCities)
+          ? managedCities
+          : String(managedCities || "").split(",");
+        const normalizedCities = [...new Set(cities.map((city) => String(city).trim()).filter(Boolean))];
+        if (!normalizedCities.length) {
+          return res.status(400).json({ error: "At least one managed city is required for a co-admin" });
+        }
+        req.body.managedCities = normalizedCities;
+      }
+
+      if (req.user?.role === ROLES.DISTRICT_ADMIN) {
+        if (![ROLES.DOCTOR, ROLES.LABORATORY, ROLES.STAFF].includes(selectedRole)) {
+          return res.status(403).json({ error: "Co-admins can only create doctor, laboratory, or staff accounts" });
+        }
+        const allowedCities = (req.user.managedCities || []).map((city) => String(city).trim().toLowerCase());
+        const requestedCity = String(location || req.body.city || "").trim().toLowerCase();
+        if (requestedCity && !allowedCities.includes(requestedCity)) {
+          return res.status(403).json({ error: "Account location is outside your assigned district" });
+        }
       }
 
       // -------------------------------------------------
@@ -637,6 +666,13 @@ router.post(
           if (hospitalCount !== hospitalIds.length) {
             return res.status(400).json({ error: "Selected hospital was not found" });
           }
+        if (req.user?.role === ROLES.DISTRICT_ADMIN) {
+          const allowedCities = (req.user.managedCities || []).map((city) => String(city).trim().toLowerCase());
+          const selectedHospitals = await Hospital.find({ _id: { $in: hospitalIds } }).select("city").lean();
+          if (selectedHospitals.some((hospital) => !allowedCities.includes(String(hospital.city || "").trim().toLowerCase()))) {
+            return res.status(403).json({ error: "Selected hospital is outside your assigned district" });
+          }
+        }
         }
       }
 
@@ -649,6 +685,8 @@ router.post(
         email: normalizedEmail,
         password,
         role: selectedRole,
+        district: selectedRole === ROLES.DISTRICT_ADMIN ? String(district || req.body.managedCities?.[0] || "").trim() : "",
+        managedCities: selectedRole === ROLES.DISTRICT_ADMIN ? req.body.managedCities : [],
         patientId: selectedRole === ROLES.PATIENT ? generatePatientId() : undefined,
       });
 

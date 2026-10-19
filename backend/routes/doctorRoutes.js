@@ -6,6 +6,7 @@ const Clinic = require("../models/Clinic");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { getJwtSecret } = require("../utils/jwt");
 const { ROLES, normalizeRole, hasRole } = require("../utils/roles");
+const { isGlobalAdmin, cityMatches, scopedRegex } = require("../utils/adminScope");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
@@ -38,6 +39,8 @@ const optionalAuthenticateUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: normalizeRole(user.role) || user.role,
+        district: user.district || "",
+        managedCities: Array.isArray(user.managedCities) ? user.managedCities : [],
       };
     }
 
@@ -106,6 +109,10 @@ router.get("/", optionalAuthenticateUser, async (req, res) => {
     } else {
       // For other roles or public access, build filters from query params.
       const andConditions = [{ isActive: { $ne: false } }];
+
+      if (req.user?.role === ROLES.DISTRICT_ADMIN) {
+        andConditions.push({ location: scopedRegex(req.user) });
+      }
 
       // This handles cases for dashboards (e.g., DoctorDashboard) needing a specific profile.
       if (userId && email) {
@@ -254,11 +261,15 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
     const validationError = validateDoctorPayload(req.body);
     if (validationError) {
       return res.status(400).json({ error: validationError });
+    }
+
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, req.body.location)) {
+      return res.status(403).json({ error: "Doctor location is outside your assigned district" });
     }
 
     if (req.body.password && req.body.password.length < 6) {
@@ -327,11 +338,20 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
   }
 });
 
-router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
     const validationError = validateDoctorPayload(req.body);
     if (validationError) {
       return res.status(400).json({ error: validationError });
+    }
+
+    const existingDoctor = await Doctor.findById(req.params.id).select("location").lean();
+    if (!existingDoctor) return res.status(404).json({ error: "Doctor not found" });
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, existingDoctor.location) && !cityMatches(req.user, req.body.location)) {
+      return res.status(403).json({ error: "Doctor is outside your assigned district" });
+    }
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, req.body.location)) {
+      return res.status(403).json({ error: "Doctor location is outside your assigned district" });
     }
 
     const updatePayload = {
@@ -520,11 +540,14 @@ router.put("/:id/availability", authenticateUser, async (req, res) => {
 });
 
 // Delete doctor and associated user login
-router.delete("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.delete("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) {
       return res.status(404).json({ error: "Doctor not found" });
+    }
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, doctor.location)) {
+      return res.status(403).json({ error: "Doctor is outside your assigned district" });
     }
 
     if (doctor.userId) {

@@ -5,6 +5,7 @@ const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
+const { isGlobalAdmin, cityMatches, scopedRegex } = require("../utils/adminScope");
 const { ROLES } = require("../utils/roles");
 
 const doctorFields = "name specialization location qualification experience fees profileImage rating reviewCount availability consultationType nextAvailableSlot";
@@ -137,9 +138,12 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   let createdUser = null;
   try {
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, req.body.city)) {
+      return res.status(403).json({ error: "Hospital city is outside your assigned district" });
+    }
     const { password, email, doctorIds, ...hospitalData } = req.body;
     const assignedDoctorIds = await validateDoctorIds(doctorIds);
     hospitalData.doctors = assignedDoctorIds;
@@ -171,8 +175,13 @@ router.post("/", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req
   }
 });
 
-router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
+    const existingHospital = await Hospital.findById(req.params.id).select("city").lean();
+    if (!existingHospital) return res.status(404).json({ error: "Hospital not found" });
+    if (!isGlobalAdmin(req.user) && (!cityMatches(req.user, existingHospital.city) || !cityMatches(req.user, req.body.city))) {
+      return res.status(403).json({ error: "Hospital is outside your assigned district" });
+    }
     const { password, email, doctorIds, ...hospitalData } = req.body;
     const existing = await Hospital.findById(req.params.id);
     if (!existing) return res.status(404).json({ error: "Hospital not found" });
@@ -209,8 +218,13 @@ router.put("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (r
   }
 });
 
-router.delete("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+router.delete("/:id", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN, ROLES.DISTRICT_ADMIN), async (req, res) => {
   try {
+    const existingHospital = await Hospital.findById(req.params.id).select("city").lean();
+    if (!existingHospital) return res.status(404).json({ error: "Hospital not found" });
+    if (!isGlobalAdmin(req.user) && !cityMatches(req.user, existingHospital.city)) {
+      return res.status(403).json({ error: "Hospital is outside your assigned district" });
+    }
     const hospital = await Hospital.findByIdAndDelete(req.params.id);
     if (!hospital) {
       return res.status(404).json({ error: "Hospital not found" });

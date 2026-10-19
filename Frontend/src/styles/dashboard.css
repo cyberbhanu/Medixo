@@ -2265,6 +2265,22 @@
   align-self: flex-start;
   z-index: 2200;
 }
+.notification-inline-prompt {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: min(310px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid #b8dce0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, .18);
+}
+.notification-inline-prompt strong,
+.notification-inline-prompt span { display: block; }
+.notification-inline-prompt strong { color: #12304a; font-size: 13px; }
+.notification-inline-prompt span { margin-top: 4px; color: #64748b; font-size: 11px; line-height: 1.45; }
+.notification-inline-prompt .notification-enable { width: 100%; margin: 11px 0 0; }
 
 .notification-trigger {
   position: relative;
@@ -2318,6 +2334,12 @@
 @media (max-width: 767px) {
   .notification-center {
     position: static;
+  }
+  .notification-inline-prompt {
+    position: fixed;
+    top: 76px;
+    right: 12px;
+    z-index: 2300;
   }
 
   .notification-popover {
