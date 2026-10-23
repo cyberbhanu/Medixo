@@ -77,6 +77,7 @@ const formatUserResponse = (user) => ({
   email: user.email,
   role: normalizeRole(user.role) || user.role,
   district: user.district || "",
+  state: user.state || "",
   managedCities: Array.isArray(user.managedCities) ? user.managedCities : [],
 });
 
@@ -529,6 +530,7 @@ router.post(
         hospitals,
         department,
         district,
+        state,
         managedCities,
       } = req.body;
 
@@ -686,6 +688,7 @@ router.post(
         password,
         role: selectedRole,
         district: selectedRole === ROLES.DISTRICT_ADMIN ? String(district || req.body.managedCities?.[0] || "").trim() : "",
+        state: selectedRole === ROLES.DISTRICT_ADMIN ? String(state || "").trim() : "",
         managedCities: selectedRole === ROLES.DISTRICT_ADMIN ? req.body.managedCities : [],
         patientId: selectedRole === ROLES.PATIENT ? generatePatientId() : undefined,
       });

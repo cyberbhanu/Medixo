@@ -44,7 +44,7 @@ const attachHospitalAppointments = async (hospital) => {
       ...(doctorIds.length ? [{ doctorId: { $in: doctorIds } }] : []),
     ],
   })
-    .select("patientName appointmentDate appointmentTime status queueNumber doctorId hospital clinic")
+    .select("patientName patientEmail patientPhone patientAge appointmentDate appointmentTime status queueNumber doctorId hospital clinic reportUrl reason")
     .populate("doctorId", "name specialization")
     .sort({ appointmentDate: 1, appointmentTime: 1, createdAt: -1 })
     .lean();
@@ -106,7 +106,7 @@ router.get("/account/me", authenticateUser, authorizeRoles(ROLES.HOSPITAL), asyn
   try {
     const hospital = await Hospital.findOne({ userId: req.user.id, isActive: { $ne: false } })
       .populate("doctors", "name specialization location experience fees profileImage rating reviewCount")
-      .populate("appointments", "patientName appointmentDate appointmentTime status queueNumber doctorId");
+      .populate("appointments", "patientName patientEmail patientPhone patientAge appointmentDate appointmentTime status queueNumber doctorId reportUrl reason");
 
     if (!hospital) return res.status(404).json({ error: "Hospital profile not found" });
     await attachAssignedDoctors(hospital);

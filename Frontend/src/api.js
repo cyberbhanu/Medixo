@@ -298,6 +298,13 @@ export const getLabTests = async () => {
   return response.data;
 };
 
+export const uploadLabReport = async (appointmentId, file) => {
+  const formData = new FormData();
+  formData.append("report", file);
+  const response = await API.post(`/labs/tests/${appointmentId}/report`, formData);
+  return response.data;
+};
+
 // =====================================================
 // HOSPITALS
 // =====================================================

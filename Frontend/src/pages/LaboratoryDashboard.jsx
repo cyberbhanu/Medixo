@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getLabTests, updateAppointment } from "../api";
+import { getLabTests, updateAppointment, uploadLabReport } from "../api";
 import DashboardLayout, {
   DashboardIcon,
   DashboardSection,
@@ -15,6 +15,9 @@ export default function LaboratoryDashboard() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
   const [reportDrafts, setReportDrafts] = useState({});
+  const [reportFiles, setReportFiles] = useState({});
+  const [uploadingId, setUploadingId] = useState("");
+  const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -51,6 +54,41 @@ export default function LaboratoryDashboard() {
       setSavingId("");
     }
   };
+
+  const uploadReport = async (testId) => {
+    const file = reportFiles[testId];
+    if (!file) {
+      setError("Choose a report file before uploading.");
+      return;
+    }
+    setUploadingId(testId);
+    setError("");
+    setSuccess("");
+    try {
+      const updated = await uploadLabReport(testId, file);
+      setTests((current) => current.map((test) => test._id === updated._id ? updated : test));
+      setReportFiles((current) => ({ ...current, [testId]: null }));
+      setSuccess("Report uploaded and shared with the patient, doctor, and assigned staff.");
+    } catch (requestError) {
+      setError(requestError.response?.data?.error || "Unable to upload report");
+    } finally {
+      setUploadingId("");
+    }
+  };
+
+  const filteredTests = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return tests;
+    return tests.filter((test) => [
+      test.patientName,
+      test.patientEmail,
+      test.patientPhone,
+      test.testName,
+      test.reason,
+      test.referredBy?.name,
+      test.referredByStaff?.name,
+    ].filter(Boolean).join(" ").toLowerCase().includes(query));
+  }, [search, tests]);
 
   const stats = useMemo(() => {
     const active = tests.filter((test) => ACTIVE_STATUSES.includes(test.status)).length;
@@ -122,11 +160,15 @@ export default function LaboratoryDashboard() {
       {success ? <div className="dashboard-banner success">{success}</div> : null}
 
       <DashboardSection title="Assigned Test Bookings" action="Laboratory only">
+        <label className="dashboard-input-group full-width dashboard-search-field">
+          <span>Search patient or test</span>
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, phone, email, test, or referring doctor" />
+        </label>
         <div className="dashboard-table">
           {loading ? (
             <p className="dashboard-empty-state">Loading tests...</p>
-          ) : tests.length ? (
-            tests.map((test) => (
+          ) : filteredTests.length ? (
+            filteredTests.map((test) => (
               <article key={test._id} className="dashboard-table-row dashboard-patient-row">
                 <div className="dashboard-patient-row-header">
                   <div>
@@ -161,7 +203,7 @@ export default function LaboratoryDashboard() {
                 </div>
 
                 <label className="dashboard-input-group full-width">
-                  <span>Report URL</span>
+                  <span>Report URL (optional)</span>
                   <input
                     type="url"
                     value={reportDrafts[test._id] ?? test.reportUrl ?? ""}
@@ -171,6 +213,17 @@ export default function LaboratoryDashboard() {
                     placeholder="https://example.com/report.pdf"
                   />
                 </label>
+
+                <div className="dashboard-report-upload-row">
+                  <label className="dashboard-input-group">
+                    <span>Upload report</span>
+                    <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" onChange={(event) => setReportFiles((current) => ({ ...current, [test._id]: event.target.files?.[0] || null }))} />
+                  </label>
+                  <button type="button" className="dashboard-secondary-action" onClick={() => uploadReport(test._id)} disabled={uploadingId === test._id || !reportFiles[test._id]}>
+                    {uploadingId === test._id ? "Uploading..." : "Upload & share report"}
+                  </button>
+                </div>
+                {test.reportUrl ? <a href={test.reportUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action">View current report</a> : null}
 
                 <div className="dashboard-action-row">
                   <button
@@ -207,7 +260,7 @@ export default function LaboratoryDashboard() {
             ))
           ) : (
             <p className="dashboard-empty-state">
-              No test bookings are assigned to your laboratory yet.
+              {tests.length ? "No laboratory bookings match your search." : "No test bookings are assigned to your laboratory yet."}
             </p>
           )}
         </div>

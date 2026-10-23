@@ -200,7 +200,7 @@ export default function DoctorDashboard() {
 
         if (!query) return true;
 
-        return [appointment.patientName, appointment.patientPhone, appointment.reason]
+                        return [appointment.patientName, appointment.patientEmail, appointment.patientPhone, appointment.reason, appointment.disease, appointment.reportUrl]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
@@ -358,6 +358,7 @@ export default function DoctorDashboard() {
                       <button type="button" onClick={() => setManagingAppointment(item)} className="dashboard-primary-action dashboard-compact-action">Manage Patient</button>
                       <QueueTicketPrintButton appointment={item} />
                       <PrescriptionPrintButton appointment={item} compact />
+                      {item.reportUrl ? <a href={item.reportUrl} target="_blank" rel="noreferrer" className="dashboard-secondary-action dashboard-compact-action">View report</a> : null}
                     </div>
                   </div>
                 </article>

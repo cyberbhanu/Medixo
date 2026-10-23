@@ -117,6 +117,7 @@ const EMPTY_CO_ADMIN = {
   name: "",
   email: "",
   password: "",
+  state: "",
   district: "",
   managedCities: "",
 };
@@ -1584,6 +1585,10 @@ export default function AdminDashboard() {
               <label className="dashboard-input-group">
                 <span>Password *</span>
                 <input type="password" minLength={6} value={coAdminForm.password} onChange={(e) => setCoAdminForm({ ...coAdminForm, password: e.target.value })} required />
+              </label>
+              <label className="dashboard-input-group">
+                <span>State</span>
+                <input value={coAdminForm.state} onChange={(e) => setCoAdminForm({ ...coAdminForm, state: e.target.value })} placeholder="Bihar" />
               </label>
               <label className="dashboard-input-group">
                 <span>District</span>

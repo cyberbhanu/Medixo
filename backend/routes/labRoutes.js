@@ -1,10 +1,24 @@
 const router = require("express").Router();
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 const Lab = require("../models/Lab");
 const Appointment = require("../models/Appointment");
 const User = require("../models/User");
 const { authenticateUser, authorizeRoles } = require("../middleware/auth");
 const { isGlobalAdmin, cityMatches } = require("../utils/adminScope");
 const { ROLES, hasRole } = require("../utils/roles");
+const { notifyAppointmentUpdated } = require("../utils/pushNotifications");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const reportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
 
 router.get("/", async (req, res) => {
   try {
@@ -37,6 +51,53 @@ router.get("/tests", authenticateUser, authorizeRoles(ROLES.LABORATORY), async (
     res.json(tests);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/tests/:id/report", authenticateUser, authorizeRoles(ROLES.LABORATORY), reportUpload.single("report"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "Please select a report file" });
+
+    const labProfile = await getLabProfileForUser(req.user);
+    const appointment = await Appointment.findOne({
+      _id: req.params.id,
+      type: "lab",
+      labId: labProfile?._id,
+    });
+
+    if (!appointment) return res.status(404).json({ error: "Laboratory booking not found" });
+
+    const dataUri = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    const uploadResult = await cloudinary.uploader.upload(dataUri, {
+      folder: "medixo_reports",
+      resource_type: "auto",
+      public_id: `report-${appointment._id}-${Date.now()}`,
+    });
+
+    const previousAppointment = appointment.toObject();
+    appointment.reportUrl = uploadResult.secure_url;
+    if (appointment.status !== "Rejected" && appointment.status !== "Cancelled") {
+      appointment.status = "Completed";
+    }
+    await appointment.save();
+
+    await Lab.findByIdAndUpdate(labProfile._id, {
+      $push: { reports: { appointmentId: appointment._id, reportUrl: uploadResult.secure_url } },
+    });
+
+    const updatedAppointment = await Appointment.findById(appointment._id)
+      .populate("doctorId", "name specialization location fees userId email")
+      .populate("labId", "name location email")
+      .populate("referredBy", "name")
+      .populate("referredByStaff", "name staffRole")
+      .populate("patientId", "name email role");
+
+    notifyAppointmentUpdated(previousAppointment, updatedAppointment.toObject())
+      .catch((error) => console.error("Report notification failed:", error.message));
+
+    return res.json(updatedAppointment);
+  } catch (error) {
+    return res.status(400).json({ error: error.message || "Unable to upload report" });
   }
 });
 

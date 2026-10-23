@@ -57,6 +57,12 @@ const UserSchema = new mongoose.Schema(
       default: "",
     },
 
+    state: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     managedCities: [
       {
         type: String,
