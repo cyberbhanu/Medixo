@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Hospital = require("../models/Hospital");
 const Clinic = require("../models/Clinic");
+const Appointment = require("../models/Appointment");
 const { ROLES } = require("../utils/roles");
 const { isGlobalAdmin, getScopedDoctors, getScopedHospitals, getScopedLabs } = require("../utils/adminScope");
 
@@ -12,6 +13,101 @@ const {
   authenticateUser,
   authorizeRoles,
 } = require("../middleware/auth");
+
+const isDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+const isMonth = (value) => /^\d{4}-\d{2}$/.test(String(value || ""));
+
+const getCoAdminActivity = async (coAdmin, date, month) => {
+  const managedCities = Array.isArray(coAdmin.managedCities)
+    ? coAdmin.managedCities.map((city) => String(city || "").trim()).filter(Boolean)
+    : [];
+  const scopedUser = { ...coAdmin, managedCities };
+  const [doctors, hospitals, labs] = await Promise.all([
+    getScopedDoctors(scopedUser),
+    getScopedHospitals(scopedUser),
+    getScopedLabs(scopedUser),
+  ]);
+  const doctorIds = doctors.map((item) => item._id);
+  const hospitalIds = hospitals.map((item) => item._id);
+  const labIds = labs.map((item) => item._id);
+  const staffFilter = {
+    role: "staff",
+    $or: [
+      ...(doctorIds.length ? [{ doctorId: { $in: doctorIds } }] : []),
+      ...(hospitalIds.length ? [{ hospitalId: { $in: hospitalIds } }] : []),
+    ],
+  };
+  const [staff, staffRecords] = await Promise.all([
+    User.countDocuments(staffFilter),
+    User.find(staffFilter).select("name email phone doctorId hospitalId isActive").populate("doctorId", "name").populate("hospitalId", "name").lean(),
+  ]);
+
+  const appointmentScope = {
+    $or: [
+      ...(doctorIds.length ? [{ doctorId: { $in: doctorIds } }] : []),
+      ...(hospitalIds.length ? [{ hospital: { $in: hospitalIds } }] : []),
+      ...(labIds.length ? [{ labId: { $in: labIds } }] : []),
+    ],
+  };
+  const hasScope = appointmentScope.$or.length > 0;
+  const dailyFilter = { ...appointmentScope, ...(hasScope ? { appointmentDate: date } : { _id: null }) };
+  const monthFilter = { ...appointmentScope, ...(hasScope ? { appointmentDate: { $gte: `${month}-01`, $lt: `${month}-32` } } : { _id: null }) };
+  const [dailyAppointments, monthlyAppointments] = await Promise.all([
+    Appointment.find(dailyFilter)
+      .populate("doctorId", "name")
+      .populate("labId", "name")
+      .sort({ appointmentTime: 1, createdAt: -1 })
+      .lean(),
+    Appointment.find(monthFilter)
+      .select("patientId patientName patientEmail patientPhone status reportUrl appointmentDate appointmentTime doctorId labId hospital reason")
+      .populate("doctorId", "name")
+      .populate("labId", "name")
+      .populate("hospital", "name")
+      .sort({ appointmentDate: -1, appointmentTime: 1 })
+      .lean(),
+  ]);
+  const patientKeys = new Set(monthlyAppointments.map((item) => String(item.patientId || item.patientEmail || "").toLowerCase()).filter(Boolean));
+
+  return {
+    id: String(coAdmin._id),
+    name: coAdmin.name,
+    email: coAdmin.email,
+    state: coAdmin.state || "",
+    district: coAdmin.district || "",
+    managedCities,
+    counts: {
+      doctors: doctors.length,
+      hospitals: hospitals.length,
+      laboratories: labs.length,
+      staff,
+      dailyAppointments: dailyAppointments.length,
+      monthlyAppointments: monthlyAppointments.length,
+      monthlyCompleted: monthlyAppointments.filter((item) => item.status === "Completed").length,
+      monthlyReports: monthlyAppointments.filter((item) => Boolean(item.reportUrl)).length,
+      monthlyPatients: patientKeys.size,
+    },
+    dailyAppointments: dailyAppointments.slice(0, 25),
+    monthlyAppointments: monthlyAppointments.slice(0, 100),
+    records: {
+      doctors: doctors.map((item) => ({ _id: item._id, name: item.name, email: item.email, specialization: item.specialization, location: item.location })),
+      hospitals: hospitals.map((item) => ({ _id: item._id, name: item.name, city: item.city, state: item.state, phone: item.phone })),
+      laboratories: labs.map((item) => ({ _id: item._id, name: item.name, location: item.location, phone: item.phone })),
+      staff: staffRecords.map((item) => ({ _id: item._id, name: item.name, email: item.email, phone: item.phone, doctor: item.doctorId?.name || "", hospital: item.hospitalId?.name || "", isActive: item.isActive !== false })),
+    },
+  };
+};
+
+router.get("/co-admins/activity", authenticateUser, authorizeRoles(ROLES.SUPER_ADMIN), async (req, res) => {
+  try {
+    const date = isDate(req.query.date) ? String(req.query.date) : new Date().toISOString().slice(0, 10);
+    const month = isMonth(req.query.month) ? String(req.query.month) : date.slice(0, 7);
+    const coAdmins = await User.find({ role: ROLES.DISTRICT_ADMIN, isActive: { $ne: false } }).select("-password").lean();
+    const activity = await Promise.all(coAdmins.map((coAdmin) => getCoAdminActivity(coAdmin, date, month)));
+    res.json({ date, month, coAdmins: activity });
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Unable to load co-admin activity" });
+  }
+});
 
 // =====================================================
 // ADMIN ACCESS

@@ -1866,6 +1866,25 @@
   white-space: nowrap;
 }
 
+.dashboard-details-panel {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: #f8fbff;
+  border: 1px solid #e1eaf5;
+  border-radius: 14px;
+}
+
+.dashboard-details-panel > summary {
+  cursor: pointer;
+  color: #123c74;
+  font-weight: 700;
+  list-style-position: inside;
+}
+
+.dashboard-details-panel[open] > summary {
+  margin-bottom: 14px;
+}
+
 .dashboard-report-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

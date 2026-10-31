@@ -546,6 +546,11 @@ export const getAdminStaff = async () => {
   return response.data;
 };
 
+export const getCoAdminActivity = async (params = {}) => {
+  const response = await API.get("/admin/co-admins/activity", { params });
+  return response.data;
+};
+
 export const createAdminStaff = async (
   staffData
 ) => {

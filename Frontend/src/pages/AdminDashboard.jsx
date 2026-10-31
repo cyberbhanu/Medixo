@@ -22,6 +22,7 @@ import {
   uploadDoctorImage,
   uploadClinicImage,
   getAdminStaff,
+  getCoAdminActivity,
   createAdminStaff,
   updateAdminStaff,
   toggleAdminStaffStatus,
@@ -133,6 +134,7 @@ const STATUS_OPTIONS = [
 
 const ADMIN_LIST_PAGE_SIZE = 3;
 const showLegacyClinicManagement = false;
+const getActivityDate = () => new Date().toISOString().slice(0, 10);
 
 const STAFF_ROLES = [
   "Receptionist",
@@ -277,6 +279,12 @@ export default function AdminDashboard() {
   const [patientReport, setPatientReport] = useState({ summary: {}, patients: [] });
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
+  const [coAdminActivity, setCoAdminActivity] = useState({ date: getActivityDate(), month: getActivityDate().slice(0, 7), coAdmins: [] });
+  const [coAdminActivityDate, setCoAdminActivityDate] = useState(getActivityDate());
+  const [coAdminActivityMonth, setCoAdminActivityMonth] = useState(getActivityDate().slice(0, 7));
+  const [coAdminActivityLoading, setCoAdminActivityLoading] = useState(false);
+  const [coAdminActivityError, setCoAdminActivityError] = useState("");
+  const [selectedCoAdminActivityId, setSelectedCoAdminActivityId] = useState("");
 
   const [patientSearch, setPatientSearch] = useState("");
   const [doctorSearch, setDoctorSearch] = useState("");
@@ -476,6 +484,35 @@ export default function AdminDashboard() {
       ignore = true;
     };
   }, [reportClinicId, reportDoctorId, reportMonth]);
+
+  const loadCoAdminActivity = async () => {
+    if (normalizeRole(user?.role) !== "super_admin") return;
+    setCoAdminActivityLoading(true);
+    setCoAdminActivityError("");
+    try {
+      const activity = await getCoAdminActivity({ date: coAdminActivityDate, month: coAdminActivityMonth });
+      setCoAdminActivity(activity || { date: coAdminActivityDate, month: coAdminActivityMonth, coAdmins: [] });
+    } catch (requestError) {
+      setCoAdminActivityError(errorMessage(requestError, "Unable to load co-admin activity"));
+    } finally {
+      setCoAdminActivityLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCoAdminActivity();
+  }, [coAdminActivityDate, coAdminActivityMonth, user?.role]);
+
+  useEffect(() => {
+    const firstCoAdmin = coAdminActivity.coAdmins?.[0];
+    if (firstCoAdmin && !coAdminActivity.coAdmins.some((item) => item.id === selectedCoAdminActivityId)) {
+      setSelectedCoAdminActivityId(firstCoAdmin.id);
+    }
+  }, [coAdminActivity.coAdmins, selectedCoAdminActivityId]);
+
+  const selectedCoAdminActivity = coAdminActivity.coAdmins?.find((item) => item.id === selectedCoAdminActivityId)
+    || coAdminActivity.coAdmins?.[0]
+    || null;
 
   const patients = useMemo(() => {
     const map = new Map();
@@ -1608,6 +1645,133 @@ export default function AdminDashboard() {
         </DashboardSection>
       ) : null}
 
+      {normalizeRole(user?.role) === "super_admin" ? (
+        <DashboardSection
+          id="admin-co-admin-activity"
+          title="Co-Admin Activity"
+          action={coAdminActivityLoading ? "Loading..." : "Refresh Activity"}
+          onActionClick={loadCoAdminActivity}
+        >
+          <div className="dashboard-report-toolbar">
+            <label className="dashboard-input-group">
+              <span>Daily activity date</span>
+              <input type="date" value={coAdminActivityDate} onChange={(event) => setCoAdminActivityDate(event.target.value)} />
+            </label>
+            <label className="dashboard-input-group">
+              <span>Monthly activity report</span>
+              <input type="month" value={coAdminActivityMonth} onChange={(event) => setCoAdminActivityMonth(event.target.value)} />
+            </label>
+            <button type="button" className="dashboard-primary-action" onClick={loadCoAdminActivity} disabled={coAdminActivityLoading}>
+              {coAdminActivityLoading ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
+
+          {coAdminActivityError ? <div className="dashboard-banner error">{coAdminActivityError}</div> : null}
+          {coAdminActivity.coAdmins?.length ? (
+            <>
+              <label className="dashboard-input-group" style={{ maxWidth: "420px" }}>
+                <span>Activity detail for</span>
+                <select value={selectedCoAdminActivity?.id || ""} onChange={(event) => setSelectedCoAdminActivityId(event.target.value)}>
+                  {coAdminActivity.coAdmins.map((activity) => <option key={activity.id} value={activity.id}>{activity.name} · {activity.district || "District not set"}</option>)}
+                </select>
+              </label>
+              <div className="dashboard-admin-list">
+                {coAdminActivity.coAdmins.map((activity) => (
+                  <article className="dashboard-admin-record" key={activity.id}>
+                    <div className="dashboard-record-header">
+                      <div>
+                        <h3>{activity.name}</h3>
+                        <p>{activity.email} · {activity.state || "State not set"} · {activity.district || "District not set"}</p>
+                      </div>
+                      <span className="dashboard-inline-badge">{activity.managedCities?.join(", ") || "No cities"}</span>
+                    </div>
+                    <div className="dashboard-record-grid">
+                      <span><strong>Today:</strong> {activity.counts.dailyAppointments} appointments</span>
+                      <span><strong>Month:</strong> {activity.counts.monthlyAppointments} appointments</span>
+                      <span><strong>Completed:</strong> {activity.counts.monthlyCompleted}</span>
+                      <span><strong>Patients:</strong> {activity.counts.monthlyPatients}</span>
+                      <span><strong>Reports:</strong> {activity.counts.monthlyReports}</span>
+                      <span><strong>Doctors:</strong> {activity.counts.doctors}</span>
+                      <span><strong>Staff:</strong> {activity.counts.staff}</span>
+                      <span><strong>Hospitals:</strong> {activity.counts.hospitals}</span>
+                      <span><strong>Labs:</strong> {activity.counts.laboratories}</span>
+                    </div>
+                    <div className="dashboard-action-row">
+                      <button type="button" className="dashboard-secondary-action" onClick={() => { setSelectedCoAdminActivityId(activity.id); setAppointmentFilters((current) => ({ ...current, date: coAdminActivityDate })); document.getElementById("admin-appointments")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+                        View daily appointments
+                      </button>
+                      <button type="button" className="dashboard-secondary-action" onClick={() => { setReportMonth(coAdminActivityMonth); document.getElementById("admin-monthly-report")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+                        Open monthly report
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              {selectedCoAdminActivity?.dailyAppointments?.length ? (
+                <div className="dashboard-table">
+                  <div className="dashboard-form-heading">
+                    <span>Daily detail</span>
+                    <h3>{selectedCoAdminActivity.name}&apos;s appointments on {formatDate(coAdminActivity.date)}</h3>
+                  </div>
+                  {selectedCoAdminActivity.dailyAppointments.map((appointment) => (
+                    <article className="dashboard-table-row" key={appointment._id}>
+                      <div>
+                        <h3>{appointment.patientName || "Patient"}</h3>
+                        <p>{appointment.doctorId?.name || appointment.labId?.name || "Provider"} · {appointment.reason || "Appointment"}</p>
+                      </div>
+                      <span>{appointment.appointmentTime || "—"} · {appointment.status}</span>
+                    </article>
+                  ))}
+                </div>
+              ) : <p className="dashboard-empty-state">No appointments found for the selected co-admin and date.</p>}
+              {selectedCoAdminActivity ? (
+                <div className="dashboard-admin-list">
+                  <div className="dashboard-form-heading">
+                    <span>District workspace</span>
+                    <h3>{selectedCoAdminActivity.district || "District"} data sheets and reports</h3>
+                    <p>All records below are limited to this co-admin&apos;s assigned cities. The global admin records remain unchanged.</p>
+                  </div>
+                  <div className="dashboard-record-grid">
+                    <span><strong>Doctors:</strong> {selectedCoAdminActivity.records?.doctors?.length || 0}</span>
+                    <span><strong>Hospitals:</strong> {selectedCoAdminActivity.records?.hospitals?.length || 0}</span>
+                    <span><strong>Laboratories:</strong> {selectedCoAdminActivity.records?.laboratories?.length || 0}</span>
+                    <span><strong>Staff:</strong> {selectedCoAdminActivity.records?.staff?.length || 0}</span>
+                    <span><strong>Monthly report rows:</strong> {selectedCoAdminActivity.monthlyAppointments?.length || 0}</span>
+                  </div>
+                  <details className="dashboard-details-panel">
+                    <summary>View doctors, hospitals, laboratories and staff</summary>
+                    <div className="dashboard-admin-list">
+                      {[
+                        ["Doctors", selectedCoAdminActivity.records?.doctors, (item) => `${item.name} · ${item.specialization || "Specialty not set"} · ${item.location || "Location not set"}`],
+                        ["Hospitals", selectedCoAdminActivity.records?.hospitals, (item) => `${item.name} · ${item.city || "City not set"} · ${item.phone || "No phone"}`],
+                        ["Laboratories", selectedCoAdminActivity.records?.laboratories, (item) => `${item.name} · ${item.location || "Location not set"} · ${item.phone || "No phone"}`],
+                        ["Staff", selectedCoAdminActivity.records?.staff, (item) => `${item.name} · ${item.email || item.phone || "No contact"} · ${item.doctor || item.hospital || "Unassigned"}`],
+                      ].map(([label, records, describe]) => (
+                        <div className="dashboard-table" key={label}>
+                          <div className="dashboard-form-heading"><span>{label}</span><h3>{records?.length || 0} records</h3></div>
+                          {records?.length ? records.slice(0, 25).map((item) => <div className="dashboard-table-row" key={item._id}><div><h3>{item.name}</h3><p>{describe(item)}</p></div><span>{item.isActive === false ? "Inactive" : "Active"}</span></div>) : <p className="dashboard-empty-state">No {label.toLowerCase()} found in this district.</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                  <details className="dashboard-details-panel">
+                    <summary>View the monthly appointment report</summary>
+                    <div className="dashboard-table">
+                      {selectedCoAdminActivity.monthlyAppointments?.length ? selectedCoAdminActivity.monthlyAppointments.map((appointment) => (
+                        <div className="dashboard-table-row" key={appointment._id}>
+                          <div><h3>{appointment.patientName || appointment.patientEmail || "Patient"}</h3><p>{appointment.doctorId?.name || appointment.labId?.name || appointment.hospital?.name || "Provider"} · {appointment.appointmentDate} {appointment.appointmentTime || ""}</p></div>
+                          <span>{appointment.status}{appointment.reportUrl ? " · Report uploaded" : ""}</span>
+                        </div>
+                      )) : <p className="dashboard-empty-state">No monthly appointment records found.</p>}
+                    </div>
+                  </details>
+                </div>
+              ) : null}
+            </>
+          ) : <p className="dashboard-empty-state">No active co-admin accounts are available yet.</p>}
+        </DashboardSection>
+      ) : null}
+
       <DashboardSection
         id="admin-doctors"
         title="Doctor Management"
@@ -2554,7 +2718,7 @@ export default function AdminDashboard() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Monthly Patient Report" action="Export CSV" onActionClick={exportMonthlyPatientReport}>
+      <DashboardSection id="admin-monthly-report" title="Monthly Patient Report" action="Export CSV" onActionClick={exportMonthlyPatientReport}>
         <div className="dashboard-report-toolbar">
           <label className="dashboard-input-group">
             <span>Report month</span>
