@@ -1524,7 +1524,7 @@
   color: #64748b;
 }
 
-.search-city-field > label select {
+.search-city-field > label input {
   min-width: 0;
   padding-left: 40px;
   padding-right: 30px;
@@ -1601,7 +1601,7 @@
     gap: 8px;
   }
 
-  .search-city-field > label select {
+  .search-city-field > label input {
     padding-left: 40px;
   }
 

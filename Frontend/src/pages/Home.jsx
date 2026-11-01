@@ -365,11 +365,19 @@ function SearchPanel({
       <div className="search-city-field">
         <label>
           <Icon name="pin" />
-          <select value={filters.city} onChange={(event) => onFiltersChange({ ...filters, city: event.target.value })}>
-            <option value="">City</option>
-            {cityOptions.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
+          <input
+            type="search"
+            list="medixo-city-options"
+            value={filters.city}
+            onChange={(event) => onFiltersChange({ ...filters, city: event.target.value })}
+            placeholder="City / district"
+            aria-label="Search city or district"
+            autoComplete="off"
+          />
         </label>
+        <datalist id="medixo-city-options">
+          {cityOptions.map((item) => <option key={item} value={item} />)}
+        </datalist>
         <button
           type="button"
           className="location-detect-button"
@@ -915,7 +923,7 @@ export default function Home() {
         setLocationMessage(`Showing providers in ${selectedCity}.`);
       } else {
         setLocationStatus("error");
-        setLocationMessage(`We detected ${location.city}, but no providers are listed there yet.`);
+        setLocationMessage(`We detected ${location.city}, but no providers are listed there yet. Choose another city or district above.`);
       }
     } catch (locationError) {
       setLocationStatus("error");
